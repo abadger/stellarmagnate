@@ -1,0 +1,52 @@
+#!/usr/bin/python3 -tt
+#
+# Stellar Magnate - A space-themed commodity trading game
+# Copyright (C) 2016, Toshio Kuratomi <toshio@fedoraproject.org>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import asyncio
+import sys
+
+from pubmarine import PubPen
+#try:
+#    import uvloop
+#except ImportError:
+#    uvloop = None
+#else:
+#    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+
+from magnate.dispatcher import Dispatcher
+from magnate.ui import urwid
+
+
+# entrypoint parses args
+# creates a dispatcher
+#   dispatcher subscribes to backend update events
+# creates a UI
+#   passes the dispatcher and pubpen into the UI
+#   UI creates windows
+# entrypoint starts the event loop
+#   dispatcher reacts to events from the backend and commands from the user
+#   UI reacts to events from the user and the dispatcher
+#
+if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
+    pubpen = PubPen(loop)
+    dispatcher = Dispatcher(pubpen)
+    ui = urwid.Interface(pubpen)
+    #loop.run_forever()
+    ui.run()
+    sys.exit(1)
+
