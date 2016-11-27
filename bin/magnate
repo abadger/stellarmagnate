@@ -20,6 +20,7 @@ import asyncio
 import sys
 
 from pubmarine import PubPen
+from straight.plugin import load
 #try:
 #    import uvloop
 #except ImportError:
@@ -28,6 +29,8 @@ from pubmarine import PubPen
 #    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 from magnate.dispatcher import Dispatcher
+from magnate.ui.api import UserInterface
+
 from magnate.ui import urwid
 
 
@@ -42,11 +45,21 @@ from magnate.ui import urwid
 #   UI reacts to events from the user and the dispatcher
 #
 if __name__ == '__main__':
+    ### FIXME: Get this from the command line:
+    ui_name = 'urwid'
+
+    # Load the requested user interface
+    ui_plugins = load('magnate.ui', subclasses=UserInterface)
+    for UIClass in ui_plugins:
+        if UIClass.__module__.startswith('magnate.ui.{}'.format(ui_name)):
+            break
+    else:
+        print('Unknown user ui: {}'.format(ui_name))
+
     loop = asyncio.get_event_loop()
     pubpen = PubPen(loop)
     dispatcher = Dispatcher(pubpen)
-    ui = urwid.Interface(pubpen)
-    #loop.run_forever()
-    ui.run()
-    sys.exit(1)
+    ui = UIClass(pubpen)
 
+    ret_code = ui.run()
+    sys.exit(ret_code)

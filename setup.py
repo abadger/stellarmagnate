@@ -26,5 +26,5 @@ Travel, a trading game for the Apple IIe by Brian Winn.
         ],
         packages=['magnate', 'magnate.ui'],
         scripts=['bin/magnate'],
-        install_requires=['pubmarine >= 0.3', 'urwid'],
+        install_requires=['pubmarine >= 0.3', 'urwid', 'straight.plugin'],
     )
