@@ -46,8 +46,8 @@ class StatusBar(urwid.Columns):
     def __init__(self, pubpen, spacer=u'u2500'):
         self.pubpen = pubpen
 
-        self.who = urwid.Text('{} Name: '.format(spacer))
-        self.where = urwid.Text(' Location: {}'.format(spacer))
+        self.who = urwid.Text(u'\u2524 Name: \u251C')
+        self.where = urwid.Text(u'\u2524 Location: \u251C')
 
         self.left = urwid.Columns([self.who])
         self.right = urwid.Columns([self.where])
@@ -69,10 +69,10 @@ class StatusBar(urwid.Columns):
     #
 
     def update_username(self, username):
-        self.who.set_text(' Name: {} '.format(username))
+        self.who.set_text('\u2524 Name: {} \u251C'.format(username))
 
     def update_location(self, location):
-        self.where.set_text(' Location: {} '.format(location))
+        self.where.set_text('\u2524 Location: {} \u251C'.format(location))
 
     #
     # Handlers
