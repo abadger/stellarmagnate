@@ -20,7 +20,7 @@ import string
 
 import urwid
 
-from magnate.ui import UserInterface
+from magnate.ui.api import UserInterface
 
 
 # ui elements:
