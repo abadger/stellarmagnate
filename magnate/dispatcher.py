@@ -131,7 +131,7 @@ class User:
         self.pubpen.emit('user.info', self.username, self.cash, self.ship.location)
 
 
-ALL_DESTINATIONS = ('Mercury', 'Venus', 'Earth', 'Luna', 'Mars')
+ALL_DESTINATIONS = ('Sol Research Station', 'Mercury', 'Venus', 'Earth', 'Luna', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto')
 
 class Ship:
     def __init__(self, pubpen, location='Earth'):
