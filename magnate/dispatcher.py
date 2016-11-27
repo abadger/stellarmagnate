@@ -100,9 +100,9 @@ class Dispatcher:
 
     def login(self, username, password):
         if 'toshio' in username.lower():
-            self.pubpen.emit('user.login_success', username)
+            self.pubpen.publish('user.login_success', username)
         else:
-            self.pubpen.emit('user.login_failure', 'Unknown account: {}'.format(username))
+            self.pubpen.publish('user.login_failure', 'Unknown account: {}'.format(username))
         self.user = User(self.pubpen, username)
 
     def move(self, what, old_location, new_location):
@@ -128,7 +128,7 @@ class User:
         self.pubpen.subscribe('query.user.info', self.handle_user_info)
 
     def handle_user_info(self):
-        self.pubpen.emit('user.info', self.username, self.cash, self.ship.location)
+        self.pubpen.publish('user.info', self.username, self.cash, self.ship.location)
 
 
 ALL_DESTINATIONS = ('Sol Research Station', 'Mercury', 'Venus', 'Earth', 'Luna', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto')
@@ -150,14 +150,14 @@ class Ship:
         self.destinations = list(ALL_DESTINATIONS)
         self.destinations.remove(location)
 
-        self.pubpen.emit('ship.destinations', self.destinations)
-        self.pubpen.emit('ship.moved', self._location, location)
+        self.pubpen.publish('ship.destinations', self.destinations)
+        self.pubpen.publish('ship.moved', self._location, location)
         self._location = location
 
     def handle_movement(self, location):
         try:
             self.location = location
         except ValueError:
-            self.pubpen.emit('ship.movement_failure', 'Unknown destination')
+            self.pubpen.publish('ship.movement_failure', 'Unknown destination')
             return
 

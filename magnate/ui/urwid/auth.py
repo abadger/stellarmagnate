@@ -73,7 +73,7 @@ class LoginScreen(urwid.WidgetWrap):
         self.fields.focus_position = 0
 
     def attempt_login(self, *args):
-        self.pubpen.emit('action.user.login_attempt', self.username.get_text()[0], self.password.get_text()[0])
+        self.pubpen.publish('action.user.login_attempt', self.username.get_text()[0], self.password.get_text()[0])
 
     def quit(self, button):
         raise urwid.ExitMainLoop()

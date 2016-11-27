@@ -145,7 +145,7 @@ class TravelMenu(urwid.ListBox):
         if key in self.keypress_map:
             destination = self.keypress_map[key]
             self.ship_moved_sub_id = self.pubpen.subscribe('ship.moved', self.handle_new_location)
-            self.pubpen.emit('action.ship.movement_attempt', destination)
+            self.pubpen.publish('action.ship.movement_attempt', destination)
             return
         super().keypress(size, key)
         return key
