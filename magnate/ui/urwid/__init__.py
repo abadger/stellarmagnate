@@ -20,6 +20,9 @@ import string
 
 import urwid
 
+from magnate.ui import UserInterface
+
+
 # ui elements:
 # [x] Splash
 # [x] Status bar
@@ -318,7 +321,7 @@ class LoginScreen(urwid.WidgetWrap):
             return
         return key
 
-class Interface:
+class Interface(UserInterface):
     def __init__(self, pubpen):
         self.pubpen = pubpen
 
