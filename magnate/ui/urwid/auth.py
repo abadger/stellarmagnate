@@ -36,13 +36,13 @@ class LoginScreen(urwid.WidgetWrap):
         password_label = urwid.Text('Password: ', align='right')
         self.username = urwid.Edit()
         self.password = urwid.Edit()
-        quit_button = urwid.Button('Quit')
-        decorated_quit_button = urwid.AttrMap(quit_button, None, focus_map='reversed')
         login_button = urwid.Button('Login')
         decorated_login_button = urwid.AttrMap(login_button, None, focus_map='reversed')
+        quit_button = urwid.Button('Quit')
+        decorated_quit_button = urwid.AttrMap(quit_button, None, focus_map='reversed')
         buttons = urwid.Columns((
-            (len('Quit') + 4, decorated_quit_button),
             (len('Login') + 4, decorated_login_button),
+            (len('Quit') + 4, decorated_quit_button),
             ), focus_column=1)
 
         labels = urwid.Pile([username_label, password_label])
@@ -60,8 +60,8 @@ class LoginScreen(urwid.WidgetWrap):
 
         self.focusable_widgets = (w for w in itertools.cycle((
             ((self.fields, 1),),
-            ((self.fields, 2), (buttons, 1)),
             ((self.fields, 2), (buttons, 0)),
+            ((self.fields, 2), (buttons, 1)),
             ((self.fields, 0),)
             )))
 
