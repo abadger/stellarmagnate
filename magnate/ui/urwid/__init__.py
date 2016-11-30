@@ -14,7 +14,9 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+"""
+The main entrypoint into the urwid user interface
+"""
 import urwid
 
 from magnate.ui.api import UserInterface
@@ -24,6 +26,10 @@ from .title import TitleCard
 
 
 class Interface(UserInterface):
+    """The main entrypoint into the urwid user interface
+
+    Creates the main widgets and takes care of switching between them.
+    """
     def __init__(self, pubpen):
         super().__init__(pubpen)
 
@@ -50,13 +56,15 @@ class Interface(UserInterface):
                                          palette=(('reversed', 'standout', ''),),)
 
     def show_title_card(self):
+        """Display a splash screen"""
         self.root_win.body = urwid.Filler(self.title_card, height=('relative', 100))
 
     def show_login_screen(self):
-        self.root_win.body = self.login_screen
+        """Display a login form"""
         self.root_win.body = urwid.Filler(self.login_screen, height=('relative', 100))
 
     def show_main_window(self):
+        """Display the main window"""
         self.root_win.body = urwid.Filler(self.main_window, height=('relative', 100))
 
     def run(self):

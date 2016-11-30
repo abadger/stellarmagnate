@@ -61,9 +61,9 @@ class StatusBar(urwid.Columns):
         self.left = urwid.Columns([self.who])
         self.right = urwid.Columns([self.where])
         super().__init__((('pack', self.who),
-            ('weight', 1, urwid.Divider(spacer)),
-            ('pack', self.where),
-            ))
+                          ('weight', 1, urwid.Divider(spacer)),
+                          ('pack', self.where),
+                         ))
 
         # Connect to backend events
         self.pubpen.subscribe('user.info', self.handle_user_info)
@@ -152,11 +152,11 @@ class MainDisplay(urwid.WidgetWrap):
         self.game_menu = GameMenuDisplay(self.pubpen)
 
         self.display_map = {
-                'MarketMenu': self.market_menu,
-                'TravelDisplay': self.travel_menu,
-                'GameMenuDisplay': self.game_menu,
-                'Blank': self.blank
-                }
+            'MarketMenu': self.market_menu,
+            'TravelDisplay': self.travel_menu,
+            'GameMenuDisplay': self.game_menu,
+            'Blank': self.blank
+            }
 
         self.push_display('Blank')
 
@@ -209,7 +209,7 @@ class MainDisplay(urwid.WidgetWrap):
         elif key in frozenset('eE'):
             self.push_display('GameMenuDisplay')
         else:
-            super().keypress(size, key)
+            super().keypress(size, key)  # pylint: disable=not-callable
         return
 
 

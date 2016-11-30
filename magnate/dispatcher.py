@@ -14,82 +14,13 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+"""
+Dispatcher manages the communication between the backend and various user
+interfaces.
+"""
 
 class Dispatcher:
-    """
-    The dispatcher has methods which allow the UI to request actions be taken
-    It communicates changes to the UI via pubmarine events.
-
-    # Emitted events:
-    #
-    # :event: market.price_change
-    # :args:
-    #   * item_name
-    #   * location
-    #   * old_price
-    #   * new_price
-    #
-    # :event: market.commodity_bought
-    # :args:
-    #   * item_name
-    #   * location
-    #   * who_bought
-    #   * amount_bought
-    #   * money_spent
-    #
-    # :event: market.commodity.sold
-    # :args:
-    #   * item_name
-    #   * location
-    #   * who_sold
-    #   * amount_sold
-    #   * money_received
-    #
-    # :event: ship.moved
-    # :args:
-    #   * old_location
-    #   * new_location
-    # :kwargs:
-    #
-    # :event: ship.destinations
-    # :args:
-    #   * destinations (list)
-    #
-    # :event: user.info
-    # :args:
-    #   * username
-    #   * cash
-    #   * location
-    #
-    # :event: user.login_success
-    # :args:
-    #   * username
-    #
-    # :event: user.login_failure
-    # :args:
-    #   * username
-    #   * failure message
-    #
-
-    # Received signals
-    # ================
-    # In general, the dispatcher will receive and process action.* signals
-    # from the controller.
-    #
-    # :event: action.user.login_attempt
-    # :args:
-    #   * username
-    #   * password
-    #
-    # :event: action.ship.movement_attempt
-    #   * ship_id
-    #   * destination
-    #
-    #
-
-
-    """
+    """Manage the communication between the backend and frontends"""
 
 
     def __init__(self, pubpen):
@@ -99,6 +30,7 @@ class Dispatcher:
         self.pubpen.subscribe('action.user.login_attempt', self.login)
 
     def login(self, username, password):
+        """Log a user into the game"""
         if 'toshio' in username.lower():
             self.pubpen.publish('user.login_success', username)
         else:
@@ -108,6 +40,7 @@ class Dispatcher:
 
 
 class User:
+    """A logged in user"""
     def __init__(self, pubpen, username):
         self.pubpen = pubpen
         self.username = username
@@ -117,6 +50,10 @@ class User:
         self.pubpen.subscribe('query.user.info', self.handle_user_info)
 
     def handle_user_info(self):
+        """Return all information about a user
+
+        :event user.info: All the information about the user
+        """
         self.pubpen.publish('user.info', self.username, self.cash,
                             self.ship.location)
 
@@ -126,6 +63,7 @@ ALL_DESTINATIONS = ('Sol Research Station', 'Mercury', 'Venus', 'Earth',
 
 
 class Ship:
+    """A user's ship"""
     def __init__(self, pubpen, location='Earth'):
         self.pubpen = pubpen
         self._location = None
@@ -136,12 +74,24 @@ class Ship:
 
     @property
     def location(self):
+        """Retrieve the ship's location"""
         return self._location
 
     @location.setter
     def location(self, location):
-        self._destinations = list(ALL_DESTINATIONS)
-        self._destinations.remove(location)
+        """Move the ship to a new location
+
+        :arg location: The location to move to
+        :event ship.moved: Emitted when the ship arrives at a new location
+            :arg old_location: The location the ship moved from
+            :arg location: The location the ship arrived at
+        :event ship.destination: Emitted when the ship ship arrives at a new
+            location
+        :raises ValueError: when the new location is not valid
+        """
+        temp_destination = list(ALL_DESTINATIONS)
+        temp_destination.remove(location)
+        self._destinations = temp_destination
 
         self.pubpen.publish('ship.destinations', self.destinations)
         self.pubpen.publish('ship.moved', self._location, location)
@@ -149,9 +99,17 @@ class Ship:
 
     @property
     def destinations(self):
+        """Read-only property lists the ship's valid destinations"""
         return self._destinations
 
     def handle_movement(self, location):
+        """Attempt to move the ship to a new location on user request
+
+        :arg location: The location to move to
+        :event ship.movement_failure: Emitted when the dhip could not be moved
+            :msg: Unknown destination
+            :msg: Ship too heavy
+        """
         try:
             self.location = location
         except ValueError:

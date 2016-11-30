@@ -14,7 +14,9 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+"""
+Give a menu of new destinations for the ship to move to
+"""
 import itertools
 from string import punctuation # pylint: disable=deprecated-module
 
@@ -22,6 +24,7 @@ import urwid
 
 
 class TravelDisplay(urwid.ListBox):
+    """Widget that allows the user to select a new destination for the ship"""
     _selectable = True
     signals = ['close_travel_menu']
 
@@ -37,17 +40,20 @@ class TravelDisplay(urwid.ListBox):
         self.pubpen.subscribe('ship.destinations', self.handle_new_destinations)
 
     def handle_new_destinations(self, locations):
+        """Update the destination list when the ship can move to new places"""
         self.listwalker.clear()
         self.keypress_map = {}
         for idx, location in enumerate(locations):
             self.listwalker.append(urwid.Text('({}) {}'.format(self.idx_names[idx], location)))
             self.keypress_map[self.idx_names[idx]] = location
 
-    def handle_new_location(self, old_location, location):
+    def handle_new_location(self, *args):
+        """Got a valid new location so we can close this window"""
         self.pubpen.unsubscribe(self._ship_moved_sub_id)
         urwid.emit_signal(self, 'close_travel_menu')
 
     def keypress(self, size, key):
+        """Handle all keyboard shortcuts for the travel menu"""
         if key in self.keypress_map:
             destination = self.keypress_map[key]
             self._ship_moved_sub_id = self.pubpen.subscribe('ship.moved', self.handle_new_location)

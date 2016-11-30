@@ -14,6 +14,9 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+A splash screen for the Stellar Magnate Program
+"""
 
 import urwid
 
@@ -28,13 +31,16 @@ class TitleCard(urwid.LineBox):
         program_name = urwid.Text('Stellar Magnate', align='center')
         copyright_name = urwid.Text('(C) 2016, Toshio Kuratomi', align='center')
         license_name = urwid.Text('GNU Affero General Public License 3 or later', align='center')
+
         screen = urwid.Filler(urwid.Pile([program_name, copyright_name, license_name]), valign='middle')
         super().__init__(screen)
 
     def keypress(self, *args):
+        """Any interaction with the widget moves on to the next screen"""
         urwid.emit_signal(self, 'close_title_card')
 
     def selectable(self):
+        """Allow the user to interact with this widget"""
         # Decoration widgets like LineBox override selectable() so we need to
         # use an actual method
         return True
