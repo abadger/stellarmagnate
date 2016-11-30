@@ -36,8 +36,8 @@ class LoginScreen(urwid.WidgetWrap):
         self.quit_button = urwid.Button('Quit')
         self.login_button = urwid.Button('Login')
         self.buttons = urwid.Columns((
-            (len('Quit') + 4, self.quit_button),
-            (len('Login') + 4, self.login_button),
+            (len('Quit') + 4, urwid.AttrMap(self.quit_button, None, focus_map='reversed')),
+            (len('Login') + 4, urwid.AttrMap(self.login_button, None, focus_map='reversed')),
             ), focus_column=1)
 
         labels = urwid.Pile([username_label, password_label])

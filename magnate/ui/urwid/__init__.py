@@ -32,7 +32,7 @@ class Interface(UserInterface):
         self.title_card = TitleCard(pubpen)
         self.login_screen = LoginScreen(pubpen)
         self.main_window = MainWindow(pubpen)
-        self.root_win = urwid.Frame(self.title_card)
+        self.root_win = urwid.Frame(urwid.SolidFill(' '))
 
         # Arrange the widgets
 
@@ -47,29 +47,25 @@ class Interface(UserInterface):
 
         self.urwid_loop = urwid.MainLoop(self.root_win,
                 event_loop=urwid.AsyncioEventLoop(loop=self.pubpen.loop),
-                unhandled_input=self.toplevel_input)
+                unhandled_input=self.toplevel_input,
+                palette=(
+                    ('reversed', 'standout', ''),
+                    ),
+                )
 
     def show_title_card(self):
-        self.root_win.body = self.title_card
+        self.root_win.body = urwid.Filler(self.title_card, height=('relative', 100))
 
     def show_login_screen(self):
         self.root_win.body = self.login_screen
+        self.root_win.body = urwid.Filler(self.login_screen, height=('relative', 100))
 
     def show_main_window(self):
-        self.root_win.body = self.main_window
+        self.root_win.body = urwid.Filler(self.main_window, height=('relative', 100))
 
     def toplevel_input(self, keypress):
-        if self.root_win.body == self.main_window:
-            if keypress in frozenset('tT'):
-                self.main_window.display_travel_menu()
-                return
-        elif self.root_win.body == self.title_card:
-            # Let the title card handle all input
-            return
-        elif self.root_win.body == self.login_screen:
-            # Login screen handles all of its own input
-            return
-        raise urwid.ExitMainLoop()
+        # The screens are each responsible for their own input
+        return
 
     def run(self):
         self.urwid_loop.run()
