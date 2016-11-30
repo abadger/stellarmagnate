@@ -128,11 +128,39 @@ class InfoWindow(urwid.Pile):
         pass
 
 
-class MarketMenu(urwid.Pile):
+class ShipyardDisplay(urwid.WidgetWrap):
     _selectable = True
+
     def __init__(self, pubpen):
+        self.pubpen = pubpen
+
         blank = urwid.Text('This test page intentionaly left blank')
-        super().__init__([blank])
+        container = urwid.Filler(blank)
+        super().__init__(container)
+        pass
+
+
+class FinancialDisplay(urwid.WidgetWrap):
+    _selectable = True
+
+    def __init__(self, pubpen):
+        self.pubpen = pubpen
+
+        blank = urwid.Text('This test page intentionaly left blank')
+        container = urwid.Filler(blank)
+        super().__init__(container)
+        pass
+
+
+class MarketDisplay(urwid.WidgetWrap):
+    _selectable = True
+
+    def __init__(self, pubpen):
+        self.pubpen = pubpen
+
+        blank = urwid.Text('This test page intentionaly left blank')
+        container = urwid.Filler(blank)
+        super().__init__(container)
         pass
 
 
@@ -147,12 +175,16 @@ class MainDisplay(urwid.WidgetWrap):
 
         # Widgets traded in and out of the main display area
 
-        self.market_menu = MarketMenu(self.pubpen)
+        self.market_display = MarketDisplay(self.pubpen)
         self.travel_menu = TravelDisplay(self.pubpen)
         self.game_menu = GameMenuDisplay(self.pubpen)
+        self.shipyard_display = ShipyardDisplay(self.pubpen)
+        self.financial_display = FinancialDisplay(self.pubpen)
 
         self.display_map = {
-            'MarketMenu': self.market_menu,
+            'MarketDisplay': self.market_display,
+            'ShipyardDisplay': self.shipyard_display,
+            'FinancialDisplay': self.financial_display,
             'TravelDisplay': self.travel_menu,
             'GameMenuDisplay': self.game_menu,
             'Blank': self.blank
@@ -204,6 +236,12 @@ class MainDisplay(urwid.WidgetWrap):
     def keypress(self, size, key):
         if key == 'esc':
             self.pop_display()
+        elif key in frozenset('pP'):
+            self.push_display('MarketDisplay')
+        elif key in frozenset('yY'):
+            self.push_display('ShipyardDisplay')
+        elif key in frozenset('fF'):
+            self.push_display('FinancialDisplay')
         elif key in frozenset('tT'):
             self.push_display('TravelDisplay')
         elif key in frozenset('eE'):
