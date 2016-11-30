@@ -109,12 +109,19 @@ class MenuBar(urwid.Pile):
             ('pack', self.travel_entry),
             ('pack', self.game_menu_entry),
             ('weight', 1, urwid.Divider(' ')),
-            ), dividechars=3)
+            ), dividechars=5)
 
         super().__init__((
             ('pack', self.menu_entries),
             ('weight', 1, urwid.Divider(line)),
             ))
+
+
+class InfoWindow(urwid.Pile):
+    _selectable = False
+    def __init__(self, pubpen):
+        super().__init__([])
+        pass
 
 
 class TravelMenu(urwid.ListBox):
@@ -151,18 +158,137 @@ class TravelMenu(urwid.ListBox):
         return key
 
 
-class InfoWindow(urwid.Pile):
-    _selectable = False
-    def __init__(self, pubpen):
-        super().__init__([])
-        pass
-
-
 class MarketMenu(urwid.Pile):
     _selectable = True
     def __init__(self, pubpen):
-        super().__init__([])
+        blank = urwid.Text('This test page intentionaly left blank')
+        super().__init__([blank])
         pass
+
+
+class GameMenu(urwid.WidgetWrap):
+    _selectable = True
+    signals = ['close_game_menu']
+
+    def __init__(self, pubpen):
+        self.pubpen = pubpen
+
+        # Overlay
+        # LineBox using double lines
+        # Display it centered on the main_window
+        self.save_button = urwid.Button('Save')
+        self.load_button = urwid.Button('Load')
+        self.help_button = urwid.Button('Help')
+        self.quit_button = urwid.Button('Quit')
+        self.continue_button = urwid.Button('Continue Game [ESC]')
+
+        self.buttons = urwid.SimpleFocusListWalker((
+            urwid.AttrMap(self.save_button, None, focus_map='reversed'),
+            urwid.AttrMap(self.load_button, None, focus_map='reversed'),
+            urwid.AttrMap(self.quit_button, None, focus_map='reversed'),
+            urwid.AttrMap(self.continue_button, None, focus_map='reversed'),
+            ))
+        self.entrybox = urwid.ListBox(self.buttons)
+
+        # Draw a box around the widget and constrain the widget's size
+        linebox = urwid.LineBox(self.entrybox,
+                tlcorner='\u2554', tline='\u2550', trcorner='\u2557',
+                blcorner='\u255A', bline='\u2550', brcorner='\u255D',
+                lline='\u2551', rline='\u2551')
+        padding = urwid.Padding(linebox, align='center', width=len(self.continue_button.get_label()) + 6)
+        filler = urwid.Filler(padding, valign='middle', height=len(self.buttons) + 2)
+
+        super().__init__(filler)
+
+        urwid.connect_signal(self.save_button, 'click', lambda x:x)
+        urwid.connect_signal(self.load_button, 'click', lambda x:x)
+        urwid.connect_signal(self.quit_button, 'click', self.quit_client)
+        urwid.connect_signal(self.continue_button, 'click', self.continue_game)
+
+    def continue_game(self, *args):
+        urwid.emit_signal(self, 'close_game_menu')
+
+    def quit_client(self, button):
+        raise urwid.ExitMainLoop()
+
+
+class MainDisplay(urwid.WidgetWrap):
+    def __init__(self, pubpen):
+        self.pubpen = pubpen
+        self.display_stack = []
+        self.blank = urwid.Frame(urwid.SolidFill(' '))
+        self.background = urwid.WidgetPlaceholder(self.blank)
+
+        super().__init__(self.background)
+
+        #
+        # Widgets traded in and out of the main display area
+        #
+
+        self.market_menu = MarketMenu(self.pubpen)
+        self.travel_menu = TravelMenu(self.pubpen)
+        self.game_menu = GameMenu(self.pubpen)
+
+        self.display_map = {
+                'MarketMenu': self.market_menu,
+                'TravelMenu': self.travel_menu,
+                'GameMenu': self.game_menu,
+                'Blank': self.blank
+                }
+
+        self.push_display('Blank')
+
+        urwid.connect_signal(self.travel_menu, 'close_travel_menu', self.pop_display)
+        urwid.connect_signal(self.game_menu, 'close_game_menu', self.pop_display)
+
+    def selectable(self):
+        return True
+
+    def push_display(self, display_name):
+        """
+        Push a new display to the top level
+
+        Displays are like separate sheets of paper which we stack up on our
+        desk.  We only have one instance of any given display in the stack but
+        we can pull an old display to the top or we can decide we're done with
+        the present display and go back to the previous one.
+        """
+        assert display_name in self.display_map
+        widget = self.display_map[display_name]
+
+        # Remove any prior instance of this display from the stack
+        try:
+            self.display_stack.remove(display_name)
+        except ValueError:
+            pass
+        # Add the display at the end
+        self.display_stack.append(display_name)
+        self.background.original_widget = widget
+
+    def pop_display(self, *args):
+        widget = None
+        while widget is None:
+            if len(self.display_stack) <= 1:
+                widget = self.blank
+            else:
+                self.display_stack.pop()
+                widget = self.display_map[self.display_stack[-1]]
+                if widget is self.game_menu:
+                    # Never go back to the game menu
+                    widget = None
+
+        self.background.original_widget = widget
+
+    def keypress(self, size, key):
+        if key == 'esc':
+            self.pop_display()
+        elif key in frozenset('tT'):
+            self.push_display('TravelMenu')
+        elif key in frozenset('eE'):
+            self.push_display('GameMenu')
+        else:
+            super().keypress(size, key)
+        return
 
 
 class MainWindow(urwid.LineBox):
@@ -174,11 +300,13 @@ class MainWindow(urwid.LineBox):
         #
         self.menu_bar = MenuBar(self.pubpen)
         self.info_window = InfoWindow(self.pubpen)
-        self.main_display = urwid.Pile((
+        self.main_display = MainDisplay(self.pubpen)
+
+        layout = urwid.Pile((
             ('pack', self.menu_bar),
-            ('pack', urwid.Text(' ')),
+            ('weight', 1, self.main_display),
             ))
-        self.top = urwid.Frame(self.main_display)
+        self.top = urwid.Frame(layout)
 
         super().__init__(self.top)
 
@@ -191,28 +319,3 @@ class MainWindow(urwid.LineBox):
             (self.status_bar, self.tline_widget.options('weight', 1, False)),
             (tline, self.tline_widget.options('given', 1, False)),
             ))
-
-        #
-        # Widgets traded in and out of the main display area
-        #
-
-        self.travel_menu = TravelMenu(self.pubpen)
-        self.market_menu = MarketMenu(self.pubpen)
-
-        urwid.connect_signal(self.travel_menu, 'close_travel_menu', self.display_market_menu)
-
-    def selectable(self):
-        # Decoration widgets like LineBox override selectable() so we need to
-        # use an actual method
-        return True
-
-    def toplevel_input(self, key):
-        raise urwid.ExitMainLoop()
-
-    def display_travel_menu(self):
-        self.main_display.contents[1] = (self.travel_menu, self.main_display.options(height_type='weight', height_amount=20))
-        self.main_display.focus_position = 1
-
-    def display_market_menu(self):
-        self.main_display.contents[1] = (self.market_menu, self.main_display.options(height_type='weight', height_amount=20))
-        self.main_display.focus_position = 1
