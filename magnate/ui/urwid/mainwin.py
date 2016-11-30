@@ -17,6 +17,7 @@
 
 import urwid
 
+from .gamemenu import GameMenuDisplay
 from .travel import TravelDisplay
 
 # ui elements:
@@ -132,66 +133,6 @@ class InfoWindow(urwid.Pile):
         pass
 
 
-class GameMenu(urwid.WidgetWrap):
-    _selectable = True
-    signals = ['close_game_menu']
-
-    def __init__(self, pubpen):
-        self.pubpen = pubpen
-
-        # Overlay
-        # LineBox using double lines
-        # Display it centered on the main_window
-        self.save_button = urwid.Button('(S)ave')
-        self.load_button = urwid.Button('(L)oad')
-        self.quit_button = urwid.Button('(Q)uit')
-        self.continue_button = urwid.Button('(ESC) Continue Game')
-
-        self.buttons = urwid.SimpleFocusListWalker((
-            urwid.AttrMap(self.save_button, None, focus_map='reversed'),
-            urwid.AttrMap(self.load_button, None, focus_map='reversed'),
-            urwid.AttrMap(self.quit_button, None, focus_map='reversed'),
-            urwid.AttrMap(self.continue_button, None, focus_map='reversed'),
-            ))
-        self.entrybox = urwid.ListBox(self.buttons)
-
-        # Draw a box around the widget and constrain the widget's size
-        linebox = urwid.LineBox(self.entrybox,
-                tlcorner='\u2554', tline='\u2550', trcorner='\u2557',
-                blcorner='\u255A', bline='\u2550', brcorner='\u255D',
-                lline='\u2551', rline='\u2551')
-        padding = urwid.Padding(linebox, align='center', width=len(self.continue_button.get_label()) + 6)
-        filler = urwid.Filler(padding, valign='middle', height=len(self.buttons) + 2)
-
-        super().__init__(filler)
-
-        urwid.connect_signal(self.save_button, 'click', self.save_game)
-        urwid.connect_signal(self.load_button, 'click', self.load_game)
-        urwid.connect_signal(self.quit_button, 'click', self.quit_client)
-        urwid.connect_signal(self.continue_button, 'click', self.continue_game)
-
-    def save_game(self, *args):
-        pass
-
-    def load_game(self, *args):
-        pass
-
-    def quit_client(self, *args):
-        raise urwid.ExitMainLoop()
-
-    def continue_game(self, *args):
-        urwid.emit_signal(self, 'close_game_menu')
-
-    def keypress(self, size, key):
-        super().keypress(size, key)
-        if key in frozenset('sS'):
-            self.save_game()
-        elif key in frozenset('lL'):
-            self.load_game()
-        elif key in frozenset('qQ'):
-            self.quit_client()
-
-
 class MarketMenu(urwid.Pile):
     _selectable = True
     def __init__(self, pubpen):
@@ -215,12 +156,12 @@ class MainDisplay(urwid.WidgetWrap):
 
         self.market_menu = MarketMenu(self.pubpen)
         self.travel_menu = TravelDisplay(self.pubpen)
-        self.game_menu = GameMenu(self.pubpen)
+        self.game_menu = GameMenuDisplay(self.pubpen)
 
         self.display_map = {
                 'MarketMenu': self.market_menu,
                 'TravelDisplay': self.travel_menu,
-                'GameMenu': self.game_menu,
+                'GameMenuDisplay': self.game_menu,
                 'Blank': self.blank
                 }
 
@@ -273,7 +214,7 @@ class MainDisplay(urwid.WidgetWrap):
         elif key in frozenset('tT'):
             self.push_display('TravelDisplay')
         elif key in frozenset('eE'):
-            self.push_display('GameMenu')
+            self.push_display('GameMenuDisplay')
         else:
             super().keypress(size, key)
         return
