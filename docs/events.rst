@@ -100,3 +100,23 @@ to resynchronize a cache of the values if it's noticed that something is off.
     Emitted to retrieve a complete record of the user from the backend.
 
     :arg string username: The user about whome to retrieve information
+
+---------
+UI Events
+---------
+
+UI events are created by a single user interface plugin for internal
+communication.  For instance, a menu might want to communicate that a new
+window needs to be opened and populated with data.  All UI events should be
+namespaced under ``ui.[PLUGINNAME]`` so as not to conflict with other plugins.
+
+Urwid Interface
+===============
+
+These are UI Events used by the Urwid interface.  Urwid has its own event
+system but using it requires that the widget that wants to observe the event
+must have a reference to the widget that emits it.  When dealing with a deep
+hierarchy of widgets it can be painful to pass these references around so the
+Urwid interface makes use of our pubmarine event dispatcher for some things.
+
+[Currently None]
