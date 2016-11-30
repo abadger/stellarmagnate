@@ -27,9 +27,18 @@ import urwid
 # [x] Travel Menu
 #     [x] Export signals for selecting entries
 #     [x] hook up signal for opening the travel menu
+#     [_] Jump
 # [_] Menubar
+#     [x] Basic entries
 #     [_] Export signals for selecting the menu entries
+#     [x] Travel
+#     [_] Finance
+#     [_] Market
+#     [_] Shipyard
 # [_] Game Menu
+#   [x] Quit
+#   [_] Save
+#   [_] Load
 # [_] Info window
 # [_] Financial menu
 # [_] Financial  action menu
@@ -158,14 +167,6 @@ class TravelMenu(urwid.ListBox):
         return key
 
 
-class MarketMenu(urwid.Pile):
-    _selectable = True
-    def __init__(self, pubpen):
-        blank = urwid.Text('This test page intentionaly left blank')
-        super().__init__([blank])
-        pass
-
-
 class GameMenu(urwid.WidgetWrap):
     _selectable = True
     signals = ['close_game_menu']
@@ -176,11 +177,10 @@ class GameMenu(urwid.WidgetWrap):
         # Overlay
         # LineBox using double lines
         # Display it centered on the main_window
-        self.save_button = urwid.Button('Save')
-        self.load_button = urwid.Button('Load')
-        self.help_button = urwid.Button('Help')
-        self.quit_button = urwid.Button('Quit')
-        self.continue_button = urwid.Button('Continue Game [ESC]')
+        self.save_button = urwid.Button('(S)ave')
+        self.load_button = urwid.Button('(L)oad')
+        self.quit_button = urwid.Button('(Q)uit')
+        self.continue_button = urwid.Button('(ESC) Continue Game')
 
         self.buttons = urwid.SimpleFocusListWalker((
             urwid.AttrMap(self.save_button, None, focus_map='reversed'),
@@ -200,16 +200,39 @@ class GameMenu(urwid.WidgetWrap):
 
         super().__init__(filler)
 
-        urwid.connect_signal(self.save_button, 'click', lambda x:x)
-        urwid.connect_signal(self.load_button, 'click', lambda x:x)
+        urwid.connect_signal(self.save_button, 'click', self.save_game)
+        urwid.connect_signal(self.load_button, 'click', self.load_game)
         urwid.connect_signal(self.quit_button, 'click', self.quit_client)
         urwid.connect_signal(self.continue_button, 'click', self.continue_game)
+
+    def save_game(self, *args):
+        pass
+
+    def load_game(self, *args):
+        pass
+
+    def quit_client(self, *args):
+        raise urwid.ExitMainLoop()
 
     def continue_game(self, *args):
         urwid.emit_signal(self, 'close_game_menu')
 
-    def quit_client(self, button):
-        raise urwid.ExitMainLoop()
+    def keypress(self, size, key):
+        super().keypress(size, key)
+        if key in frozenset('sS'):
+            self.save_game()
+        elif key in frozenset('lL'):
+            self.load_game()
+        elif key in frozenset('qQ'):
+            self.quit_client()
+
+
+class MarketMenu(urwid.Pile):
+    _selectable = True
+    def __init__(self, pubpen):
+        blank = urwid.Text('This test page intentionaly left blank')
+        super().__init__([blank])
+        pass
 
 
 class MainDisplay(urwid.WidgetWrap):
