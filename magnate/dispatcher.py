@@ -102,20 +102,9 @@ class Dispatcher:
         if 'toshio' in username.lower():
             self.pubpen.publish('user.login_success', username)
         else:
-            self.pubpen.publish('user.login_failure', 'Unknown account: {}'.format(username))
+            self.pubpen.publish('user.login_failure',
+                                'Unknown account: {}'.format(username))
         self.user = User(self.pubpen, username)
-
-    def move(self, what, old_location, new_location):
-        pass
-        account = lookup(what)
-        verify_account_at(old_location)
-        verify_can_move(old_location, new_location)
-        try:
-            backend.move(account, new_location)
-        except:
-            yield old_location, error
-        else:
-            yield new_location
 
 
 class User:
@@ -128,15 +117,19 @@ class User:
         self.pubpen.subscribe('query.user.info', self.handle_user_info)
 
     def handle_user_info(self):
-        self.pubpen.publish('user.info', self.username, self.cash, self.ship.location)
+        self.pubpen.publish('user.info', self.username, self.cash,
+                            self.ship.location)
 
 
-ALL_DESTINATIONS = ('Sol Research Station', 'Mercury', 'Venus', 'Earth', 'Luna', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto')
+ALL_DESTINATIONS = ('Sol Research Station', 'Mercury', 'Venus', 'Earth',
+                    'Luna', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto')
+
 
 class Ship:
     def __init__(self, pubpen, location='Earth'):
         self.pubpen = pubpen
         self._location = None
+        self._destinations = []
         self.location = location
 
         self.pubpen.subscribe('action.ship.movement_attempt', self.handle_movement)
@@ -147,12 +140,16 @@ class Ship:
 
     @location.setter
     def location(self, location):
-        self.destinations = list(ALL_DESTINATIONS)
-        self.destinations.remove(location)
+        self._destinations = list(ALL_DESTINATIONS)
+        self._destinations.remove(location)
 
         self.pubpen.publish('ship.destinations', self.destinations)
         self.pubpen.publish('ship.moved', self._location, location)
         self._location = location
+
+    @property
+    def destinations(self):
+        return self._destinations
 
     def handle_movement(self, location):
         try:
@@ -160,4 +157,3 @@ class Ship:
         except ValueError:
             self.pubpen.publish('ship.movement_failure', 'Unknown destination')
             return
-

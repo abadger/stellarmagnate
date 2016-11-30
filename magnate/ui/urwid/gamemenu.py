@@ -14,11 +14,19 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+"""
+Game Menu widget
+"""
 import urwid
 
 
 class GameMenuDisplay(urwid.WidgetWrap):
+    """
+    Menu for Meta-game entries
+
+    Saving, quiting, settings, etc
+
+    """
     _selectable = True
     signals = ['close_game_menu']
 
@@ -42,12 +50,15 @@ class GameMenuDisplay(urwid.WidgetWrap):
         self.entrybox = urwid.ListBox(self.buttons)
 
         # Draw a box around the widget and constrain the widget's size
-        linebox = urwid.LineBox(self.entrybox,
-                tlcorner='\u2554', tline='\u2550', trcorner='\u2557',
-                blcorner='\u255A', bline='\u2550', brcorner='\u255D',
-                lline='\u2551', rline='\u2551')
-        padding = urwid.Padding(linebox, align='center', width=len(self.continue_button.get_label()) + 6)
-        filler = urwid.Filler(padding, valign='middle', height=len(self.buttons) + 2)
+        linebox = urwid.LineBox(self.entrybox, tlcorner='\u2554',
+                                tline='\u2550', trcorner='\u2557',
+                                blcorner='\u255A', bline='\u2550',
+                                brcorner='\u255D', lline='\u2551',
+                                rline='\u2551')
+        padding = urwid.Padding(linebox, align='center',
+                                width=len(self.continue_button.get_label()) + 6)
+        filler = urwid.Filler(padding, valign='middle',
+                              height=len(self.buttons) + 2)
 
         super().__init__(filler)
 
@@ -57,24 +68,28 @@ class GameMenuDisplay(urwid.WidgetWrap):
         urwid.connect_signal(self.continue_button, 'click', self.continue_game)
 
     def save_game(self, *args):
+        """Save game state to a file"""
         pass
 
     def load_game(self, *args):
+        """Load game state from a file"""
         pass
 
-    def quit_client(self, *args):
+    @staticmethod
+    def quit_client(*args):
+        """Quit the game"""
         raise urwid.ExitMainLoop()
 
     def continue_game(self, *args):
+        """Close the game menu and continue playing"""
         urwid.emit_signal(self, 'close_game_menu')
 
     def keypress(self, size, key):
-        super().keypress(size, key)
+        """Process keyboard shortcuts for the GameMenu"""
+        super().keypress(size, key) # pylint: disable=not-callable
         if key in frozenset('sS'):
             self.save_game()
         elif key in frozenset('lL'):
             self.load_game()
         elif key in frozenset('qQ'):
             self.quit_client()
-
-

@@ -27,8 +27,8 @@ class TitleCard(urwid.LineBox):
 
         program_name = urwid.Text('Stellar Magnate', align='center')
         copyright_name = urwid.Text('(C) 2016, Toshio Kuratomi', align='center')
-        license = urwid.Text('GNU General Public License 3.0 or later', align='center')
-        screen = urwid.Filler(urwid.Pile([program_name, copyright_name, license]), valign='middle')
+        license_name = urwid.Text('GNU Affero General Public License 3 or later', align='center')
+        screen = urwid.Filler(urwid.Pile([program_name, copyright_name, license_name]), valign='middle')
         super().__init__(screen)
 
     def keypress(self, *args):
@@ -38,5 +38,3 @@ class TitleCard(urwid.LineBox):
         # Decoration widgets like LineBox override selectable() so we need to
         # use an actual method
         return True
-
-

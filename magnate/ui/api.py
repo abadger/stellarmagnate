@@ -12,7 +12,7 @@ class UserInterface(metaclass=ABCMeta):
             The pubpen contains a link to the asyncio event loop that may be
             shared by the UserInterface if it supports it.
         """
-        pass
+        self.pubpen = pubpen
 
     @abstractmethod
     def run(self):

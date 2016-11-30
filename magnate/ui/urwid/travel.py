@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import itertools
-import string
+from string import punctuation # pylint: disable=deprecated-module
 
 import urwid
 
@@ -25,10 +25,12 @@ class TravelDisplay(urwid.ListBox):
     _selectable = True
     signals = ['close_travel_menu']
 
-    idx_names = [str(c) for c in itertools.chain(range(1, 9), [0], (c for c in string.punctuation if c not in frozenset('(){}[]<>')))]
+    idx_names = [str(c) for c in itertools.chain(range(1, 9), [0], (c for c in punctuation if c not in frozenset('(){}[]<>')))]
 
     def __init__(self, pubpen):
         self.pubpen = pubpen
+        self.keypress_map = {}
+        self._ship_moved_sub_id = None
 
         self.listwalker = urwid.SimpleFocusListWalker([])
         super().__init__(self.listwalker)
@@ -42,13 +44,13 @@ class TravelDisplay(urwid.ListBox):
             self.keypress_map[self.idx_names[idx]] = location
 
     def handle_new_location(self, old_location, location):
-        self.pubpen.unsubscribe(self.ship_moved_sub_id)
+        self.pubpen.unsubscribe(self._ship_moved_sub_id)
         urwid.emit_signal(self, 'close_travel_menu')
 
     def keypress(self, size, key):
         if key in self.keypress_map:
             destination = self.keypress_map[key]
-            self.ship_moved_sub_id = self.pubpen.subscribe('ship.moved', self.handle_new_location)
+            self._ship_moved_sub_id = self.pubpen.subscribe('ship.moved', self.handle_new_location)
             self.pubpen.publish('action.ship.movement_attempt', destination)
             return
         super().keypress(size, key)

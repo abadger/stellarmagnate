@@ -65,10 +65,7 @@ class StatusBar(urwid.Columns):
             ('pack', self.where),
             ))
 
-        #
         # Connect to backend events
-        #
-
         self.pubpen.subscribe('user.info', self.handle_user_info)
         self.pubpen.subscribe('user.login_success', self.handle_login)
         self.pubpen.subscribe('ship.moved', self.handle_ship_moved)
@@ -76,7 +73,6 @@ class StatusBar(urwid.Columns):
     #
     # Widget methods
     #
-
     def update_username(self, username):
         self.who.set_text('\u2524 Name: {} \u251C'.format(username))
 
@@ -86,7 +82,6 @@ class StatusBar(urwid.Columns):
     #
     # Handlers
     #
-
     def handle_user_info(self, username, cash, location):
         self.update_username(username)
         self.update_location(location)
@@ -150,9 +145,7 @@ class MainDisplay(urwid.WidgetWrap):
 
         super().__init__(self.background)
 
-        #
         # Widgets traded in and out of the main display area
-        #
 
         self.market_menu = MarketMenu(self.pubpen)
         self.travel_menu = TravelDisplay(self.pubpen)

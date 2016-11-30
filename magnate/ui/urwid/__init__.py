@@ -25,7 +25,7 @@ from .title import TitleCard
 
 class Interface(UserInterface):
     def __init__(self, pubpen):
-        self.pubpen = pubpen
+        super().__init__(pubpen)
 
         # Windows
 
@@ -46,12 +46,8 @@ class Interface(UserInterface):
         # Setup the main loop
 
         self.urwid_loop = urwid.MainLoop(self.root_win,
-                event_loop=urwid.AsyncioEventLoop(loop=self.pubpen.loop),
-                unhandled_input=self.toplevel_input,
-                palette=(
-                    ('reversed', 'standout', ''),
-                    ),
-                )
+                                         event_loop=urwid.AsyncioEventLoop(loop=self.pubpen.loop),
+                                         palette=(('reversed', 'standout', ''),),)
 
     def show_title_card(self):
         self.root_win.body = urwid.Filler(self.title_card, height=('relative', 100))
@@ -62,10 +58,6 @@ class Interface(UserInterface):
 
     def show_main_window(self):
         self.root_win.body = urwid.Filler(self.main_window, height=('relative', 100))
-
-    def toplevel_input(self, keypress):
-        # The screens are each responsible for their own input
-        return
 
     def run(self):
         self.urwid_loop.run()
