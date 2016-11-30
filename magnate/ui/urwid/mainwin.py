@@ -15,10 +15,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import itertools
-import string
-
 import urwid
+
+from .travel import TravelDisplay
 
 # ui elements:
 # [x] Splash
@@ -133,40 +132,6 @@ class InfoWindow(urwid.Pile):
         pass
 
 
-class TravelMenu(urwid.ListBox):
-    _selectable = True
-    signals = ['close_travel_menu']
-
-    idx_names = [str(c) for c in itertools.chain(range(1, 9), [0], (c for c in string.punctuation if c not in frozenset('(){}[]<>')))]
-
-    def __init__(self, pubpen):
-        self.pubpen = pubpen
-
-        self.listwalker = urwid.SimpleFocusListWalker([])
-        super().__init__(self.listwalker)
-        self.pubpen.subscribe('ship.destinations', self.handle_new_destinations)
-
-    def handle_new_destinations(self, locations):
-        self.listwalker.clear()
-        self.keypress_map = {}
-        for idx, location in enumerate(locations):
-            self.listwalker.append(urwid.Text('({}) {}'.format(self.idx_names[idx], location)))
-            self.keypress_map[self.idx_names[idx]] = location
-
-    def handle_new_location(self, old_location, location):
-        self.pubpen.unsubscribe(self.ship_moved_sub_id)
-        urwid.emit_signal(self, 'close_travel_menu')
-
-    def keypress(self, size, key):
-        if key in self.keypress_map:
-            destination = self.keypress_map[key]
-            self.ship_moved_sub_id = self.pubpen.subscribe('ship.moved', self.handle_new_location)
-            self.pubpen.publish('action.ship.movement_attempt', destination)
-            return
-        super().keypress(size, key)
-        return key
-
-
 class GameMenu(urwid.WidgetWrap):
     _selectable = True
     signals = ['close_game_menu']
@@ -249,12 +214,12 @@ class MainDisplay(urwid.WidgetWrap):
         #
 
         self.market_menu = MarketMenu(self.pubpen)
-        self.travel_menu = TravelMenu(self.pubpen)
+        self.travel_menu = TravelDisplay(self.pubpen)
         self.game_menu = GameMenu(self.pubpen)
 
         self.display_map = {
                 'MarketMenu': self.market_menu,
-                'TravelMenu': self.travel_menu,
+                'TravelDisplay': self.travel_menu,
                 'GameMenu': self.game_menu,
                 'Blank': self.blank
                 }
@@ -306,7 +271,7 @@ class MainDisplay(urwid.WidgetWrap):
         if key == 'esc':
             self.pop_display()
         elif key in frozenset('tT'):
-            self.push_display('TravelMenu')
+            self.push_display('TravelDisplay')
         elif key in frozenset('eE'):
             self.push_display('GameMenu')
         else:
