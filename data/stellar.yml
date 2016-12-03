@@ -1,0 +1,195 @@
+---
+# Notes:
+# Future ideas:
+#   * locations vs planets.  Some planets may have multiple locations.
+#   * Some commodities and equipment should only be sold in the Sol system
+#     * May be bought elsewhere by looking at the commodity type
+#   * Warehouse space could have a rental fee or upkeep fee.(and security fee)
+version: "0.1"
+system:
+  name: Sol
+  id: 0
+  locations:
+    - name: Sol
+      type: star
+      id: 0
+    - name: Mercury
+      type: planet
+      id: 1
+    - name: Venus
+      type: planet
+      id: 2
+    - name: Earth
+      type: planet
+      id: 3
+    - name: Luna
+      type: planet
+      id: 4
+    - name: Mars
+      type: planet
+      id: 5
+    - name: Jupiter
+      type: planet
+      id: 6
+    - name: Saturn
+      type: planet
+      id: 7
+    - name: Uranus
+      type: planet
+      id: 8
+    - name: Neptune
+      type: planet
+      id: 9
+    - name: Pluto
+      type: planet
+      id: 10
+market:
+  - name: Grain
+    id: 0
+    type: food
+    mean_price: 25
+    standard_deviation: 10
+    depreciation_rate: 0.3
+    events:
+    - type: sale
+      adjustment: 5
+      msg: |
+        This year's food harvest reaches unheard of levels!  Surplus drives
+        prices down.
+    - type: shortage
+      adjustment: 5
+      msg: |
+        Famine drives the price of food through the roof.
+  - name: Iron
+    id: 1
+    type: metal
+    mean_price: 125
+    standard_deviation: 25
+    depreciation_rate: 0
+    events:
+    - type: sale
+      adjustment: 20
+      msg: |
+        New mines open.  Ore prices plumment.
+    - type: shortage
+      adjustment: 200
+      msg: |
+        New industries demand more metals!
+  - name: Liquid Hydrogen
+    id: 2
+    type: fuel
+    mean_price: 1000
+    standard_deviation: 165
+    depreciation_rate: 0.1
+    events:
+    - type: sale
+      adjustment: 200
+      msg: |
+        A new source of hydrogen has been found
+    - type: shortage
+      adjustment: 10
+      msg: |
+        Shortage of energy sends fuel prices skyward!
+  - name: Medicine
+    id: 3
+    type: low bulk chemicals
+    mean_price: 3150
+    standard_deviation: 615
+    depreciation_rate: 0.3
+    events:
+    - type: sale
+      adjustment: 300
+      msg: |
+        New pharmaceutical methods create a surplus of medicine.
+    - type: shortage
+      adjustment: 2600
+      msg: |
+        Plague spreads like wildfire!
+  - name: Weapons
+    id: 4
+    type: low bulk machine
+    mean_price: 7750
+    standard_deviation: 585
+    depreciation_rate: 0
+    events:
+    - type: sale
+      adjustment: 1000
+      msg: |
+        Key arms manufacturer makes bid to undersell the competition.
+    - type: shortage
+      adjustment: 3500
+      msg: |
+        Warfare erupts on the planet!
+  - name: Drugs
+    id: 5
+    type: low bulk chemicals
+    mean_price: 15000
+    standard_deviation: 1670
+    depreciation_rate: 0.3
+    events:
+    - type: sale
+      adjustment: 2000
+      msg: |
+        Cheap drugs flood the market.
+    - type: shortage
+      adjustment: 7000
+      msg: |
+        Addicts are buying drugs at an alarming rate.
+equipment:
+  - name: Cargo Module (100 units)
+    id: 0
+    type: shipparts
+    mean_price: 25000
+    standard_deviation: 670
+    depreciation: 1
+    holdspace: -100
+    events:
+    - type: sale
+      low_percentage: 0.5
+      hi_percentage: 2
+      adjustment: 5000
+      msg: |
+        The shipyard offers to sell you a few refurbished cargo modules.
+  - name: Laser Array
+    id: 1
+    type: shipparts
+    mean_price: 16000
+    standard_deviation: 335
+    depreciation: 1
+    holdspace: 50
+    events:
+    - type: sale
+      low_percentage: 0.5
+      hi_percentage: 2
+      adjustment: 5000
+      msg: |
+        A local arms dealer has some shipboard laser arrays he's willing to
+        sell for cheap.
+property:
+  - name: Warehouse spave (1000 units)
+    id: 0
+    type: property
+    mean_price: 160000
+    standard_deviation: 16700
+    depreciation: 1
+    storage_space: 1000
+    events:
+    - type: sale
+      low_percentage: 0.5
+      hi_percentage: 2
+      msg: |
+        The local government is auctioning off cheap warehouse space to
+        encourage off-world trade.
+# Haven't figured out ship types yet
+ships:
+  - name: Passenger
+    holdspace: 100
+  - name: Liner
+    holdspace: 100
+  - name: Freighter
+    holdspace: 100
+  - name: Tanker
+    holdspace: 100
+  - name: Super Tanker
+    holdspace: 100
+
