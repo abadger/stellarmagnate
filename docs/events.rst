@@ -65,6 +65,16 @@ Ship events return information about ship objects.
 
     :arg string msg: A message explaining why the movement failed
 
+.. py:function:: ship.cargo(cargo: dict)
+
+    Emitted when a ship's cargo manifest changes (commodities are bought and
+    sold or transferred to a warehouse)
+
+    :arg dict cargo: A dict of cargo in the ship's hold.  Format is:
+        :key: cargoname (ie: "Food")
+        :value: amount (ie: 50)
+
+
 -------------
 Action Events
 -------------
@@ -87,6 +97,7 @@ user.
     :arg string username: The name of the user attempting to login
     :arg string password: The password for the user
 
+
 ------------
 Query Events
 ------------
@@ -95,11 +106,31 @@ These events are requests from the frontend for information from the backend.
 This could simply be to get information during initialization or it could be
 to resynchronize a cache of the values if it's noticed that something is off.
 
+.. py:function:: query.cargo.info()
+
+    Emitted to retrieve a complete record of the cargoes that are being
+    carried in a ship.  This triggers a :py:func:`ship.cargo` event.
+
+.. py:function:: query.market.info(location: string)
+
+    Emitted to retrieve a complete record of commodities to buy and sell at
+    a location.
+
+    :arg string location: The location to query for information about
+
 .. py:function:: query.user.info(username: string)
 
     Emitted to retrieve a complete record of the user from the backend.
 
-    :arg string username: The user about whome to retrieve information
+    :arg string username: The user about whom to retrieve information
+
+.. py:function:: query.warehouse.info(location: string)
+
+    Emitted to retrieve a complete record of the cargoes being held in
+    a location's warehouse.
+
+    :arg string location: The location to retrieve information about warehouse
+        space
 
 ---------
 UI Events
