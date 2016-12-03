@@ -13,7 +13,7 @@ Status Bar:
 
 Menubar
 +--------------------------------------------------------+
-| (P)ort District  Ship(Y)ard  (F)inancial  (T)ravel  M(e)nu        |
+| (P)ort District  Ship(Y)ard  (F)inancial  (T)ravel  (M)enu        |
 +--------------------------------------------------------+
 
 
@@ -32,6 +32,42 @@ Travel
 |
 | (!) Jump
 +-----------------------+
+
+
+
+Menu:
++----------+
+| (s)ave
+| (l)oad
+| (q)uit
+| (c)ontinue
++----------+
+
+
+Market
++- (C)ommodity ---------+- (H)old -----+- (W)arehouse ----+
+| (1) Grain $10    1000 |  0           |  1000
+| (2) Metal $100   300  |  10          |  100
+| (3) Weapons $2000  0  |  1000        |  0
+| (4) Drugs   $10.1K    |  10          |  0
++-----------------------+--------------+------------------+
+
+
+Purchase Commodities
++------------------------+
+| Hold: XXX  Warehouse: YYY
+| Total cost: $XXX
+| hold/warehouse   (H)/(W)
+| Quantity [_____] [MAX]
++------------------------+
+
+
+Sell Commodities
++------------------------+
+| Hold: XXX  Warehouse: YYY
+| Total sale: $XXX
+| Quantity [_____] [MAX]
++------------------------+
 
 
 Info Window:
@@ -57,16 +93,6 @@ Info Window:
 |   $0
 |
 +-----------------+
-
-
-
-Menu:
-+----------+
-| (s)ave
-| (l)oad
-| (e)xit
-+----------+
-
 
 Financial
 +-----------------+
@@ -127,30 +153,5 @@ Purchase Weapons
 | Supply: 10
 |
 | Total cost: $XXX
-| Quantity [_____] [MAX]
-+------------------------+
-
-Market
-+- (M)arket ------------+- (S)hip -----+- (W)arehouse ----+
-| (1) Grain $10    1000 |  0           |  1000
-| (2) Metal $100   300  |  10          |  100
-| (3) Weapons $2000  0  |  1000        |  0
-| (4) Drugs   $10.1K    |  10          |  0
-+-----------------------+--------------+------------------+
-
-
-Purchase Commodities
-+------------------------+
-|
-| Total cost: $XXX
-| ship/warehouse   (S)/(W)
-| Quantity [_____] [MAX]
-+------------------------+
-
-
-Sell Commodities
-+------------------------+
-|
-| Total sale: $XXX
 | Quantity [_____] [MAX]
 +------------------------+
