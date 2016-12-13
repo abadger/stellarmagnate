@@ -2,6 +2,7 @@
     "$schema": "http://json-schema.org/draft-04/schema#",
     "id": "https://toshio.fedorapeople.org/stellarmagnate/stellar-schema.json",
     "type": "object",
+    "additionalProperties": false,
     "properties": {
         "version": {
             "type": "string",
@@ -9,6 +10,7 @@
         },
         "system": {
             "type": "object",
+            "additionalProperties": false,
             "properties": {
                 "name": {
                     "type": "string"
@@ -22,6 +24,7 @@
                     "uniqueness": true,
                     "items": {
                         "type": "object",
+                        "additionalProperties": false,
                         "properties": {
                             "name": {
                                 "type": "string"
@@ -44,6 +47,7 @@
             "uniqueness": true,
             "items": {
                 "type": "object",
+                "additionalProperties": false,
                 "properties": {
                     "name": {
                         "type": "string"
@@ -73,6 +77,7 @@
                         "uniqueness": true,
                         "items": {
                             "type": "object",
+                            "additionalProperties": false,
                             "properties": {
                                 "type": {
                                     "type": "string",
@@ -96,6 +101,7 @@
             "uniqueness": true,
             "items": {
                 "type": "object",
+                "additionalProperties": false,
                 "properties": {
                     "name": {
                         "type": "string"
@@ -128,6 +134,7 @@
                         "uniqueness": true,
                         "items": {
                             "type": "object",
+                            "additionalProperties": false,
                             "properties": {
                                 "type": {
                                     "type": "string",
