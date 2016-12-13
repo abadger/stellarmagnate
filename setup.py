@@ -28,5 +28,5 @@ Travel by Brian Winn.
         ],
         packages=['magnate', 'magnate.ui'],
         scripts=['bin/magnate'],
-        install_requires=['pubmarine >= 0.3', 'urwid', 'straight.plugin'],
+        install_requires=['ConfigObj', 'kitchen', 'pubmarine >= 0.3', 'straight.plugin', 'urwid'],
     )
