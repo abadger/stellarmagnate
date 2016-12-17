@@ -17,10 +17,11 @@
 """
 Give a menu of new destinations for the ship to move to
 """
-import itertools
-from string import punctuation # pylint: disable=deprecated-module
+from functools import partial
 
 import urwid
+
+from .indexed_menu import IndexedMenuEnumerator, IndexedMenuButton
 
 
 class TravelDisplay(urwid.ListBox):
@@ -28,29 +29,39 @@ class TravelDisplay(urwid.ListBox):
     _selectable = True
     signals = ['close_travel_menu']
 
-    idx_names = [str(c) for c in itertools.chain(range(1, 9), [0], (c for c in punctuation if c not in frozenset('(){}[]<>')))]
-
     def __init__(self, pubpen):
         self.pubpen = pubpen
-        self.keypress_map = {}
+        self.keypress_map = IndexedMenuEnumerator()
         self._ship_moved_sub_id = None
 
         self.listwalker = urwid.SimpleFocusListWalker([])
         super().__init__(self.listwalker)
         self.pubpen.subscribe('ship.destinations', self.handle_new_destinations)
 
+    # pubpen event handlers
+
     def handle_new_destinations(self, locations):
         """Update the destination list when the ship can move to new places"""
         self.listwalker.clear()
-        self.keypress_map = {}
-        for idx, location in enumerate(locations):
-            self.listwalker.append(urwid.Text('({}) {}'.format(self.idx_names[idx], location)))
-            self.keypress_map[self.idx_names[idx]] = location
+        self.keypress_map = IndexedMenuEnumerator()
+        #for idx, location in enumerate(locations):
+        for location in locations:
+            prefix = self.keypress_map.set_next(location)
+            button = IndexedMenuButton('({}) {}'.format(prefix, location))
+            self.listwalker.append(urwid.AttrMap(button, None, focus_map='reversed'))
+            urwid.connect_signal(button, 'click', partial(self.handle_button_click, location))
 
     def handle_new_location(self, *args):
         """Got a valid new location so we can close this window"""
         self.pubpen.unsubscribe(self._ship_moved_sub_id)
         urwid.emit_signal(self, 'close_travel_menu')
+
+    # urwid event handlers
+
+    def handle_button_click(self, location, *args):
+        """Handle menu selection via button click"""
+        self._ship_moved_sub_id = self.pubpen.subscribe('ship.moved', self.handle_new_location)
+        self.pubpen.publish('action.ship.movement_attempt', location)
 
     def keypress(self, size, key):
         """Handle all keyboard shortcuts for the travel menu"""
