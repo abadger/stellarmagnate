@@ -19,6 +19,10 @@ Dispatcher manages the communication between the backend and various user
 interfaces.
 """
 
+
+ALL_DESTINATIONS = ('Sol Research Station', 'Mercury', 'Venus', 'Earth',
+                    'Luna', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto')
+
 class Dispatcher:
     """Manage the communication between the backend and frontends"""
 
@@ -32,11 +36,11 @@ class Dispatcher:
     def login(self, username, password):
         """Log a user into the game"""
         if 'toshio' in username.lower():
+            self.user = User(self.pubpen, username)
             self.pubpen.publish('user.login_success', username)
         else:
             self.pubpen.publish('user.login_failure',
                                 'Unknown account: {}'.format(username))
-        self.user = User(self.pubpen, username)
 
 
 class User:
@@ -56,10 +60,6 @@ class User:
         """
         self.pubpen.publish('user.info', self.username, self.cash,
                             self.ship.location)
-
-
-ALL_DESTINATIONS = ('Sol Research Station', 'Mercury', 'Venus', 'Earth',
-                    'Luna', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto')
 
 
 class Ship:
