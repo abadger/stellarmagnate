@@ -45,16 +45,17 @@ Menu:
 
 
 Market
-+- (C)ommodity ---------+- (H)old -----+- (W)arehouse ----+
-| (1) Grain $10    1000 |  0           |  1000
-| (2) Metal $100   300  |  10          |  100
-| (3) Weapons $2000  0  |  1000        |  0
-| (4) Drugs   $10.1K    |  10          |  0
-+-----------------------+--------------+------------------+
++- Commodity -- Price - Quantity --- Hold ------ Warehouse --+
+| (1) Grain     $10     7.5E+200     7.5E+200    7.5E+200
+| (2) Metal     $100    1.7E+5       10          100
+| (3) Weapons   $2000   3.4E+21      1000        0
+| (4) Drugs     $10.1K  2.0E+10      10          0
++------------------------------------------------------------+
 
 
 Purchase Commodities
 +------------------------+
+| (o) Buy (o) Sell
 | Hold: XXX  Warehouse: YYY
 | Total cost: $XXX
 | hold/warehouse   (H)/(W)
@@ -64,6 +65,7 @@ Purchase Commodities
 
 Sell Commodities
 +------------------------+
+| (o) Buy (o) Sell
 | Hold: XXX  Warehouse: YYY
 | Total sale: $XXX
 | Quantity [_____] [MAX]
