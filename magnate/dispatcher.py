@@ -19,17 +19,20 @@ Dispatcher manages the communication between the backend and various user
 interfaces.
 """
 
+from .dataloader import load_data_definition
+
 
 ALL_DESTINATIONS = ('Sol Research Station', 'Mercury', 'Venus', 'Earth',
                     'Luna', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto')
 
+
 class Dispatcher:
     """Manage the communication between the backend and frontends"""
-
 
     def __init__(self, pubpen):
         self.pubpen = pubpen
         self.user = None
+        self.markets = None
 
         self.pubpen.subscribe('action.user.login_attempt', self.login)
 
@@ -38,6 +41,8 @@ class Dispatcher:
         if 'toshio' in username.lower():
             self.user = User(self.pubpen, username)
             self.pubpen.publish('user.login_success', username)
+            # Game can begin in earnest now
+            self.markets = load_data_definition(self.pubpen, 'stellar.yml')
         else:
             self.pubpen.publish('user.login_failure',
                                 'Unknown account: {}'.format(username))
