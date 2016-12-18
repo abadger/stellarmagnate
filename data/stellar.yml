@@ -92,7 +92,7 @@ market:
         Shortage of energy sends fuel prices skyward!
   - name: Medicine
     id: 3
-    type: low bulk chemicals
+    type: low bulk chemical
     mean_price: 3150
     standard_deviation: 615
     depreciation_rate: 0.3
@@ -122,7 +122,7 @@ market:
         Warfare erupts on the planet!
   - name: Drugs
     id: 5
-    type: low bulk chemicals
+    type: low bulk chemical
     mean_price: 15000
     standard_deviation: 1670
     depreciation_rate: 0.3
@@ -141,12 +141,12 @@ equipment:
     type: shipparts
     mean_price: 25000
     standard_deviation: 670
-    depreciation: 1
+    depreciation_rate: 1
     holdspace: -100
     events:
     - type: sale
       low_percentage: 0.5
-      hi_percentage: 2
+      high_percentage: 2
       adjustment: 5000
       msg: |
         The shipyard offers to sell you a few refurbished cargo modules.
@@ -155,12 +155,12 @@ equipment:
     type: shipparts
     mean_price: 16000
     standard_deviation: 335
-    depreciation: 1
+    depreciation_rate: 1
     holdspace: 50
     events:
     - type: sale
       low_percentage: 0.5
-      hi_percentage: 2
+      high_percentage: 2
       adjustment: 5000
       msg: |
         A local arms dealer has some shipboard laser arrays he's willing to
@@ -171,12 +171,12 @@ property:
     type: property
     mean_price: 160000
     standard_deviation: 16700
-    depreciation: 1
+    depreciation_rate: 1
     storage_space: 1000
     events:
     - type: sale
       low_percentage: 0.5
-      hi_percentage: 2
+      high_percentage: 2
       msg: |
         The local government is auctioning off cheap warehouse space to
         encourage off-world trade.
