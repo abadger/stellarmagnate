@@ -31,7 +31,7 @@
                             },
                             "type": {
                                 "type": "string",
-                                "pattern": "^(planet|star)$"
+                                "enum": ["planet", "star"]
                             },
                             "id": {
                                 "type": "integer",
@@ -58,7 +58,7 @@
                     },
                     "type": {
                         "type": "string",
-                        "pattern": "^(food|metal|fuel|low bulk chemicals|low bulk machine)$"
+                        "enum": ["food", "metal", "fuel", "low bulk chemical", "high bulk chemical", "low bulk machine", "high bulk machine"]
                     },
                     "mean_price": {
                         "type": "integer",
@@ -81,7 +81,7 @@
                             "properties": {
                                 "type": {
                                     "type": "string",
-                                    "pattern": "^(shortage|sale)$"
+                                    "enum": ["shortage", "sale"]
                                 },
                                 "adjustment": {
                                     "type": "integer",
@@ -112,7 +112,7 @@
                     },
                     "type": {
                         "type": "string",
-                        "pattern": "^(shipparts)$"
+                        "enum": ["shipparts"]
                     },
                     "mean_price": {
                         "type": "integer",
@@ -138,7 +138,7 @@
                             "properties": {
                                 "type": {
                                     "type": "string",
-                                    "pattern": "^(sale|shortage)$"
+                                    "enum": ["sale", "shortage"]
                                 },
                                 "low_percentage": {
                                     "type": "number",
