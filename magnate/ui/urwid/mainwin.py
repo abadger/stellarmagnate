@@ -21,9 +21,6 @@ from .gamemenu import GameMenuDisplay
 from .travel import TravelDisplay
 
 # ui elements:
-# [x] Splash
-# [x] Status bar
-#     [x] Hook up signals to change User and Location
 # [x] Travel Menu
 #     [x] Export signals for selecting entries
 #     [x] hook up signal for opening the travel menu
@@ -39,6 +36,8 @@ from .travel import TravelDisplay
 #   [x] Quit
 #   [_] Save
 #   [_] Load
+# [_] commodities market
+# [_] Commodities purchase
 # [_] Info window
 # [_] Financial menu
 # [_] Financial  action menu
@@ -103,7 +102,7 @@ class MenuBar(urwid.Pile):
         self.yard_entry = urwid.Text('Ship(Y)ard')
         self.financial_entry = urwid.Text('(F)inancial')
         self.travel_entry = urwid.Text('(T)ravel')
-        self.game_menu_entry = urwid.Text('M(e)nu')
+        self.game_menu_entry = urwid.Text('(M)enu')
 
         self.menu_entries = urwid.Columns((
             ('weight', 1, urwid.Divider(' ')),
@@ -152,17 +151,129 @@ class FinancialDisplay(urwid.WidgetWrap):
         pass
 
 
+from .indexed_menu import IndexedMenuButton, IndexedMenuEnumerator
 class MarketDisplay(urwid.WidgetWrap):
     _selectable = True
 
     def __init__(self, pubpen):
         self.pubpen = pubpen
+        self.location = None
+        self.commodities = []
+        self.keypress_map = IndexedMenuEnumerator()
+        self.commodity_idx_map = {}
 
-        blank = urwid.Text('This test page intentionaly left blank')
-        container = urwid.Filler(blank)
-        super().__init__(container)
+        # Columns
+        # LineBox w/ title and custom left/right sides
+        # listboxes w/ listwalkers
+        # if there's an onselect handler, set that so that we programatically
+        # have selection highlight all three column?
+        #
+
+        self.commodity_list = urwid.SimpleFocusListWalker([])
+        self.price_list = urwid.SimpleFocusListWalker([])
+        #self.quantity_list = urwid.SimpleFocusListWalker([])
+        self.hold_list = urwid.SimpleFocusListWalker([])
+        self.warehouse_list = urwid.SimpleFocusListWalker([])
+
+        self.market = urwid.ListBox(self.commodity_list)
+        self.price = urwid.ListBox(self.price_list)
+        #self.quantity = urwid.ListBox(self.quantity)
+        self.hold = urwid.ListBox(self.hold_list)
+        self.warehouse = urwid.ListBox(self.warehouse_list)
+
+        market_col = urwid.LineBox(self.market, title='Commodity',
+                                   trcorner='\u2500', rline=' ',
+                                   brcorner='\u2500')
+        price_col = urwid.LineBox(self.price, title='Price',
+                                  trcorner='\u2500', rline=' ',
+                                  brcorner='\u2500', tlcorner='\u2500',
+                                  lline=' ', blcorner='\u2500')
+        #quantity_col = urwid.LineBox(self.quantity, title='For Sale',
+        #                             trcorner='\u2500', rline=' ',
+        #                             brcorner='\u2500', tlcorner='\u2500',
+        #                             lline=' ', blcorner='\u2500')
+        hold_col = urwid.LineBox(self.hold, title='Hold',
+                                 trcorner='\u2500', rline=' ',
+                                 brcorner='\u2500', tlcorner='\u2500',
+                                 lline=' ', blcorner='\u2500')
+        warehouse_col = urwid.LineBox(self.warehouse, title='Warehouse',
+                                      tlcorner='\u2500', lline=' ',
+                                      blcorner='\u2500')
+
+        self.market_display = urwid.Columns([market_col, price_col, hold_col, warehouse_col])
+
+        super().__init__(self.market_display)
+
+        self.pubpen.subscribe('ship.moved', self.handle_new_location)
+        self.pubpen.subscribe('market.info', self.handle_market_info)
+        #self.pubpen.subscribe('ship.cargo') => handle new cargo information
+        #self.pubpen.subscribe('market.update') => handle new market data
+        #self.pubpen.subscribe('warehouse.info') => handle new warehouse info
+
+    def _construct_commodity_list(self, commodities):
+        for commodity in commodities:
+            if commodity not in self.commodity_idx_map:
+                idx = self.keypress_map.set_next(commodity)
+                button = IndexedMenuButton('({}) {}'.format(idx, commodity))
+                self.commodity_list.append(urwid.AttrMap(button, None, focus_map='reversed'))
+
+    def fill_commodity_lists(self):
+        # To fill the commodity list, we need to use an IndexHelper
+        # and a union of the commodities marketed here, onboard ship, in the
+        # warehouse)
+        #
+        # Enter them according to price
+        #
+        # To fill the price list,
+        # Need to know which row corresponds to which commodity
+        # Fill each row with the relevant price
+        #
+        # To fill Amount,
+        # Need to know which row corresponds to which commodity
+        # Fill each row with the relevant amount
+        #
+        # To fill Hold,
+        # Need to know which row corresponds to which commodity
+        # Fill each row with the relevant amount
+        #
+        # import locale
+        # fmted_num = locale.format(number)
+        # if len(fmyed_num) is > 7 digits:
+        # fmted_num = '{:.1E}'.format(number)
+        market_entries = []
+        hold_entries = []
+        warehouse_entries = []
+        for commodity in self.commodities:
+            market_entries.append(urwid.Text('({}) {} ${}'.format(identifier, name, price)))
+            hold_entries.append(urwid.Text('{}'.format(hold[commodity])))
+            warehouse_entries.append(urwid.Text('{}'.format(warehouse[commodity])))
+            ### TODO:Fill self.keypress_map
+            # Populate the self.market, self.hold, and self.warehouse
+            # listboxes with the keypress_map
+
+        self.commodity_list.clear()
+        self.commodity_list.extend(market_entries)
+        self.hold_list.clear()
+        self.hold_list.extend(hold_entries)
+        self.warehouse_list.clear()
+        self.warehouse_list.extend(warehouse_entries)
+
+    def handle_new_location(self, old_location, new_location):
+        self.location = new_location
+        self.commodity_list.clear()
+        self.pubpen.publish('query.market.info', new_location)
+        self.pubpen.publish('query.warehouse.info', new_location)
+
+    def handle_market_info(self, location, prices):
+        if location == self.location:
+            self._construct_commodity_list(prices.keys())
+            #self._construct_price_list(prices)
+
+    def handle_cargo_data(self, cargo):
         pass
 
+    def handle_new_warehouse_info(self, warehouse_info):
+        pass
 
 class MainDisplay(urwid.WidgetWrap):
     def __init__(self, pubpen):
@@ -244,7 +355,7 @@ class MainDisplay(urwid.WidgetWrap):
             self.push_display('FinancialDisplay')
         elif key in frozenset('tT'):
             self.push_display('TravelDisplay')
-        elif key in frozenset('eE'):
+        elif key in frozenset('mM'):
             self.push_display('GameMenuDisplay')
         else:
             super().keypress(size, key)  # pylint: disable=not-callable
