@@ -76,6 +76,36 @@ Ship events return information about ship objects.
 
 
 -------------
+Market Events
+-------------
+
+Market events carry information about a specific market to the client.
+
+.. py:function:: market.event(market: string, msg: string)
+
+    Emitted when an event occurs at a market.  This is for informational
+    purposes.  The client may choose to display the message for game flavour.
+
+    :arg string market: The market affected
+    :arg string msg: A message about the market
+
+.. py:function:: market.info(market: string, prices: dict)
+
+    Emitted in response to a :py:func:`query.market.info`.  This carries
+    information about prices of all commodities in a market.
+
+    :arg string market: The name of the market
+    :arg dict prices: A mapping of commodity name to its current price
+
+.. py:function:: market.update(market: string, commodity: string, price: int)
+
+    Emitted when the price of a commodity changes.
+
+    :arg string market: The name of a market
+    :arg string commodity: The name of the commodity being operated upon
+    :arg string price: The new price of the commodity
+
+-------------
 Action Events
 -------------
 
@@ -87,7 +117,7 @@ user.
     Emitted when the user requests that the ship be moved.  This can trigger
     a :py:func:`ship.moved` or :py:func:`ship.movement_failure` event.
 
-    :arg string destination: The location to attempte to move the ship to
+    :arg string destination: The location to attempt to move the ship to
 
 .. py:function:: action.user.login_attempt(username: string, password: string)
 
