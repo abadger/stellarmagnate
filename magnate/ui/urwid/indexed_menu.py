@@ -40,6 +40,13 @@ class IndexedMenuEnumerator(MutableMapping):
         self.idx = 0
 
     def set_next(self, selection):
+        """
+        Adds a new selection to the IndexedMenuEnumerator, picking the new key
+        from the list of valid enumerations
+
+        :arg selection: The value being set
+        :returns: The key that was picked
+        """
         try:
             key = self.idx_names[self.idx]
         except IndexError:
@@ -49,8 +56,16 @@ class IndexedMenuEnumerator(MutableMapping):
         return key
 
     def __setitem__(self, name, selection):
+        """Sets a key's value.
+
+        :arg name: The key
+        :arg selection: The value
+
+        .. warning:: Unlike dict, this cannot be used to set new keys.  Use :meth:`set_next` instead.
+        """
+        if name not in self.association:
+            raise KeyError('Can only create new keys for an IndexedMenuEnumerator via set_next()')
         self.association[name] = selection
-        pass
 
     def __getitem__(self, name):
         return self.association[name]
@@ -69,4 +84,3 @@ class IndexedMenuButton(urwid.Button):
     """A button without decorations"""
     button_left = urwid.Text("")
     button_right = urwid.Text("")
-
