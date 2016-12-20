@@ -15,14 +15,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import datetime
 import random
 from enum import Enum
 from functools import partial
 
 import attr
-from pubmarine import PubPen
-
 
 # What is the organization of this data?
 #
@@ -44,10 +41,10 @@ from pubmarine import PubPen
 # interact with both the variable and static data.
 
 CommodityType = Enum('CommodityType', ('food', 'metal', 'fuel',
-                                        'low bulk chemical',
-                                        'high bulk chemical',
-                                        'low bulk machine',
-                                        'high bulk machine'))
+                                       'low bulk chemical',
+                                       'high bulk chemical',
+                                       'low bulk machine',
+                                       'high bulk machine'))
 
 
 LocationType = Enum('LocationType', ('star', 'planet', 'moon',
@@ -113,7 +110,7 @@ class CommodityData:
     standard_deviation = attr.ib(validator=attr.validators.instance_of(int))
     depreciation_rate = attr.ib(convert=float, validator=attr.validators.instance_of(float))
     events = attr.ib(default=attr.Factory(list),
-            validator=attr.validators.optional(attr.validators.instance_of(list)))
+                     validator=attr.validators.optional(attr.validators.instance_of(list)))
 
 
 class Commodity:
@@ -169,15 +166,25 @@ class Market:
         self.pubpen.subscribe('query.market.info', self.handle_market_info)
         self.pubpen.subscribe('ship.moved', self.handle_movement)
 
+    def __getattr__(self, key):
+        try:
+            return super().__getattr__(self)
+        except AttributeError:
+            return getattr(self.location, key)
+
     def handle_market_info(self, location):
         if location == self.location.name:
             self.pubpen.publish('market.info', self.location.name, self.prices)
 
     def handle_movement(self, old_location, new_location):
+        """Ship movement triggers
+        """
         if new_location == self.location.name:
             self.recalculate_prices()
 
     def recalculate_prices(self):
+        """Set new prices for all the commodities in the market
+        """
         for commodity in self.prices:
             self._calculate_price(commodity)
 
