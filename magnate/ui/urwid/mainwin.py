@@ -151,9 +151,12 @@ class FinancialDisplay(urwid.WidgetWrap):
         pass
 
 
+import locale
+from functools import partial
 from .indexed_menu import IndexedMenuButton, IndexedMenuEnumerator
 class MarketDisplay(urwid.WidgetWrap):
     _selectable = True
+    signals = ['close_market_display']
 
     def __init__(self, pubpen):
         self.pubpen = pubpen
@@ -175,13 +178,13 @@ class MarketDisplay(urwid.WidgetWrap):
         self.hold_list = urwid.SimpleFocusListWalker([])
         self.warehouse_list = urwid.SimpleFocusListWalker([])
 
-        self.market = urwid.ListBox(self.commodity_list)
+        self.commodity = urwid.ListBox(self.commodity_list)
         self.price = urwid.ListBox(self.price_list)
         #self.quantity = urwid.ListBox(self.quantity)
         self.hold = urwid.ListBox(self.hold_list)
         self.warehouse = urwid.ListBox(self.warehouse_list)
 
-        market_col = urwid.LineBox(self.market, title='Commodity',
+        market_col = urwid.LineBox(self.commodity, title='Commodity',
                                    trcorner='\u2500', rline=' ',
                                    brcorner='\u2500')
         price_col = urwid.LineBox(self.price, title='Price',
@@ -205,75 +208,92 @@ class MarketDisplay(urwid.WidgetWrap):
         super().__init__(self.market_display)
 
         self.pubpen.subscribe('ship.moved', self.handle_new_location)
-        self.pubpen.subscribe('market.info', self.handle_market_info)
         #self.pubpen.subscribe('ship.cargo') => handle new cargo information
         #self.pubpen.subscribe('market.update') => handle new market data
         #self.pubpen.subscribe('warehouse.info') => handle new warehouse info
+
+    def handle_button_click(self, commodity, *args):
+        # popup the Buy/Sell Window
+
+        ### TODO: this should move to when the sale/buy is confirmed
+        urwid.emit_signal(self, 'close_market_display')
 
     def _construct_commodity_list(self, commodities):
         for commodity in commodities:
             if commodity not in self.commodity_idx_map:
                 idx = self.keypress_map.set_next(commodity)
+
                 button = IndexedMenuButton('({}) {}'.format(idx, commodity))
                 self.commodity_list.append(urwid.AttrMap(button, None, focus_map='reversed'))
+                urwid.connect_signal(button, 'click', partial(self.handle_button_click, commodity))
 
-    def fill_commodity_lists(self):
-        # To fill the commodity list, we need to use an IndexHelper
-        # and a union of the commodities marketed here, onboard ship, in the
-        # warehouse)
-        #
-        # Enter them according to price
-        #
-        # To fill the price list,
-        # Need to know which row corresponds to which commodity
-        # Fill each row with the relevant price
-        #
-        # To fill Amount,
-        # Need to know which row corresponds to which commodity
-        # Fill each row with the relevant amount
-        #
-        # To fill Hold,
-        # Need to know which row corresponds to which commodity
-        # Fill each row with the relevant amount
-        #
-        # import locale
-        # fmted_num = locale.format(number)
-        # if len(fmyed_num) is > 7 digits:
-        # fmted_num = '{:.1E}'.format(number)
-        market_entries = []
-        hold_entries = []
-        warehouse_entries = []
-        for commodity in self.commodities:
-            market_entries.append(urwid.Text('({}) {} ${}'.format(identifier, name, price)))
-            hold_entries.append(urwid.Text('{}'.format(hold[commodity])))
-            warehouse_entries.append(urwid.Text('{}'.format(warehouse[commodity])))
-            ### TODO:Fill self.keypress_map
-            # Populate the self.market, self.hold, and self.warehouse
-            # listboxes with the keypress_map
+                self.commodity_idx_map[commodity] = len(self.commodity_list) - 1
 
-        self.commodity_list.clear()
-        self.commodity_list.extend(market_entries)
-        self.hold_list.clear()
-        self.hold_list.extend(hold_entries)
-        self.warehouse_list.clear()
-        self.warehouse_list.extend(warehouse_entries)
+    def _construct_price_list(self, prices):
+        for commodity, price in prices.items():
+            ### FIXME: in the future, might a commodity be added here?
+            idx = self.commodity_idx_map[commodity]
+
+            price_formatted = locale.format('%d', price, grouping=True)
+            if len(price_formatted) > 7:
+                price_formatted = '{:.1E}'.format(number)
+
+            button = IndexedMenuButton('${}'.format(price_formatted))
+            self.price_list.append(urwid.AttrMap(button, None))
+
+        self._highlight_focused_commodity_line()
+
+    def _highlight_focused_commodity_line(self):
+        idx = self.commodity.focus_position
+        for entry in self.price_list:
+            entry.set_attr_map({})
+        self.price_list[idx].set_attr_map({None: 'reversed'})
 
     def handle_new_location(self, old_location, new_location):
         self.location = new_location
         self.commodity_list.clear()
+        self.commodity_idx_map.clear()
+        self.keypress_map.clear()
+        self.price_list.clear()
         self.pubpen.publish('query.market.info', new_location)
+        self._market_query_id = self.pubpen.subscribe('market.info', self.handle_market_info)
         self.pubpen.publish('query.warehouse.info', new_location)
 
     def handle_market_info(self, location, prices):
         if location == self.location:
+            self.pubpen.unsubscribe(self._market_query_id)
             self._construct_commodity_list(prices.keys())
-            #self._construct_price_list(prices)
+            self._construct_price_list(prices)
 
     def handle_cargo_data(self, cargo):
         pass
 
     def handle_new_warehouse_info(self, warehouse_info):
         pass
+
+    def keypress(self, size, key):
+        """Handle all keyboard shortcuts for the travel menu"""
+        if key in self.keypress_map:
+            # Open up the commodity menu to buy sell this item
+            pass
+            ### TODO: this should move to when the sale/buy is confirmed
+            urwid.emit_signal(self, 'close_market_display')
+        elif key in ('left', 'right'):
+            # Ignore keys that might move focus to a widget to the side
+            return
+        elif key in ('up', 'down', 'page up', 'page down'):
+            # First let the children handle the change in focus...
+            super().keypress(size, key)
+            # Then highlight the same entry in other columns
+            self._highlight_focused_commodity_line()
+        else:
+            super().keypress(size, key)
+        return key
+
+    def mouse_event(self, *args, **kwargs):
+        ### FIXME: Handle button clicks outside of the Commodity list
+        super().mouse_event(*args, **kwargs)
+        self._highlight_focused_commodity_line()
 
 class MainDisplay(urwid.WidgetWrap):
     def __init__(self, pubpen):
@@ -303,6 +323,7 @@ class MainDisplay(urwid.WidgetWrap):
 
         self.push_display('Blank')
 
+        urwid.connect_signal(self.market_display, 'close_market_display', self.pop_display)
         urwid.connect_signal(self.travel_menu, 'close_travel_menu', self.pop_display)
         urwid.connect_signal(self.game_menu, 'close_game_menu', self.pop_display)
 
