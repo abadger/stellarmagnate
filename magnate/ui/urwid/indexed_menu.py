@@ -55,6 +55,15 @@ class IndexedMenuEnumerator(MutableMapping):
         self.association[key] = selection
         return key
 
+    def clear(self):
+        """
+        Clear the mapping
+
+        In addition to normal dict behaviour, this also resets the next index back to the beginning
+        """
+        super().clear()
+        self.idx = 0
+
     def __setitem__(self, name, selection):
         """Sets a key's value.
 
