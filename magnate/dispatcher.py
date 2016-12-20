@@ -22,8 +22,7 @@ interfaces.
 from .dataloader import load_data_definition
 
 
-ALL_DESTINATIONS = ('Sol Research Station', 'Mercury', 'Venus', 'Earth',
-                    'Luna', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto')
+ALL_DESTINATIONS = tuple()
 
 
 class Dispatcher:
@@ -39,10 +38,16 @@ class Dispatcher:
     def login(self, username, password):
         """Log a user into the game"""
         if 'toshio' in username.lower():
-            self.user = User(self.pubpen, username)
             self.pubpen.publish('user.login_success', username)
             # Game can begin in earnest now
             self.markets = load_data_definition(self.pubpen, 'stellar.yml')
+
+            ### FIXME: In the future a ship should know what location it is
+            # at.  And then it should be able to lookup what locations it can
+            # reach from that planet.
+            global ALL_DESTINATIONS
+            ALL_DESTINATIONS = tuple(m.name for m in self.markets)
+            self.user = User(self.pubpen, username)
         else:
             self.pubpen.publish('user.login_failure',
                                 'Unknown account: {}'.format(username))
@@ -95,7 +100,11 @@ class Ship:
         :raises ValueError: when the new location is not valid
         """
         temp_destination = list(ALL_DESTINATIONS)
-        temp_destination.remove(location)
+        try:
+            temp_destination.remove(location)
+        except ValueError:
+            # No worries, we just want to make sure we can't go to ourselves
+            pass
         self._destinations = temp_destination
 
         self.pubpen.publish('ship.destinations', self.destinations)
