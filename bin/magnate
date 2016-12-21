@@ -31,8 +31,6 @@ from straight.plugin import load
 from magnate.dispatcher import Dispatcher
 from magnate.ui.api import UserInterface
 
-from magnate.ui import urwid
-
 
 # entrypoint parses args
 # creates a dispatcher
