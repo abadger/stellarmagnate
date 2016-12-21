@@ -33,9 +33,6 @@ class GameMenuDisplay(urwid.WidgetWrap):
     def __init__(self, pubpen):
         self.pubpen = pubpen
 
-        # Overlay
-        # LineBox using double lines
-        # Display it centered on the main_window
         self.save_button = urwid.Button('(S)ave')
         self.load_button = urwid.Button('(L)oad')
         self.quit_button = urwid.Button('(Q)uit')
