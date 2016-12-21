@@ -181,3 +181,12 @@ hierarchy of widgets it can be painful to pass these references around so the
 Urwid interface makes use of our pubmarine event dispatcher for some things.
 
 [Currently None]
+
+.. py:function:: ui.urwid.sale_info(commodity: string, price: int)
+
+    Emitted to inform the transaction dialog what commodity and price the user
+    is interested in.
+
+    :arg string commodity: Name of the commodity to buy or sell
+    :arg int price: Price of the commodity
+

@@ -15,10 +15,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from functools import partial
+
 import urwid
 
 from .gamemenu import GameMenuDisplay
-from .market import MarketDisplay
+from .market import MarketDisplay, TransactionDialog
 from .travel import TravelDisplay
 
 # ui elements:
@@ -164,6 +166,7 @@ class MainDisplay(urwid.WidgetWrap):
         # Widgets traded in and out of the main display area
 
         self.market_display = MarketDisplay(self.pubpen)
+        self.transaction_dialog = TransactionDialog(self.pubpen)
         self.travel_menu = TravelDisplay(self.pubpen)
         self.game_menu = GameMenuDisplay(self.pubpen)
         self.shipyard_display = ShipyardDisplay(self.pubpen)
@@ -171,6 +174,7 @@ class MainDisplay(urwid.WidgetWrap):
 
         self.display_map = {
             'MarketDisplay': self.market_display,
+            'TransactionDialog': self.transaction_dialog,
             'ShipyardDisplay': self.shipyard_display,
             'FinancialDisplay': self.financial_display,
             'TravelDisplay': self.travel_menu,
@@ -181,6 +185,8 @@ class MainDisplay(urwid.WidgetWrap):
         self.push_display('Blank')
 
         urwid.connect_signal(self.market_display, 'close_market_display', self.pop_display)
+        urwid.connect_signal(self.market_display, 'open_transaction_dialog',
+                             partial(self.push_display, 'TransactionDialog'))
         urwid.connect_signal(self.travel_menu, 'close_travel_menu', self.pop_display)
         urwid.connect_signal(self.game_menu, 'close_game_menu', self.pop_display)
 
