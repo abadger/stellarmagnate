@@ -68,12 +68,29 @@ class TransactionDialog(urwid.WidgetWrap):
         self.pubpen.subscribe('ui.urwid.sale_info', self.handle_new_sale)
 
     def handle_new_sale(self, commodity, price):
+        """Reset the dialog box whenever a new sale is started
+
+        :arg commodity: The commodity that is being bought or sold
+        :arg price: The amount that the commodity is selling for
+        """
         self.dialog.set_title('{} - ${}'.format(commodity, price))
         pass
         # reset radio buttons to buy
         # reset checkboxes for hold and warehouse
         # recalculate hold and warehouse space
         # reset quantity to 0
+
+    def handle_buy_sell_toggle(self):
+        """Change interface slightly depending on whether we're buying or selling"""
+        pass
+
+    def handle_max_quantity(self):
+        """Calculate the maximum quantity to buy or sell"""
+        pass
+
+    def handle_make_transaction(self):
+        """Request to make the transaction"""
+        pass
 
 
 class MarketDisplay(urwid.WidgetWrap):
