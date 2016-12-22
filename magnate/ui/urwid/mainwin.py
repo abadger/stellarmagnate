@@ -40,6 +40,8 @@ from .travel import TravelDisplay
 #   [_] Save
 #   [_] Load
 # [_] commodities market
+#   [_] Hold space
+#   [_] Warehouse space
 # [_] Commodities purchase
 # [_] Info window
 # [_] Financial menu
@@ -49,8 +51,6 @@ from .travel import TravelDisplay
 # [_] Ship purchase
 # [_] Weapons market
 # [_] Weapon purchase
-# [_] commodities market
-# [_] Commodities purchase
 
 class StatusBar(urwid.Columns):
     _selectable = False
@@ -222,7 +222,7 @@ class MainDisplay(urwid.WidgetWrap):
             else:
                 self.display_stack.pop()
                 widget = self.display_map[self.display_stack[-1]]
-                if widget is self.game_menu:
+                if widget in (self.game_menu, self.transaction_dialog):
                     # Never go back to the game menu
                     widget = None
 
