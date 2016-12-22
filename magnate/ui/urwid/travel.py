@@ -60,14 +60,16 @@ class TravelDisplay(urwid.ListBox):
 
     def handle_button_click(self, location, *args):
         """Handle menu selection via button click"""
-        self._ship_moved_sub_id = self.pubpen.subscribe('ship.moved', self.handle_new_location)
+        if self._ship_moved_sub_id is None:
+            self._ship_moved_sub_id = self.pubpen.subscribe('ship.moved', self.handle_new_location)
         self.pubpen.publish('action.ship.movement_attempt', location)
 
     def keypress(self, size, key):
         """Handle all keyboard shortcuts for the travel menu"""
         if key in self.keypress_map:
             destination = self.keypress_map[key]
-            self._ship_moved_sub_id = self.pubpen.subscribe('ship.moved', self.handle_new_location)
+            if self._ship_moved_sub_id is None:
+                self._ship_moved_sub_id = self.pubpen.subscribe('ship.moved', self.handle_new_location)
             self.pubpen.publish('action.ship.movement_attempt', destination)
             return
         super().keypress(size, key)
