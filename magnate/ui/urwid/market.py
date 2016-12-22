@@ -220,7 +220,7 @@ class MarketDisplay(urwid.WidgetWrap):
             entry.set_attr_map({})
         self.price_list[idx].set_attr_map({None: 'reversed'})
 
-    def handle_new_location(self, old_location, new_location):
+    def handle_new_location(self, new_location, old_location):
         self.location = new_location
         self.commodity_list.clear()
         self.commodity_idx_map.clear()

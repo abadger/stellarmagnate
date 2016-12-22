@@ -52,12 +52,12 @@ Ship events return information about ship objects.
     :arg list destinations: A list of strings showing where the ship can
         travel from here.
 
-.. py:function:: ship.moved(old_location: string, new_location: string)
+.. py:function:: ship.moved(new_location: string, old_location: string)
 
     Emitted when a ship changes location.
 
-    :arg string old_location: The location that the ship moved from
     :arg string new_location: The location that the ship moved to
+    :arg string old_location: The location that the ship moved from
 
 .. py:function:: ship.movement_failure(msg: string)
 

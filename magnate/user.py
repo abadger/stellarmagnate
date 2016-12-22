@@ -106,8 +106,8 @@ class Ship:
 
         :arg location: The location to move to
         :event ship.moved: Emitted when the ship arrives at a new location
-            :arg old_location: The location the ship moved from
             :arg location: The location the ship arrived at
+            :arg old_location: The location the ship moved from
         :event ship.destination: Emitted when the ship ship arrives at a new
             location
         :raises ValueError: when the new location is not valid
@@ -117,7 +117,7 @@ class Ship:
         self._destinations = temp_destination
 
         self.pubpen.publish('ship.destinations', self.destinations)
-        self.pubpen.publish('ship.moved', self._location, location)
+        self.pubpen.publish('ship.moved', location, self._location)
         self._location = location
 
     @property

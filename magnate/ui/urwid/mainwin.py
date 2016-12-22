@@ -91,7 +91,7 @@ class StatusBar(urwid.Columns):
     def handle_login(self, username):
         self.update_username(username)
 
-    def handle_ship_moved(self, old_location, new_location):
+    def handle_ship_moved(self, new_location, old_location):
         self.update_location(new_location)
 
 
