@@ -105,6 +105,7 @@ class MarketDisplay(urwid.WidgetWrap):
         self.keypress_map = IndexedMenuEnumerator()
         self.commodity_idx_map = {}
         self.commodity_price_map = {}
+        self._market_query_sub_id = None
 
         # Columns
         # LineBox w/ title and custom left/right sides
@@ -215,7 +216,11 @@ class MarketDisplay(urwid.WidgetWrap):
         #urwid.emit_signal(self, 'close_market_display')
 
     def _highlight_focused_commodity_line(self):
-        idx = self.commodity.focus_position
+        try:
+            idx = self.commodity.focus_position
+        except IndexError:
+            # The commodity list hasn't been refreshed yet.
+            idx = 0
         for entry in self.price_list:
             entry.set_attr_map({})
         self.price_list[idx].set_attr_map({None: 'reversed'})
@@ -230,12 +235,14 @@ class MarketDisplay(urwid.WidgetWrap):
 
         #self.pubpen.subscribe('market.{}.update'.format(new_location)) => handle new market data
         #self.pubpen.subscribe('warehouse.{}.update'.format(new_location)) => handle new warehouse info
-        self._market_query_id = self.pubpen.subscribe('market.{}.info'.format(new_location), self.handle_market_info)
+        if self._market_query_sub_id is None:
+            self._market_query_sub_id = self.pubpen.subscribe('market.{}.info'.format(new_location), self.handle_market_info)
         self.pubpen.publish('query.market.{}.info'.format(new_location))
         self.pubpen.publish('query.warehouse.{}.info'.format(new_location))
 
     def handle_market_info(self, prices):
-        self.pubpen.unsubscribe(self._market_query_id)
+        self.pubpen.unsubscribe(self._market_query_sub_id)
+        self._market_query_sub_id = None
         self._construct_commodity_list(prices.keys())
         self._construct_price_list(prices)
         self.commodity_price_map = prices
@@ -272,5 +279,6 @@ class MarketDisplay(urwid.WidgetWrap):
         ### FIXME: Handle button clicks outside of the Commodity list
         super().mouse_event(*args, **kwargs)
         self._highlight_focused_commodity_line()
+        ### FIXME: !!! Set commodity to the commodity that was clicked on
         self.pubpen.publish('ui.urwid.sale_info', commodity, self.commodity_price_map[commodity])
         urwid.emit_signal(self, 'open_transaction_dialog')

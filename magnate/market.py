@@ -173,9 +173,9 @@ class Market:
             return getattr(self.location, key)
 
     def handle_market_info(self):
-        self.pubpen.publish('market.{}.info'.format(self.location.name), self.prices)
+        self.pubpen.publish('market.{}.info'.format(self.location.name), self.prices.copy())
 
-    def handle_movement(self, old_location, new_location):
+    def handle_movement(self, new_location, old_location):
         """Ship movement triggers
         """
         if new_location == self.location.name:

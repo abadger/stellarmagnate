@@ -54,6 +54,7 @@ class TravelDisplay(urwid.ListBox):
     def handle_new_location(self, *args):
         """Got a valid new location so we can close this window"""
         self.pubpen.unsubscribe(self._ship_moved_sub_id)
+        self._ship_moved_sub_id = None
         urwid.emit_signal(self, 'close_travel_menu')
 
     # urwid event handlers
