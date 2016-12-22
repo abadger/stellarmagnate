@@ -163,7 +163,7 @@ class Market:
         #self.price_time = datetime.datetime.utcnow()
 
         self.recalculate_prices()
-        self.pubpen.subscribe('query.market.info', self.handle_market_info)
+        self.pubpen.subscribe('query.market.{}.info'.format(self.location.name), self.handle_market_info)
         self.pubpen.subscribe('ship.moved', self.handle_movement)
 
     def __getattr__(self, key):
@@ -172,9 +172,8 @@ class Market:
         except AttributeError:
             return getattr(self.location, key)
 
-    def handle_market_info(self, location):
-        if location == self.location.name:
-            self.pubpen.publish('market.info', self.location.name, self.prices)
+    def handle_market_info(self):
+        self.pubpen.publish('market.{}.info'.format(self.location.name), self.prices)
 
     def handle_movement(self, old_location, new_location):
         """Ship movement triggers
@@ -269,7 +268,7 @@ class Market:
                          'adjustment': 0,
                          'msg': 'Production levels for {} were right on target'.format(commodity)
                         }
-            self.pubpen.publish('market.event', self.location.name, event['msg'])
+            self.pubpen.publish('market.{}.event'.format(self.location.name), event['msg'])
 
         if not is_event:
             if price_decrease:
@@ -281,4 +280,4 @@ class Market:
             price = 1
 
         self.prices[commodity] = price
-        self.pubpen.publish('market.update', self.location.name, commodity, price)
+        self.pubpen.publish('market.{}.update'.format(self.location.name), commodity, price)

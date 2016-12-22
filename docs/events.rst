@@ -81,27 +81,24 @@ Market Events
 
 Market events carry information about a specific market to the client.
 
-.. py:function:: market.event(market: string, msg: string)
+.. py:function:: market.{location}.event(msg: string)
 
     Emitted when an event occurs at a market.  This is for informational
     purposes.  The client may choose to display the message for game flavour.
 
-    :arg string market: The market affected
     :arg string msg: A message about the market
 
-.. py:function:: market.info(market: string, prices: dict)
+.. py:function:: market.{location}.info(prices: dict)
 
-    Emitted in response to a :py:func:`query.market.info`.  This carries
+    Emitted in response to a :py:func:`query.market.{location}.info`.  This carries
     information about prices of all commodities in a market.
 
-    :arg string market: The name of the market
     :arg dict prices: A mapping of commodity name to its current price
 
-.. py:function:: market.update(market: string, commodity: string, price: int)
+.. py:function:: market.{location}.update(commodity: string, price: int)
 
     Emitted when the price of a commodity changes.
 
-    :arg string market: The name of a market
     :arg string commodity: The name of the commodity being operated upon
     :arg string price: The new price of the commodity
 
@@ -141,12 +138,10 @@ to resynchronize a cache of the values if it's noticed that something is off.
     Emitted to retrieve a complete record of the cargoes that are being
     carried in a ship.  This triggers a :py:func:`ship.cargo` event.
 
-.. py:function:: query.market.info(location: string)
+.. py:function:: query.market.{location}.info()
 
     Emitted to retrieve a complete record of commodities to buy and sell at
     a location.
-
-    :arg string location: The location to query for information about
 
 .. py:function:: query.user.info(username: string)
 
@@ -154,13 +149,11 @@ to resynchronize a cache of the values if it's noticed that something is off.
 
     :arg string username: The user about whom to retrieve information
 
-.. py:function:: query.warehouse.info(location: string)
+.. py:function:: query.warehouse.{location}.info()
 
     Emitted to retrieve a complete record of the cargoes being held in
     a location's warehouse.
 
-    :arg string location: The location to retrieve information about warehouse
-        space
 
 ---------
 UI Events

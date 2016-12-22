@@ -150,8 +150,6 @@ class MarketDisplay(urwid.WidgetWrap):
 
         self.pubpen.subscribe('ship.moved', self.handle_new_location)
         #self.pubpen.subscribe('ship.cargo') => handle new cargo information
-        #self.pubpen.subscribe('market.update') => handle new market data
-        #self.pubpen.subscribe('warehouse.info') => handle new warehouse info
 
     # Populate the columns of the Market Display
 
@@ -230,16 +228,17 @@ class MarketDisplay(urwid.WidgetWrap):
         self.price_list.clear()
         self.commodity_price_map.clear()
 
-        self.pubpen.publish('query.market.info', new_location)
-        self._market_query_id = self.pubpen.subscribe('market.info', self.handle_market_info)
-        self.pubpen.publish('query.warehouse.info', new_location)
+        #self.pubpen.subscribe('market.{}.update'.format(new_location)) => handle new market data
+        #self.pubpen.subscribe('warehouse.{}.update'.format(new_location)) => handle new warehouse info
+        self._market_query_id = self.pubpen.subscribe('market.{}.info'.format(new_location), self.handle_market_info)
+        self.pubpen.publish('query.market.{}.info'.format(new_location))
+        self.pubpen.publish('query.warehouse.{}.info'.format(new_location))
 
-    def handle_market_info(self, location, prices):
-        if location == self.location:
-            self.pubpen.unsubscribe(self._market_query_id)
-            self._construct_commodity_list(prices.keys())
-            self._construct_price_list(prices)
-            self.commodity_price_map = prices
+    def handle_market_info(self, prices):
+        self.pubpen.unsubscribe(self._market_query_id)
+        self._construct_commodity_list(prices.keys())
+        self._construct_price_list(prices)
+        self.commodity_price_map = prices
 
     def handle_cargo_data(self, cargo):
         pass
