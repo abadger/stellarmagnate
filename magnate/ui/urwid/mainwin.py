@@ -19,7 +19,7 @@ from functools import partial
 
 import urwid
 
-from .gamemenu import GameMenuDisplay
+from .gamemenu import GameMenuDialog
 from .market import MarketDisplay, TransactionDialog
 from .travel import TravelDisplay
 
@@ -168,7 +168,7 @@ class MainDisplay(urwid.WidgetWrap):
         self.market_display = MarketDisplay(self.pubpen)
         self.transaction_dialog = TransactionDialog(self.pubpen)
         self.travel_menu = TravelDisplay(self.pubpen)
-        self.game_menu = GameMenuDisplay(self.pubpen)
+        self.game_menu = GameMenuDialog(self.pubpen)
         self.shipyard_display = ShipyardDisplay(self.pubpen)
         self.financial_display = FinancialDisplay(self.pubpen)
 
@@ -178,7 +178,7 @@ class MainDisplay(urwid.WidgetWrap):
             'ShipyardDisplay': self.shipyard_display,
             'FinancialDisplay': self.financial_display,
             'TravelDisplay': self.travel_menu,
-            'GameMenuDisplay': self.game_menu,
+            'GameMenuDialog': self.game_menu,
             'Blank': self.blank
             }
 
@@ -240,7 +240,7 @@ class MainDisplay(urwid.WidgetWrap):
         elif key in frozenset('tT'):
             self.push_display('TravelDisplay')
         elif key in frozenset('mM'):
-            self.push_display('GameMenuDisplay')
+            self.push_display('GameMenuDialog')
         else:
             super().keypress(size, key)  # pylint: disable=not-callable
         return

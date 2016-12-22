@@ -20,7 +20,7 @@ Game Menu widget
 import urwid
 
 
-class GameMenuDisplay(urwid.WidgetWrap):
+class GameMenuDialog(urwid.WidgetWrap):
     """
     Menu for Meta-game entries
 
