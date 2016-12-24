@@ -53,6 +53,7 @@ if __name__ == '__main__':
             break
     else:
         print('Unknown user ui: {}'.format(ui_name))
+        sys.exit(1)
 
     loop = asyncio.get_event_loop()
     pubpen = PubPen(loop)
