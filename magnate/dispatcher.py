@@ -33,6 +33,7 @@ class Dispatcher:
         self.user = None
         self.markets = None
 
+        self.pubpen.subscribe('action.ship.movement_attempt', self.handle_movement)
         self.pubpen.subscribe('action.user.login_attempt', self.login)
 
     def login(self, username, password):
@@ -51,6 +52,20 @@ class Dispatcher:
         else:
             self.pubpen.publish('user.login_failure',
                                 'Unknown account: {}'.format(username))
+
+    def handle_movement(self, location):
+        """Attempt to move the ship to a new location on user request
+
+        :arg location: The location to move to
+        :event ship.movement_failure: Emitted when the dhip could not be moved
+            :msg: Unknown destination
+            :msg: Ship too heavy
+        """
+        try:
+            self.user.ship.location = location
+        except ValueError:
+            self.pubpen.publish('ship.movement_failure', 'Unknown destination')
+            return
 
 
 class User:
@@ -79,8 +94,6 @@ class Ship:
         self._location = None
         self._destinations = []
         self.location = location
-
-        self.pubpen.subscribe('action.ship.movement_attempt', self.handle_movement)
 
     @property
     def location(self):
@@ -115,17 +128,3 @@ class Ship:
     def destinations(self):
         """Read-only property lists the ship's valid destinations"""
         return self._destinations
-
-    def handle_movement(self, location):
-        """Attempt to move the ship to a new location on user request
-
-        :arg location: The location to move to
-        :event ship.movement_failure: Emitted when the dhip could not be moved
-            :msg: Unknown destination
-            :msg: Ship too heavy
-        """
-        try:
-            self.location = location
-        except ValueError:
-            self.pubpen.publish('ship.movement_failure', 'Unknown destination')
-            return
