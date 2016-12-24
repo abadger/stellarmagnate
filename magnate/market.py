@@ -22,6 +22,9 @@ from functools import partial
 
 import attr
 
+from .utils.attrs import enum_converter, enum_validator
+
+
 # What is the organization of this data?
 #
 # There is some data which does not vary between games.  These are base
@@ -50,50 +53,6 @@ CommodityType = Enum('CommodityType', ('food', 'metal', 'fuel',
 
 LocationType = Enum('LocationType', ('star', 'planet', 'moon',
                                      'space station'))
-
-
-def enum_converter(EnumType, value):
-    """
-    Convert a string into an :class:`enum.Enum`
-
-    :arg EnumType: An Enum type to convert to
-    :arg value: The value to convert to an Enum
-
-    Typically, this function will be used with the :meth:`attr.ib` convert
-    parameter and :func:`functools.partial`.  Example::
-
-        @attr.s
-        class CommodityData:
-            type = attr.ib(convert=partial(enum_converter, CommodityType))
-    """
-    if not isinstance(value, EnumType):
-        try:
-            return EnumType[value]
-        except:
-            # Let the validator catch this
-            pass
-    return value
-
-
-def enum_validator(EnumType, instance, attribute, value):
-    """
-    Validate that a value is a member of an :class:`enum.Enum`
-
-    :arg EnumType: An Enum type to convert to
-    :arg instance: The instance of the attr.s class that is being created
-    :arg attribute: The attribute of the attr.s class that is being set
-    :arg value: The value the attribute is being set to
-
-    This function will be used with the :meth:`attr.ib` validate parameter and
-    :func:`functools.partial`.  Example::
-
-        @attr.s
-        class CommodityData:
-            type = attr.ib(validator=partial(enum_validator, CommodityType))
-    """
-    if not isinstance(value, EnumType):
-        raise ValueError('{} is not a {}'.format(value, EnumType))
-
 
 @attr.s
 class CommodityData:
