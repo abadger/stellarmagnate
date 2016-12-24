@@ -38,6 +38,13 @@ User events return information about user objects.
     :arg int cash: The amount of cash the user has on their person
     :arg string location: The location that the user is in currently
 
+.. py:function:: user.order_failure(msg: string)
+
+    Emitted when an order attempt fails
+
+    :arg string msg: A message explaining why the attempt failed
+
+
 -----------
 Ship Events
 -----------
@@ -95,6 +102,22 @@ Market events carry information about a specific market to the client.
 
     :arg dict prices: A mapping of commodity name to its current price
 
+.. py:function:: market.{location}.purchased(commodity: string, quantity: int)
+
+    This contains information when a user successfully purchases a commodity
+    at a specific market.
+
+    :arg string commodity: The name of the commodity that was bought
+    :arg int quantity: The amount of the commodity that was purchased
+
+.. py:function:: market.{location}.sold(commodity: string, quantity: int)
+
+    This contains information when a user successfully sold a commodity
+    at a specific market.
+
+    :arg string commodity: The name of the commodity that was sold
+    :arg int quantity: The amount of the commodity that was sold
+
 .. py:function:: market.{location}.update(commodity: string, price: int)
 
     Emitted when the price of a commodity changes.
@@ -123,6 +146,17 @@ user.
 
     :arg string username: The name of the user attempting to login
     :arg string password: The password for the user
+
+.. py:function:: action.user.order(order: magnate.ui.event_api.Order)
+
+    Emitted when the user requests that a commodity be bought from a market.
+    Triggers one of :py:func:`market.{location}.purchased`, :py:func:`market.{location}.sold`, or
+    :py:func:`user.order_failure`.
+
+    :arg magnate.ui.event_api.Order order: All the details necessary to buy or sell
+        this commodity.
+
+    .. seealso:: :py:class:`magnate.ui.event_api.Order`
 
 
 ------------
@@ -175,7 +209,7 @@ Urwid interface makes use of our pubmarine event dispatcher for some things.
 
 [Currently None]
 
-.. py:function:: ui.urwid.sale_info(commodity: string, price: int)
+.. py:function:: ui.urwid.order_info(commodity: string, price: int)
 
     Emitted to inform the transaction dialog what commodity and price the user
     is interested in.

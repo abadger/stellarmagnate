@@ -187,6 +187,7 @@ class MainDisplay(urwid.WidgetWrap):
         urwid.connect_signal(self.market_display, 'close_market_display', self.pop_display)
         urwid.connect_signal(self.market_display, 'open_transaction_dialog',
                              partial(self.push_display, 'TransactionDialog'))
+        urwid.connect_signal(self.transaction_dialog, 'close_transaction_dialog', self.pop_display)
         urwid.connect_signal(self.travel_menu, 'close_travel_menu', self.pop_display)
         urwid.connect_signal(self.game_menu, 'close_game_menu', self.pop_display)
 

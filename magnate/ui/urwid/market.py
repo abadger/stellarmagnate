@@ -20,7 +20,9 @@ from functools import partial
 
 import urwid
 
+from ..event_api import Order
 from .indexed_menu import IndexedMenuButton, IndexedMenuEnumerator
+
 
 class TransactionDialog(urwid.WidgetWrap):
     """Dialog box to buy or sell a commodity"""
@@ -29,10 +31,12 @@ class TransactionDialog(urwid.WidgetWrap):
 
     def __init__(self, pubpen):
         self.pubpen = pubpen
+        self.order = None
+        self._transaction_sub_id = None
 
-        self.transaction_type_group = []
-        self.buy_button = urwid.RadioButton(self.transaction_type_group, 'Buy')
-        self.sell_button = urwid.RadioButton(self.transaction_type_group, 'Sell')
+        transaction_type_group = []
+        self.buy_button = urwid.RadioButton(transaction_type_group, 'Buy')
+        self.sell_button = urwid.RadioButton(transaction_type_group, 'Sell')
         buysell_widget = urwid.Columns([(len('buy') + 5, self.buy_button), (len('Sell') + 5, self.sell_button)])
 
         self.hold_box = urwid.CheckBox('Hold:', state=True)
@@ -65,14 +69,17 @@ class TransactionDialog(urwid.WidgetWrap):
 
         super().__init__(filler)
 
-        self.pubpen.subscribe('ui.urwid.sale_info', self.handle_new_sale)
+        urwid.connect_signal(self.commit_button, 'click', self.handle_make_transaction)
+        self.pubpen.subscribe('ui.urwid.order_info', self.create_new_transaction)
 
-    def handle_new_sale(self, commodity, price):
+    def create_new_transaction(self, commodity, price, location):
         """Reset the dialog box whenever a new sale is started
 
         :arg commodity: The commodity that is being bought or sold
         :arg price: The amount that the commodity is selling for
+        :arg location: The location the transaction is taking place
         """
+        self.order = Order(location,commodity, price)
         self.dialog.set_title('{} - ${}'.format(commodity, price))
         pass
         # reset radio buttons to buy
@@ -83,14 +90,62 @@ class TransactionDialog(urwid.WidgetWrap):
     def handle_buy_sell_toggle(self):
         """Change interface slightly depending on whether we're buying or selling"""
         pass
+        # If buy sell changed, then change hold and warehouse numbers
+        # (free space for buy, amount of item for sell)
+        # If quantity exceeds maximum, reduce it to the maximum
 
     def handle_max_quantity(self):
         """Calculate the maximum quantity to buy or sell"""
         pass
+        # For buy, if hold is checked use hold_space for maximum_space
+        #       if warehouse, add that to the maximum_space
+        #   calculate maximum amount to buy for user's money.
+        #   if amount to buy > maximum_space, reduce to maximum_space
+        #   set quantity field to maximum_space
+        #   set total_sale to quantity * price
+        #
+        # For sell, if hold is checked, set amount_to_sell to hold
+        #       if warehouse, add to amount_to_sell
+        #   set quantity field to amount_to_sell
+        #   set total_sale to quantity field * price
 
-    def handle_make_transaction(self):
-        """Request to make the transaction"""
+    def validate_check_box_change(sef):
         pass
+
+    def handle_transaction_finalized(self, *args, **kwargs):
+        urwid.emit_signal(self, 'close_transaction_dialog')
+
+    def handle_make_transaction(self, button):
+        """Request to make the transaction"""
+        if self.buy_button.state is True:
+            if self.hold_box.get_state() is True:
+                ### TODO: place the min() of quantity or hold free space here.
+                # put rest in warehouse
+                self.order.hold_quantity = self.quantity.value()
+            if self.warehouse_box.get_state() is True:
+                ### TODO: implement warehouse
+                pass
+            ### TODO: if there's still more quantity, error?  (or reduce)
+            if self._transaction_sub_id is None:
+                self._transaction_sub_id = self.pubpen.subscribe('market.{}.purchased'.format(self.order.location),
+                                                                 self.handle_transaction_finalized)
+            self.pubpen.publish('action.user.order', self.order)
+        elif self.sell_button.status is True:
+            if self.hold_box.get_state() is True:
+                ### TODO: place the min() of quantity or amount of commodity in hold
+                # take rest from warehouse
+                self.order.hold_quantity = self.quantity.value()
+            if self.warehouse_box.get_state() is True:
+                ### TODO: implement warehouse
+                pass
+            if self._transaction_sub_id is None:
+                self._transaction_sub_id = self.pubpen.subscribe('market.{}.sold'.format(self.order.location),
+                                                                 self.handle_transaction_finalized)
+            self.pubpen.publish('action.user.order', self.order)
+            pass
+        else:
+            # Error
+            assert self.buy_button.status or self.sell_button.status, 'Neither the buy nor sell button was selected'
 
 
 class MarketDisplay(urwid.WidgetWrap):
@@ -210,7 +265,7 @@ class MarketDisplay(urwid.WidgetWrap):
     def handle_button_click(self, commodity, *args):
         # popup the Buy/Sell Window
 
-        self.pubpen.publish('ui.urwid.sale_info', commodity, self.commodity_price_map[commodity])
+        self.pubpen.publish('ui.urwid.order_info', commodity, self.commodity_price_map[commodity], self.location)
         urwid.emit_signal(self, 'open_transaction_dialog')
         ### TODO: this should move to when the sale/buy is confirmed
         #urwid.emit_signal(self, 'close_market_display')
@@ -260,7 +315,7 @@ class MarketDisplay(urwid.WidgetWrap):
             pass
             commodity = self.keypress_map[key]
             ### TODO: this should move to when the sale/buy is confirmed
-            self.pubpen.publish('ui.urwid.sale_info', commodity, self.commodity_price_map[commodity])
+            self.pubpen.publish('ui.urwid.order_info', commodity, self.commodity_price_map[commodity], self.location)
             urwid.emit_signal(self, 'open_transaction_dialog')
             #urwid.emit_signal(self, 'close_market_display')
         elif key in ('left', 'right'):
@@ -280,5 +335,5 @@ class MarketDisplay(urwid.WidgetWrap):
         super().mouse_event(*args, **kwargs)
         self._highlight_focused_commodity_line()
         ### FIXME: !!! Set commodity to the commodity that was clicked on
-        self.pubpen.publish('ui.urwid.sale_info', commodity, self.commodity_price_map[commodity])
+        self.pubpen.publish('ui.urwid.order_info', commodity, self.commodity_price_map[commodity], self.location)
         urwid.emit_signal(self, 'open_transaction_dialog')

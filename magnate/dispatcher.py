@@ -35,6 +35,7 @@ class Dispatcher:
 
         self.pubpen.subscribe('action.ship.movement_attempt', self.handle_movement)
         self.pubpen.subscribe('action.user.login_attempt', self.login)
+        self.pubpen.subscribe('action.user.order', self.handle_order)
 
     def login(self, username, password):
         """Log a user into the game"""
@@ -52,6 +53,49 @@ class Dispatcher:
         else:
             self.pubpen.publish('user.login_failure',
                                 'Unknown account: {}'.format(username))
+
+    def handle_order(self, order):
+        fatal_error = False
+
+        # Check that the user is in the location
+        if order.location != self.user.ship.location:
+            fatal_error = True
+            self.pubpen.publish('user.order_failure', msg='Cannot process an order when the player is not at the location')
+
+        current_price = self.markets[order.location].prices[order.commodity]
+        total_sale = current_price * (order.hold_quantity + order.warehouse_quantity)
+
+        if order.buy:
+            # Check that the price matches or is better
+            if order.price < current_price:
+                fatal_error = True
+                self.pubpen.publish('user.order_failure', msg='Current market price is higher than on the order.  Refresh prices and try again')
+
+            # Check that the user has enough cash
+            if total_sale > self.user.cash:
+                fatal_error = True
+                self.pubpen.publish("user.order_failure", msg="Total amount of money for this sale exceeds the user's cash")
+
+            pass
+            # deduct from the user's cash.
+            # add to the user's hold and warehouse space
+            pass
+
+            # Publish that the commodities were purhased
+            self.pubpen.publish('market.{}.purchased'.format(order.location), order.commodity, order.hold_quantity + order.warehouse_quantity)
+        else:
+            # Check that the price matches or is better
+            if order.price > current_price:
+                fatal_error = True
+                self.pubpen.publish('user.order_failure', 'Current market price is lower than on the order.  Refresh prices and try again')
+            pass
+            # Check that the user has enough commodity
+            # Deduct from the user's hold and warehouse space
+            # Add to the user's cash
+            pass
+
+            # Report that the commodities were sold
+            self.pubpen.publish('market.{}.sold'.format(order.location), order.commodity, order.hold_quantity + order.warehouse_quantity)
 
     def handle_movement(self, location):
         """Attempt to move the ship to a new location on user request
