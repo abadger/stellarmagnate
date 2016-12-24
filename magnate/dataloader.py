@@ -34,6 +34,7 @@ import copy
 import datetime
 import json
 import os
+from collections import OrderedDict
 
 import jsonschema
 try:
@@ -67,12 +68,12 @@ def load_data_definition(pubpen, yaml_file):
         commodity = CommodityData(entry['name'], entry['type'], entry['mean_price'], entry['standard_deviation'], entry['depreciation_rate'], entry['events'])
         commodity_data.append(commodity)
 
-    markets = []
+    markets = OrderedDict()
     for location in data['system']['locations']:
         loc = LocationData(location['name'], location['type'])
-        commodities = dict((c.name, Commodity(pubpen, c)) for c in commodity_data)
+        commodities = OrderedDict((c.name, Commodity(pubpen, c)) for c in commodity_data)
         market = Market(pubpen, loc, commodities)
-        markets.append(market)
+        markets[loc.name] = market
 
     return markets
 

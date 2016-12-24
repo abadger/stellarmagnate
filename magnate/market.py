@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import random
+from collections import OrderedDict
 from enum import Enum
 from functools import partial
 
@@ -152,7 +153,7 @@ class Market:
         self.location = location_data
         self.commodities = commodity_data
 
-        self.prices = {}
+        self.prices = OrderedDict()
         # Seed prices
         # Note: In the future, markets may have varying commodities.  Seeding
         # the commodity prices here allows calculate_prices to operate on

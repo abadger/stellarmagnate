@@ -46,7 +46,7 @@ class Dispatcher:
             # at.  And then it should be able to lookup what locations it can
             # reach from that planet.
             global ALL_DESTINATIONS
-            ALL_DESTINATIONS = tuple(m.name for m in self.markets)
+            ALL_DESTINATIONS = tuple(m for m in self.markets)
             self.user = User(self.pubpen, username)
         else:
             self.pubpen.publish('user.login_failure',
