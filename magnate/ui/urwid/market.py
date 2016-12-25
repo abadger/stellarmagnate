@@ -32,12 +32,13 @@ class TransactionDialog(urwid.WidgetWrap):
     def __init__(self, pubpen):
         self.pubpen = pubpen
         self.order = None
-        self._transaction_sub_id = None
+        self._order_purchased_sub_id = None
+        self._order_sold_sub_id = None
 
         transaction_type_group = []
         self.buy_button = urwid.RadioButton(transaction_type_group, 'Buy')
         self.sell_button = urwid.RadioButton(transaction_type_group, 'Sell')
-        buysell_widget = urwid.Columns([(len('buy') + 5, self.buy_button), (len('Sell') + 5, self.sell_button)])
+        self.buysell_widget = urwid.Columns([(len('buy') + 5, self.buy_button), (len('Sell') + 5, self.sell_button)])
 
         self.hold_box = urwid.CheckBox('Hold:', state=True)
 
@@ -54,8 +55,8 @@ class TransactionDialog(urwid.WidgetWrap):
         self.cancel_button = urwid.Button('Cancel')
         commit_widget = urwid.Columns([urwid.Text(''), (len('Place Order') + 4, self.commit_button), (len('Cancel') + 4, self.cancel_button)])
 
-        outer_layout_list = urwid.SimpleFocusListWalker([buysell_widget, self.hold_box, self.warehouse_box, self.sale_info, quantity_widget, commit_widget])
-        outer_layout = urwid.ListBox(outer_layout_list)
+        self.outer_layout_list = urwid.SimpleFocusListWalker([self.buysell_widget, self.hold_box, self.warehouse_box, self.sale_info, quantity_widget, commit_widget])
+        outer_layout = urwid.ListBox(self.outer_layout_list)
 
         self.dialog = urwid.LineBox(outer_layout, tlcorner='\u2554',
                                     tline='\u2550', trcorner='\u2557',
@@ -66,7 +67,7 @@ class TransactionDialog(urwid.WidgetWrap):
         padding = urwid.Padding(self.dialog, align='center',
                 width=max(len('Quantity: ') + len('MAX') + 4 + 20, len('Place Order') + len('Cancel') + 8))
         filler = urwid.Filler(padding, valign='middle',
-                              height=len(outer_layout_list) + 2)
+                              height=len(self.outer_layout_list) + 2)
 
         super().__init__(filler)
 
@@ -83,11 +84,17 @@ class TransactionDialog(urwid.WidgetWrap):
         """
         self.order = Order(location,commodity, price)
         self.dialog.set_title('{} - ${}'.format(commodity, price))
+
+        # Reset the form elements
+        self.buy_button.set_state(True, do_callback=False)
+        self.hold_box.set_state(True, do_callback=False)
+        self.warehouse_box.set_state(True, do_callback=False)
+        self.sale_info.set_text('Total Sale: $0')
+        self.quantity.set_edit_text("")
+        self.buysell_widget.focus_position = 0
+        self.outer_layout_list.set_focus(0)
         pass
-        # reset radio buttons to buy
-        # reset checkboxes for hold and warehouse
         # recalculate hold and warehouse space
-        # reset quantity to 0
 
     def handle_buy_sell_toggle(self):
         """Change interface slightly depending on whether we're buying or selling"""
@@ -115,6 +122,13 @@ class TransactionDialog(urwid.WidgetWrap):
         pass
 
     def handle_transaction_finalized(self, *args, **kwargs):
+        if self._order_sold_sub_id:
+            self.pubpen.unsubscribe(self._order_sold_sub_id)
+            self._order_sold_sub_id = None
+        if self._order_purchased_sub_id:
+            self.pubpen.unsubscribe(self._order_purchased_sub_id)
+            self._order_purchased_sub_id = None
+
         urwid.emit_signal(self, 'close_transaction_dialog')
 
     def handle_make_transaction(self, button):
@@ -128,11 +142,11 @@ class TransactionDialog(urwid.WidgetWrap):
                 ### TODO: implement warehouse
                 pass
             ### TODO: if there's still more quantity, error?  (or reduce)
-            if self._transaction_sub_id is None:
-                self._transaction_sub_id = self.pubpen.subscribe('market.{}.purchased'.format(self.order.location),
+            if self._order_purchased_sub_id is None:
+                self._order_purchased_sub_id = self.pubpen.subscribe('market.{}.purchased'.format(self.order.location),
                                                                  self.handle_transaction_finalized)
             self.pubpen.publish('action.user.order', self.order)
-        elif self.sell_button.status is True:
+        elif self.sell_button.state is True:
             if self.hold_box.get_state() is True:
                 ### TODO: place the min() of quantity or amount of commodity in hold
                 # take rest from warehouse
@@ -140,14 +154,22 @@ class TransactionDialog(urwid.WidgetWrap):
             if self.warehouse_box.get_state() is True:
                 ### TODO: implement warehouse
                 pass
-            if self._transaction_sub_id is None:
-                self._transaction_sub_id = self.pubpen.subscribe('market.{}.sold'.format(self.order.location),
+            if self._order_sold_sub_id is None:
+                self._order_sold_sub_id = self.pubpen.subscribe('market.{}.sold'.format(self.order.location),
                                                                  self.handle_transaction_finalized)
             self.pubpen.publish('action.user.order', self.order)
             pass
         else:
             # Error
-            assert self.buy_button.status or self.sell_button.status, 'Neither the buy nor sell button was selected'
+            assert self.buy_button.state is True or self.sell_button.state is True, 'Neither the buy nor sell button was selected'
+
+    def keypress(self, size, key):
+        """Handle all keyboard shortcuts for the travel menu"""
+        if key == 'esc':
+            self.handle_transaction_finalized()
+        else:
+            super().keypress(size, key)
+        return key
 
 
 class MarketDisplay(urwid.WidgetWrap):
