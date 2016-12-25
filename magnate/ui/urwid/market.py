@@ -50,8 +50,9 @@ class TransactionDialog(urwid.WidgetWrap):
         self.max_button = urwid.Button('MAX')
         quantity_widget = urwid.Columns([(len('Quantity: '), quantity_label), self.quantity, (len('MAX') + 4, self.max_button)])
 
-        self.commit_button = urwid.Button('Make Transaction')
-        commit_widget = urwid.Columns([urwid.Text(''), (len('Make Transaction') + 4, self.commit_button)])
+        self.commit_button = urwid.Button('Place Order')
+        self.cancel_button = urwid.Button('Cancel')
+        commit_widget = urwid.Columns([urwid.Text(''), (len('Place Order') + 4, self.commit_button), (len('Cancel') + 4, self.cancel_button)])
 
         outer_layout_list = urwid.SimpleFocusListWalker([buysell_widget, self.hold_box, self.warehouse_box, self.sale_info, quantity_widget, commit_widget])
         outer_layout = urwid.ListBox(outer_layout_list)
@@ -63,13 +64,14 @@ class TransactionDialog(urwid.WidgetWrap):
                                     rline='\u2551')
 
         padding = urwid.Padding(self.dialog, align='center',
-                width=len('Quantity: ') + len('MAX') + 4 + 20)
+                width=max(len('Quantity: ') + len('MAX') + 4 + 20, len('Place Order') + len('Cancel') + 8))
         filler = urwid.Filler(padding, valign='middle',
                               height=len(outer_layout_list) + 2)
 
         super().__init__(filler)
 
         urwid.connect_signal(self.commit_button, 'click', self.handle_make_transaction)
+        urwid.connect_signal(self.cancel_button, 'click', self.handle_transaction_finalized)
         self.pubpen.subscribe('ui.urwid.order_info', self.create_new_transaction)
 
     def create_new_transaction(self, commodity, price, location):
