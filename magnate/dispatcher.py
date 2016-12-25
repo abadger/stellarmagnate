@@ -82,7 +82,8 @@ class Dispatcher:
             pass
 
             # Publish that the commodities were purhased
-            self.pubpen.publish('market.{}.purchased'.format(order.location), order.commodity, order.hold_quantity + order.warehouse_quantity)
+            if not fatal_error:
+                self.pubpen.publish('market.{}.purchased'.format(order.location), order.commodity, order.hold_quantity + order.warehouse_quantity)
         else:
             # Check that the price matches or is better
             if order.price > current_price:
@@ -95,7 +96,8 @@ class Dispatcher:
             pass
 
             # Report that the commodities were sold
-            self.pubpen.publish('market.{}.sold'.format(order.location), order.commodity, order.hold_quantity + order.warehouse_quantity)
+            if not fatal_error:
+                self.pubpen.publish('market.{}.sold'.format(order.location), order.commodity, order.hold_quantity + order.warehouse_quantity)
 
     def handle_movement(self, location):
         """Attempt to move the ship to a new location on user request
