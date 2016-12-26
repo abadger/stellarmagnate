@@ -166,7 +166,7 @@ equipment:
         A local arms dealer has some shipboard laser arrays he's willing to
         sell for cheap.
 property:
-  - name: Warehouse spave (1000 units)
+  - name: Warehouse space (1000 units)
     id: 0
     type: property
     mean_price: 160000
@@ -183,13 +183,20 @@ property:
 # Haven't figured out ship types yet
 ships:
   - name: Passenger
-    holdspace: 100
-  - name: Liner
-    holdspace: 100
+    holdspace: 50
+  - name: Shipper
+    holdspace: 150
+  - name: Barge
+    holdspace: 250
   - name: Freighter
-    holdspace: 100
+    holdspace: 350
+  - name: Liner
+    holdspace: 450
+  - name: Cruiser
+    holdspace: 550
   - name: Tanker
-    holdspace: 100
+    holdspace: 650
   - name: Super Tanker
-    holdspace: 100
-
+    holdspace: 750
+  - name: Liner
+    holdspace: 850
