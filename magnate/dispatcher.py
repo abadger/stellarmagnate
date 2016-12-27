@@ -32,6 +32,7 @@ class Dispatcher:
         self.pubpen = pubpen
         self.user = None
         self.markets = None
+        self.ship_list = None
 
         self.pubpen.subscribe('action.ship.movement_attempt', self.handle_movement)
         self.pubpen.subscribe('action.user.login_attempt', self.login)
@@ -42,7 +43,7 @@ class Dispatcher:
         if 'toshio' in username.lower():
             self.pubpen.publish('user.login_success', username)
             # Game can begin in earnest now
-            self.markets = load_data_definition(self.pubpen, 'stellar.yml')
+            self.markets, self.ship_list = load_data_definition(self.pubpen, 'stellar.yml')
 
             ### FIXME: In the future a ship should know what location it is
             # at.  And then it should be able to lookup what locations it can
@@ -50,6 +51,7 @@ class Dispatcher:
             global ALL_DESTINATIONS
             ALL_DESTINATIONS = tuple(m for m in self.markets)
             self.user = User(self.pubpen, username)
+            self.user.ship = Ship(self.pubpen, self.ship_list['Passenger'])
         else:
             self.pubpen.publish('user.login_failure',
                                 'Unknown account: {}'.format(username))
@@ -76,27 +78,25 @@ class Dispatcher:
                 fatal_error = True
                 self.pubpen.publish("user.order_failure", msg="Total amount of money for this sale exceeds the user's cash")
 
-            pass
-            # deduct from the user's cash.
-            # add to the user's hold and warehouse space
-            pass
-
-            # Publish that the commodities were purhased
+            # Purchase the commodity
             if not fatal_error:
+                self.user.cash -= total_sale
+                pass
+                ### FIXME: add to the user's hold and warehouse space
+                pass
                 self.pubpen.publish('market.{}.purchased'.format(order.location), order.commodity, order.hold_quantity + order.warehouse_quantity)
         else:
             # Check that the price matches or is better
             if order.price > current_price:
                 fatal_error = True
                 self.pubpen.publish('user.order_failure', 'Current market price is lower than on the order.  Refresh prices and try again')
-            pass
-            # Check that the user has enough commodity
-            # Deduct from the user's hold and warehouse space
-            # Add to the user's cash
+            ### FIXME: Check that the user has enough commodity
             pass
 
             # Report that the commodities were sold
             if not fatal_error:
+                ### FIXME:  Deduct from the user's hold and warehouse space
+                self.user.cash += total_sale
                 self.pubpen.publish('market.{}.sold'.format(order.location), order.commodity, order.hold_quantity + order.warehouse_quantity)
 
     def handle_movement(self, location):
@@ -114,13 +114,15 @@ class Dispatcher:
             return
 
 
+from .ship import Ship
+
 class User:
     """A logged in user"""
     def __init__(self, pubpen, username):
         self.pubpen = pubpen
         self.username = username
         self.cash = 500
-        self.ship = Ship(pubpen)
+        self.ship = None
 
         self.pubpen.subscribe('query.user.info', self.handle_user_info)
 
@@ -131,46 +133,3 @@ class User:
         """
         self.pubpen.publish('user.info', self.username, self.cash,
                             self.ship.location)
-
-
-class Ship:
-    """A user's ship"""
-    def __init__(self, pubpen, location='Earth'):
-        self.pubpen = pubpen
-        self._location = None
-        self._destinations = []
-        self.location = location
-
-    @property
-    def location(self):
-        """Retrieve the ship's location"""
-        return self._location
-
-    @location.setter
-    def location(self, location):
-        """Move the ship to a new location
-
-        :arg location: The location to move to
-        :event ship.moved: Emitted when the ship arrives at a new location
-            :arg location: The location the ship arrived at
-            :arg old_location: The location the ship moved from
-        :event ship.destination: Emitted when the ship ship arrives at a new
-            location
-        :raises ValueError: when the new location is not valid
-        """
-        temp_destination = list(ALL_DESTINATIONS)
-        try:
-            temp_destination.remove(location)
-        except ValueError:
-            # No worries, we just want to make sure we can't go to ourselves
-            pass
-        self._destinations = temp_destination
-
-        self.pubpen.publish('ship.destinations', self.destinations)
-        self.pubpen.publish('ship.moved', location, self._location)
-        self._location = location
-
-    @property
-    def destinations(self):
-        """Read-only property lists the ship's valid destinations"""
-        return self._destinations

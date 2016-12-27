@@ -57,7 +57,8 @@ class GameMenuDialog(urwid.WidgetWrap):
         filler = urwid.Filler(padding, valign='middle',
                               height=len(self.buttons) + 2)
 
-        super().__init__(filler)
+        outer_layout = urwid.LineBox(filler)
+        super().__init__(outer_layout)
 
         urwid.connect_signal(self.save_button, 'click', self.save_game)
         urwid.connect_signal(self.load_button, 'click', self.load_game)

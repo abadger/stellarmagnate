@@ -72,7 +72,7 @@ Ship events return information about ship objects.
 
     :arg string msg: A message explaining why the movement failed
 
-.. py:function:: ship.cargo(cargo: dict)
+.. py:function:: ship.cargo.update(cargo: dict)
 
     Emitted when a ship's cargo manifest changes (commodities are bought and
     sold or transferred to a warehouse)

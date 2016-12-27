@@ -69,9 +69,10 @@ class TransactionDialog(urwid.WidgetWrap):
         filler = urwid.Filler(padding, valign='middle',
                               height=len(self.outer_layout_list) + 2)
 
-        super().__init__(filler)
+        outer_layout = urwid.LineBox(filler)
+        super().__init__(outer_layout)
 
-        urwid.connect_signal(self.commit_button, 'click', self.handle_make_transaction)
+        urwid.connect_signal(self.commit_button, 'click', self.handle_place_order)
         urwid.connect_signal(self.cancel_button, 'click', self.handle_transaction_finalized)
         self.pubpen.subscribe('ui.urwid.order_info', self.create_new_transaction)
 
@@ -131,7 +132,7 @@ class TransactionDialog(urwid.WidgetWrap):
 
         urwid.emit_signal(self, 'close_transaction_dialog')
 
-    def handle_make_transaction(self, button):
+    def handle_place_order(self, *args):
         """Request to make the transaction"""
         if self.buy_button.state is True:
             if self.hold_box.get_state() is True:
@@ -164,9 +165,11 @@ class TransactionDialog(urwid.WidgetWrap):
             assert self.buy_button.state is True or self.sell_button.state is True, 'Neither the buy nor sell button was selected'
 
     def keypress(self, size, key):
-        """Handle all keyboard shortcuts for the travel menu"""
+        """Handle all keyboard shortcuts for the transaction dialog"""
         if key == 'esc':
             self.handle_transaction_finalized()
+        elif key == 'enter':
+            self.handle_place_order()
         else:
             super().keypress(size, key)
         return key
@@ -224,7 +227,7 @@ class MarketDisplay(urwid.WidgetWrap):
                                       tlcorner='\u2500', lline=' ',
                                       blcorner='\u2500')
 
-        self.market_display = urwid.Columns([market_col, price_col, hold_col, warehouse_col])
+        self.market_display = urwid.Columns([('weight', 2, market_col), (13, price_col), (20, hold_col), (20, warehouse_col)])
 
         super().__init__(self.market_display)
 

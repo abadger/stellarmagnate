@@ -44,13 +44,25 @@ except ImportError:
 
 from .market import CommodityData, LocationData
 from .market import Commodity, Market
-from .user import Ship, User
+from .ship import ShipData, Ship
+from .user import User
 
 # Need to make this configurable
 DATADIR = os.path.normpath(os.path.join(os.path.dirname(__file__), '../data/'))
 
 
 # Load base data
+
+# Refactor:
+# function1: read from the yaml file and save to *Data objects
+# function2: construct second layer objects frim the base *Data objects.
+#   For instance Market from locations and commoditities
+#
+# Data changes:
+# Need to keep the system hierarchy so that we can tell what things are within
+# reach.  When a ship travels from location to location it needs to know
+# what's within reach.
+#
 def load_data_definition(pubpen, yaml_file):
     """
     Parse the yaml file of base yaml objects and return the information
@@ -75,7 +87,11 @@ def load_data_definition(pubpen, yaml_file):
         market = Market(pubpen, loc, commodities)
         markets[loc.name] = market
 
-    return markets
+    ships = OrderedDict()
+    for ship in data['ships']:
+        ships[ship['name']] = ShipData(ship['name'], ship['holdspace'])
+
+    return markets, ships
 
 
 # Load from save file

@@ -24,7 +24,7 @@ import urwid
 from .indexed_menu import IndexedMenuEnumerator, IndexedMenuButton
 
 
-class TravelDisplay(urwid.ListBox):
+class TravelDisplay(urwid.WidgetWrap):
     """Widget that allows the user to select a new destination for the ship"""
     _selectable = True
     signals = ['close_travel_menu']
@@ -35,7 +35,9 @@ class TravelDisplay(urwid.ListBox):
         self._ship_moved_sub_id = None
 
         self.listwalker = urwid.SimpleFocusListWalker([])
-        super().__init__(self.listwalker)
+        box = urwid.ListBox(self.listwalker)
+        outer_layout = urwid.LineBox(box)
+        super().__init__(outer_layout)
         self.pubpen.subscribe('ship.destinations', self.handle_new_destinations)
 
     # pubpen event handlers

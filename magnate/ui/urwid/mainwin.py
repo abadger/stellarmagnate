@@ -123,10 +123,72 @@ class MenuBar(urwid.Pile):
             ))
 
 
-class InfoWindow(urwid.Pile):
+class InfoWindow(urwid.WidgetWrap):
     _selectable = False
     def __init__(self, pubpen):
-        super().__init__([])
+        self.pubpen = pubpen
+
+        self._warehouse_sub_id = None
+        #self._bank_sub_id = None
+        ### FIXME: Implement bank, warehouse, bank, and loan
+        header1 = urwid.Text('Ship:')
+        self.ship_name = urwid.Text('  ')
+        header2 = urwid.Text('Ship Type:')
+        self.ship_type = urwid.Text('  ')
+        header3 = urwid.Text('Free space:')
+        self.hold_free = urwid.Text('  ')
+        header4 = urwid.Text('Cargo:')
+        self.hold_used = urwid.Text('  ')
+        header5 = urwid.Text('Warehouse:')
+        self.warehouse_free = urwid.Text('  ')
+        header6 = urwid.Text('Transshipment:')
+        self.warehouse_used = urwid.Text('  ')
+        header7 = urwid.Text('Cash:')
+        self.cash = urwid.Text('  ')
+        header8 = urwid.Text('Bank:')
+        self.bank = urwid.Text('  ')
+        header9 = urwid.Text('Loan:')
+        self.loan = urwid.Text('  ')
+        info_list = urwid.SimpleListWalker([header1, self.ship_name,
+                           header2, self.ship_type,
+                           header3, self.hold_free,
+                           header4, self.hold_used,
+                           header5, self.warehouse_free,
+                           header6, self.warehouse_used,
+                           header7, self.cash,
+                           header8, self.bank,
+                           header9, self.loan])
+        info = urwid.ListBox(info_list)
+        super().__init__(info)
+
+        # Primary triggers: These are events that tell us we need to refresh
+        # our information
+        self.pubpen.subscribe('ship.moved', self.handle_new_location)
+        ### FIXME: Subscribe to purchased, sold
+        #self.pubpen.subscribe('ship.cargo.update')
+        #self.pubpen.subscribe('user.cash.update')
+        #self.pubpen.subscribe('user.bank.update')
+        #self.pubpen.subscribe('user.loan.update')
+
+        # Secondary triggers: These are responses to requests for information
+        #self.pubpen.subscribe('ship.info')
+        #self.pubpen.subscribe('ship.cargo.info')
+        #self.pubpen.subscribe('user.info')
+        pass
+
+    def handle_new_location(self, location, *args):
+        # Unsubscribe old location triggers
+        #if self._warehouse_sub_id is not None:
+        #    self.pubpen.unsubscribe(self._warehouse_sub_id)
+        #if self._bank_sub_id is not None:
+        #    self.pubpen.unsubscribe(self._bank_sub_id)
+
+        # Subscribe to new location triggers
+        #self._warehouse_sub_id = self.pubpen.subscribe('warehouse.{}.info'.format(location))
+        #self._bank_sub_id = self.pubpen.subscribe('bank.{}.info'.format(location))
+
+        #self.pubpen.publish('query.warehouse.{}.info'.format(location))
+        #self.pubpen.publish('query.bank.{}.info'.format(location))
         pass
 
 
@@ -158,7 +220,7 @@ class MainDisplay(urwid.WidgetWrap):
     def __init__(self, pubpen):
         self.pubpen = pubpen
         self.display_stack = []
-        self.blank = urwid.Frame(urwid.SolidFill(' '))
+        self.blank = urwid.LineBox(urwid.SolidFill(' '))
         self.background = urwid.WidgetPlaceholder(self.blank)
 
         super().__init__(self.background)
@@ -258,9 +320,10 @@ class MainWindow(urwid.LineBox):
         self.info_window = InfoWindow(self.pubpen)
         self.main_display = MainDisplay(self.pubpen)
 
+        cols = urwid.Columns([self.main_display, (20, self.info_window)])
         layout = urwid.Pile((
             ('pack', self.menu_bar),
-            ('weight', 1, self.main_display),
+            ('weight', 1, cols),
             ))
         self.top = urwid.Frame(layout)
 
