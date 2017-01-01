@@ -22,7 +22,7 @@ from functools import partial
 
 import attr
 
-from .utils.attrs import enum_converter, enum_validator
+from .utils.attrs import enum_converter, enum_validator, sequence_of_type
 
 
 # What is the organization of this data?
@@ -91,6 +91,17 @@ class Commodity:
 
 
 @attr.s
+class SystemData:
+    """
+    A stellar system in which to place locations
+    """
+    name = attr.ib(validator=attr.validators.instance_of(str))
+    # Can't do better than object because we have to break the circular
+    # relationship so we can define one of these before the other.
+    locations = attr.ib(validator=attr.validators.optional(partial(sequence_of_type, object, 'immutable')))
+
+
+@attr.s
 class LocationData:
     """
     Location at which :class:`Commodities` can be bought and sold.
@@ -98,6 +109,7 @@ class LocationData:
     name = attr.ib(validator=attr.validators.instance_of(str))
     type = attr.ib(validator=partial(enum_validator, LocationType),
                    convert=partial(enum_converter, LocationType))
+    system = attr.ib(validator=attr.validators.instance_of(SystemData))
 
     #def __attrs_post_init__(self, pubpen):
     #    pass
