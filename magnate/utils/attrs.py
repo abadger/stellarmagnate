@@ -95,14 +95,14 @@ def sequence_of_type(_type, mutable, instance, attribute, value):
         raise ValueError('sequence_of_type was given an improper argument for mutable')
 
     if not isinstance(value, Sequence):
-        raise ValueError('{} is not'.format(value, msg))
+        raise ValueError('{} is not {}'.format(value, msg))
 
     if isinstance(value, MutableSequence):
         if mutable == 'immutable':
-            raise ValueError('{} is not'.format(value, msg))
+            raise ValueError('{} is not {}'.format(value, msg))
     else:
         if mutable == 'mutable':
-            raise ValueError('{} is not'.format(value, msg))
+            raise ValueError('{} is not {}'.format(value, msg))
 
     for entry in value:
         if not isinstance(entry, _type):

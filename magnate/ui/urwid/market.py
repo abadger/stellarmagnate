@@ -120,7 +120,7 @@ class TransactionDialog(urwid.WidgetWrap):
         #   set quantity field to amount_to_sell
         #   set total_sale to quantity field * price
 
-    def validate_check_box_change(sef):
+    def validate_check_box_change(self):
         pass
 
     def handle_transaction_finalized(self, *args, **kwargs):
