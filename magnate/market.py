@@ -14,6 +14,9 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+Classes to model the Location and Markets in Stellar Magnate
+"""
 
 import random
 from collections import OrderedDict
@@ -44,6 +47,10 @@ from .utils.attrs import enum_converter, enum_validator, sequence_of_type
 # because the Foo classes are also the interface for the rest of the game to
 # interact with both the variable and static data.
 
+# Enums are class-like but here we are using the function interface for
+# creating them so that we don't have to manually specify ids for each
+# category
+#pylint: disable=invalid-name
 CommodityType = Enum('CommodityType', ('food', 'metal', 'fuel',
                                        'low bulk chemical',
                                        'high bulk chemical',
@@ -53,6 +60,8 @@ CommodityType = Enum('CommodityType', ('food', 'metal', 'fuel',
 
 LocationType = Enum('LocationType', ('star', 'planet', 'moon',
                                      'space station'))
+#pylint: enable=invalid-name
+
 
 @attr.s
 class CommodityData:
@@ -145,17 +154,24 @@ class Market:
             return getattr(self.location, key)
 
     def handle_market_info(self):
+        """
+        Publish information about current prices
+
+        :event market.{location}.info: Publishes the information about the
+            current prices in the market
+        """
         self.pubpen.publish('market.{}.info'.format(self.location.name), self.prices.copy())
 
-    def handle_movement(self, new_location, old_location):
-        """Ship movement triggers
+    def handle_movement(self, new_location, *args):
+        """Recalculate prices when the ship arrives at this location
+
+        :arg new_location: The location that the ship has arrived at
         """
         if new_location == self.location.name:
             self.recalculate_prices()
 
     def recalculate_prices(self):
-        """Set new prices for all the commodities in the market
-        """
+        """Set new prices for all the commodities in the market"""
         for commodity in self.prices:
             self._calculate_price(commodity)
 
