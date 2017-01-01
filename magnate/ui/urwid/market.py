@@ -172,7 +172,7 @@ class TransactionDialog(urwid.WidgetWrap):
         elif key == 'enter':
             self.handle_place_order()
         else:
-            super().keypress(size, key)
+            super().keypress(size, key)  #pylint: disable=not-callable
         return key
 
 
@@ -347,16 +347,16 @@ class MarketDisplay(urwid.WidgetWrap):
             return
         elif key in ('up', 'down', 'page up', 'page down'):
             # First let the children handle the change in focus...
-            super().keypress(size, key)
+            super().keypress(size, key)  #pylint: disable=not-callable
             # Then highlight the same entry in other columns
             self._highlight_focused_commodity_line()
         else:
-            super().keypress(size, key)
+            super().keypress(size, key)  #pylint: disable=not-callable
         return key
 
     def mouse_event(self, *args, **kwargs):
         ### FIXME: Handle button clicks outside of the Commodity list
-        super().mouse_event(*args, **kwargs)
+        super().mouse_event(*args, **kwargs)  #pylint: disable=not-callable
         self._highlight_focused_commodity_line()
         ### FIXME: !!! Set commodity to the commodity that was clicked on
         self.pubpen.publish('ui.urwid.order_info', commodity, self.commodity_price_map[commodity], self.location)

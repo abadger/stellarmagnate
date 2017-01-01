@@ -75,5 +75,5 @@ class TravelDisplay(urwid.WidgetWrap):
                 self._ship_moved_sub_id = self.pubpen.subscribe('ship.moved', self.handle_new_location)
             self.pubpen.publish('action.ship.movement_attempt', destination)
             return
-        super().keypress(size, key)
+        super().keypress(size, key)  #pylint: disable=not-callable
         return key
