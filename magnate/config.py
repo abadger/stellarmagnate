@@ -35,15 +35,24 @@ base_data_dir = {data_dir}/base
 
 # Directory with schema that explains the structure of the data files
 schema_dir = {data_dir}/schemas
+
+# name of the User Interface plugin to use
+ui_plugin = urwid
 """.format(data_dir='/usr/share/stellarmagnate',).split('\n')
+
+TESTING_CONFIG = """
+base_data_dir = {0}
+schema_dir = {0}
+""".format(os.path.join(os.path.dirname(__file__), '..', 'data')).split('\n')
 
 CONFIG_SPEC = """
 base_data_dir = string()
 schema_dir = string()
+ui_plugin = string()
 """.split('\n')
 
 
-def find_config(conf_files):
+def _find_config(conf_files=tuple()):
     """
     Return a list of config files that actually exist on the filesystem.
 
@@ -63,12 +72,14 @@ def find_config(conf_files):
     return config_files
 
 
-def read_config(paths):
+def _read_config(paths, testing=False):
     """
     Read the config files listed in path and merge them into a dictionary.
 
     :arg paths: filenames to read and merge configuration data from.  The last
         files should override the first ones.
+    :arg testing: If set to True, then use paths to data files that are
+        appropriate for testing a source checkout.
     :rtype: ConfigObj, a dict-like object with helper methods for use as a config store
     :returns: Return the configuration dict
     """
@@ -78,4 +89,34 @@ def read_config(paths):
         new_cfg = ConfigObj(cfg_file, configspec=CONFIG_SPEC)
         cfg.merge(new_cfg)
 
+    if testing:
+        testing_cfg = ConfigObj(TESTING_CONFIG, configspec=CONFIG_SPEC)
+        cfg.merge(testing_cfg)
+
     return cfg
+
+
+def read_config(conf_files=tuple(), testing=False):
+    """
+    Read configuration files
+
+    :arg conf_files: filenames to read and merge configuration data from.  The last
+        files should override the first ones.  A default set of config files
+        in the systemwide conf dir  and the user's home directory are always included.
+    :arg testing: If set to True, then use paths to data files that are
+        appropriate for testing a source checkout.
+    :rtype: ConfigObj, a dict-like object with helper methods for use as a config store
+    :returns: Return the configuration dict
+    """
+    cfg_paths = _find_config(conf_files)
+    return _read_config(cfg_paths, testing)
+
+def write_default_config(filename):
+    """
+    Write out a default config file appropriate for a user to customize.
+
+    :arg filename: The file path to write the config to.
+    """
+    cfg = ConfigObj(DEFAULT_CONFIG, configspec=CONFIG_SPEC)
+    cfg.filename = filename
+    cfg.write()
