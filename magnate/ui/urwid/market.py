@@ -84,7 +84,7 @@ class TransactionDialog(urwid.WidgetWrap):
         :arg price: The amount that the commodity is selling for
         :arg location: The location the transaction is taking place
         """
-        self.order = Order(location,commodity, price)
+        self.order = Order(location, commodity, price)
         self.dialog.set_title('{} - ${}'.format(commodity, price))
 
         # Reset the form elements
