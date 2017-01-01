@@ -150,14 +150,14 @@ class InfoWindow(urwid.WidgetWrap):
         header9 = urwid.Text('Loan:')
         self.loan = urwid.Text('  ')
         info_list = urwid.SimpleListWalker([header1, self.ship_name,
-                           header2, self.ship_type,
-                           header3, self.hold_free,
-                           header4, self.hold_used,
-                           header5, self.warehouse_free,
-                           header6, self.warehouse_used,
-                           header7, self.cash,
-                           header8, self.bank,
-                           header9, self.loan])
+                                            header2, self.ship_type,
+                                            header3, self.hold_free,
+                                            header4, self.hold_used,
+                                            header5, self.warehouse_free,
+                                            header6, self.warehouse_used,
+                                            header7, self.cash,
+                                            header8, self.bank,
+                                            header9, self.loan])
         info = urwid.ListBox(info_list)
         super().__init__(info)
 

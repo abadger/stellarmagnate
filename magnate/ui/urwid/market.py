@@ -65,7 +65,8 @@ class TransactionDialog(urwid.WidgetWrap):
                                     rline='\u2551')
 
         padding = urwid.Padding(self.dialog, align='center',
-                width=max(len('Quantity: ') + len('MAX') + 4 + 20, len('Place Order') + len('Cancel') + 8))
+                                width=max(len('Quantity: ') + len('MAX') + 4 + 20,
+                                          len('Place Order') + len('Cancel') + 8))
         filler = urwid.Filler(padding, valign='middle',
                               height=len(self.outer_layout_list) + 2)
 
@@ -145,7 +146,7 @@ class TransactionDialog(urwid.WidgetWrap):
             ### TODO: if there's still more quantity, error?  (or reduce)
             if self._order_purchased_sub_id is None:
                 self._order_purchased_sub_id = self.pubpen.subscribe('market.{}.purchased'.format(self.order.location),
-                                                                 self.handle_transaction_finalized)
+                                                                     self.handle_transaction_finalized)
             self.pubpen.publish('action.user.order', self.order)
         elif self.sell_button.state is True:
             if self.hold_box.get_state() is True:
@@ -157,7 +158,7 @@ class TransactionDialog(urwid.WidgetWrap):
                 pass
             if self._order_sold_sub_id is None:
                 self._order_sold_sub_id = self.pubpen.subscribe('market.{}.sold'.format(self.order.location),
-                                                                 self.handle_transaction_finalized)
+                                                                self.handle_transaction_finalized)
             self.pubpen.publish('action.user.order', self.order)
             pass
         else:

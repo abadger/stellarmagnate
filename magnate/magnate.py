@@ -96,9 +96,10 @@ class Magnate:
         parser = argparse.ArgumentParser(description='A space themed trading game')
         parser.add_argument('--version', action='version', version=__version__)
         parser.add_argument('--conf-file', dest='cfg_file', action='store', default=None,
-                help='Alternate location for configuration file')
+                            help='Alternate location for configuration file')
         parser.add_argument('--_testing-configuration', dest='test_cfg', action='store_true',
-                help='Overrides data file locations for running from a source checkout.  For development only')
+                            help='Overrides data file locations for running from a source checkout.'
+                                 ' For development only')
 
         ui_plugin_names = []
         ui_plugins = load('magnate.ui', subclasses=UserInterface)
@@ -106,8 +107,8 @@ class Magnate:
             ui_plugin_names.append(plugin.__module__[len('magnate.ui.'):])
 
         parser.add_argument('--ui-plugin', dest='ui_plugin', action='store', default=None,
-                help='Specify a user interface plugin to use.'
-                ' Valid plugin names: {}'.format(', '.join(ui_plugin_names)))
+                            help='Specify a user interface plugin to use.'
+                                 ' Valid plugin names: {}'.format(', '.join(ui_plugin_names)))
 
         return parser.parse_args(args[1:])
 
@@ -144,7 +145,7 @@ class Magnate:
                                                            commodity['standard_deviation'],
                                                            commodity['depreciation_rate'],
                                                            commodity['event'],
-                                                           )
+                                                          )
         self.commodity_data = commodities
 
         ### FIXME: These need to be worked out
