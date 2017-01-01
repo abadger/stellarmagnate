@@ -1,7 +1,10 @@
 from distutils.core import setup
 
+from magnate.release import __version__
+
+
 setup(name="stellar-magnate",
-        version="0.1",
+        version=__version__,
         description="A space-themed commodity trading game",
         long_description="""
 Stellar Magnate is a space-themed trading game in the spirit of Planetary
