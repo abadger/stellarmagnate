@@ -14,4 +14,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+Holds metadata about this release of the Stellar Magnate software
+"""
 __version__ = '0.1'

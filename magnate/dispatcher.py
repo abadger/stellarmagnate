@@ -36,10 +36,23 @@ class Dispatcher:
         self.pubpen.subscribe('action.user.order', self.handle_order)
 
     def handle_login(self, username, password):
+        """
+        Attempt to log the user into the game
+
+        :arg username: User attempting to login
+        :arg password: Password to authenticate with
+        """
         user = self.magnate.login(username, password)
         self.user = user
 
     def handle_order(self, order):
+        """
+        Attempt to purchase or sell a commodity for the user
+
+        :arg order: a :class:`magnate.ui.event_api.Order` with all the
+            relevant information to buy or sell the commodity
+        :event user.order_failure: Emitted when the order could not be processed
+        """
         fatal_error = False
 
         # Check that the user is in the location
@@ -86,7 +99,7 @@ class Dispatcher:
         """Attempt to move the ship to a new location on user request
 
         :arg location: The location to move to
-        :event ship.movement_failure: Emitted when the dhip could not be moved
+        :event ship.movement_failure: Emitted when the ship could not be moved
             :msg: Unknown destination
             :msg: Ship too heavy
         """

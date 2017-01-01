@@ -153,10 +153,11 @@ class Magnate:
 
         ships = OrderedDict()
         for ship in data['ship']:
-            ships[ship['name']] = ShipData(ship['name'], ship['id'],
-                    ship['mean_price'], ship['standard_deviation'],
-                    ship['depreciation_rate'], ship['holdspace'],
-                    ship['weaponmount'])
+            ships[ship['name']] = ShipData(ship['name'], ship['mean_price'],
+                                           ship['standard_deviation'],
+                                           ship['depreciation_rate'],
+                                           ship['holdspace'],
+                                           ship['weaponmount'])
         self.ship_data = ships
 
     def _load_save(self):

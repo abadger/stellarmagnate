@@ -14,29 +14,56 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+"""
+Data structures related to Player controlled ships
+"""
 import attr
 
 from . import dispatcher
 
-@attr.s
-class ShipData:
-    type = attr.ib(validator=attr.validators.instance_of(str))
-    id = attr.ib(validator=attr.validators.instance_of(int))
-    mean_price = attr.ib(validator=attr.validators.instance_of(int))
-    standard_deviation = attr.ib(validator=attr.validators.instance_of(int))
-    depreciation_rate = attr.ib(validator=attr.validators.instance_of(int))
-    holdspace = attr.ib(validator=attr.validators.instance_of(int))
-    weaponmount = attr.ib(validator=attr.validators.instance_of(int))
-
 
 @attr.s
 class ManifestEntry:
+    """
+    Associates a given amount of a commodity with sale-related information
+    """
+    #: Name of the commodity this ManifestEntry is for
     commodity = attr.ib(validator=attr.validators.instance_of(str))
+
+    #: Amount of the commodity in this ManifestEntry
     quantity = attr.ib(validator=attr.validators.instance_of(int))
+
+    #: Average price paid for the commodity.  This may be used to
+    #: automatically show profit and loss
     price_paid = attr.ib(validator=attr.validators.instance_of(float))
+
     # When we start using depreciation in price:
     #average_age = attr.ib(validator.attr.validators.instance_of(float))
+
+
+@attr.s
+class ShipData:
+    """
+    Base, static data on a type of ship
+    """
+    #: Name of the ship type ("Passenger", "Cruiser", etc)
+    type = attr.ib(validator=attr.validators.instance_of(str))
+
+    #: The average price of the ship
+    mean_price = attr.ib(validator=attr.validators.instance_of(int))
+
+    #: Measure of how widely the ship's price fluctuates
+    standard_deviation = attr.ib(validator=attr.validators.instance_of(int))
+
+    #: How quickly the resale value of the ship decreases
+    depreciation_rate = attr.ib(validator=attr.validators.instance_of(int))
+
+    #: How much space the ship has for cargo
+    holdspace = attr.ib(validator=attr.validators.instance_of(int))
+
+    #: How many weapons the ship can hold
+    weaponmount = attr.ib(validator=attr.validators.instance_of(int))
+
 
 class Ship:
     """A user's ship"""
@@ -61,6 +88,14 @@ class Ship:
             return getattr(self.ship_data, key)
 
     def add_cargo(self, new_entry):
+        """
+        Add an amount of cargo to the hold
+
+        :arg new_entry: A :class:`magnate.ship.ManifestEntry` which
+            encapsulates the commodity being added to the hold.
+        :raises ValueError: Raised when the quantity will not fit into the
+            hold
+        """
         if self.filled_hold + new_entry.quantity > self.holdspace:
             raise ValueError('Quantity will not fit in hold')
 
@@ -76,6 +111,16 @@ class Ship:
         self.filled_hold += new_entry.quantity
 
     def remove_cargo(self, commodity, amount):
+        """
+        Remove an amount of cargo from the hold
+
+        :arg commodity: The commodity to remove
+        :arg amount: The amount of the commodity to remove
+        :rtype: :class:`magnate.ship.ManifestEntry`
+        :return: Return the record of the commodity which is being removed
+        :raises ValueError: Raised when there is not enough of the commodity
+            currently in the hold
+        """
         if not commodity in self.manifest or self.manifest[commodity].quantity < amount:
             raise ValueError('We do not have {} of {} in the hold'.format(amount, commodity))
 
