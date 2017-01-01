@@ -19,6 +19,9 @@
 Helper functions for python attrs classes.
 """
 
+from collections.abc import MutableSequence, Sequence
+
+
 def enum_converter(EnumType, value):
     """
     Convert a string into an :class:`enum.Enum`
@@ -60,3 +63,47 @@ def enum_validator(EnumType, instance, attribute, value):
     """
     if not isinstance(value, EnumType):
         raise ValueError('{} is not a {}'.format(value, EnumType))
+
+
+def sequence_of_type(_type, mutable, instance, attribute, value):
+    """
+    Validate that a value is a Sequence containing a specific type.
+
+    :arg _type: The type of the values inside of the sequence
+    :arg mutable: selects whether a sequence can be mutable or not
+        :mutable: only mutable sequences are allowed
+        :immutable: only immutable sequences are allowed
+        :both: both mutable and immutable sequences are allowed
+    :arg instance: The instance of the attr.s class that is being created
+    :arg attribute: The attribute of the attr.s class that is being set
+    :arg value: The value the attribute is being set to
+
+    This function will be used with the :meth:`attr.ib` validate parameter and
+    :func:`functools.partial`.  Example::
+
+        @attr.s
+        class CommodityData:
+            type = attr.ib(validator=partial(enum_validator, CommodityType))
+    """
+    if mutable == 'both':
+        msg = 'a Sequence'
+    elif mutable == 'mutable':
+        msg = 'a MutableSequence'
+    elif mutable == 'immutable':
+        msg = 'an Immutable Sequence'
+    else:
+        raise ValueError('sequence_of_type was given an improper argument for mutable')
+
+    if not isinstance(value, Sequence):
+        raise ValueError('{} is not'.format(value, msg))
+
+    if isinstance(value, MutableSequence):
+        if mutable == 'immutable':
+            raise ValueError('{} is not'.format(value, msg))
+    else:
+        if mutable == 'mutable':
+            raise ValueError('{} is not'.format(value, msg))
+
+    for entry in value:
+        if not isinstance(entry, _type):
+            raise ValueError('The Sequence element {} is not a {}'.format(value, _type))
