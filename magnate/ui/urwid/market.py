@@ -259,11 +259,9 @@ class MarketDisplay(urwid.WidgetWrap):
         :arg prices: Dict that maps commodity names to prices
         """
         for commodity, price in prices.items():
-            idx = self.commodity_idx_map[commodity]
-
             price_formatted = locale.format('%d', price, grouping=True)
             if len(price_formatted) > 7:
-                price_formatted = '{:.1E}'.format(number)
+                price_formatted = '{:.1E}'.format(price)
 
             button = IndexedMenuButton('${}'.format(price_formatted))
             self.price_list.append(urwid.AttrMap(button, None))
@@ -278,11 +276,9 @@ class MarketDisplay(urwid.WidgetWrap):
             on the ship.
         """
         for commodity, amount in amounts.items():
-            idx = self.commodity_idx_map[commodity]
-
             amount_formatted = locale.format('%d', amount, grouping=True)
             if len(amount_formatted) > 7:
-                amount_formatted = '{:.1E}'.format(number)
+                amount_formatted = '{:.1E}'.format(amount)
 
             button = IndexedMenuButton('${}'.format(amount_formatted))
             self.hold_list.append(urwid.AttrMap(button, None))
