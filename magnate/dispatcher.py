@@ -19,42 +19,25 @@ Dispatcher manages the communication between the backend and various user
 interfaces.
 """
 
-from .dataloader import load_data_definition
-
-
 ALL_DESTINATIONS = tuple()
 
 
 class Dispatcher:
     """Manage the communication between the backend and frontends"""
 
-    def __init__(self, pubpen):
+    def __init__(self, pubpen, magnate, markets):
         self.pubpen = pubpen
+        self.magnate = magnate
+        self.markets = markets
         self.user = None
-        self.markets = None
-        self.ship_list = None
 
         self.pubpen.subscribe('action.ship.movement_attempt', self.handle_movement)
-        self.pubpen.subscribe('action.user.login_attempt', self.login)
+        self.pubpen.subscribe('action.user.login_attempt', self.handle_login)
         self.pubpen.subscribe('action.user.order', self.handle_order)
 
-    def login(self, username, password):
-        """Log a user into the game"""
-        if 'toshio' in username.lower():
-            self.pubpen.publish('user.login_success', username)
-            # Game can begin in earnest now
-            self.markets, self.ship_list = load_data_definition(self.pubpen, 'stellar.yml')
-
-            ### FIXME: In the future a ship should know what location it is
-            # at.  And then it should be able to lookup what locations it can
-            # reach from that planet.
-            global ALL_DESTINATIONS
-            ALL_DESTINATIONS = tuple(m for m in self.markets)
-            self.user = User(self.pubpen, username)
-            self.user.ship = Ship(self.pubpen, self.ship_list['Passenger'])
-        else:
-            self.pubpen.publish('user.login_failure',
-                                'Unknown account: {}'.format(username))
+    def handle_login(self, username, password):
+        user = self.magnate.login(username, password)
+        self.user = user
 
     def handle_order(self, order):
         fatal_error = False
@@ -112,24 +95,3 @@ class Dispatcher:
         except ValueError:
             self.pubpen.publish('ship.movement_failure', 'Unknown destination')
             return
-
-
-from .ship import Ship
-
-class User:
-    """A logged in user"""
-    def __init__(self, pubpen, username):
-        self.pubpen = pubpen
-        self.username = username
-        self.cash = 500
-        self.ship = None
-
-        self.pubpen.subscribe('query.user.info', self.handle_user_info)
-
-    def handle_user_info(self):
-        """Return all information about a user
-
-        :event user.info: All the information about the user
-        """
-        self.pubpen.publish('user.info', self.username, self.cash,
-                            self.ship.location)

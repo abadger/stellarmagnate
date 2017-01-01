@@ -16,20 +16,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import asyncio
 import sys
 
-from pubmarine import PubPen
-from straight.plugin import load
-#try:
-#    import uvloop
-#except ImportError:
-#    uvloop = None
-#else:
-#    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
-from magnate.dispatcher import Dispatcher
-from magnate.ui.api import UserInterface
+from magnate.magnate import Magnate
 
 
 # entrypoint parses args
@@ -43,22 +33,5 @@ from magnate.ui.api import UserInterface
 #   UI reacts to events from the user and the dispatcher
 #
 if __name__ == '__main__':
-    ### FIXME: Get this from the command line:
-    ui_name = 'urwid'
-
-    # Load the requested user interface
-    ui_plugins = load('magnate.ui', subclasses=UserInterface)
-    for UIClass in ui_plugins:
-        if UIClass.__module__.startswith('magnate.ui.{}'.format(ui_name)):
-            break
-    else:
-        print('Unknown user ui: {}'.format(ui_name))
-        sys.exit(1)
-
-    loop = asyncio.get_event_loop()
-    pubpen = PubPen(loop)
-    dispatcher = Dispatcher(pubpen)
-    ui = UIClass(pubpen)
-
-    ret_code = ui.run()
-    sys.exit(ret_code)
+    magnate = Magnate()
+    sys.exit(magnate.run())

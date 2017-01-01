@@ -22,7 +22,12 @@ from . import dispatcher
 @attr.s
 class ShipData:
     type = attr.ib(validator=attr.validators.instance_of(str))
+    id = attr.ib(validator=attr.validators.instance_of(int))
+    mean_price = attr.ib(validator=attr.validators.instance_of(int))
+    standard_deviation = attr.ib(validator=attr.validators.instance_of(int))
+    depreciation_rate = attr.ib(validator=attr.validators.instance_of(int))
     holdspace = attr.ib(validator=attr.validators.instance_of(int))
+    weaponmount = attr.ib(validator=attr.validators.instance_of(int))
 
 
 @attr.s
