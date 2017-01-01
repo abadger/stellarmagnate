@@ -320,7 +320,7 @@ class MainWindow(urwid.LineBox):
         self.info_window = InfoWindow(self.pubpen)
         self.main_display = MainDisplay(self.pubpen)
 
-        cols = urwid.Columns([self.main_display, (20, self.info_window)])
+        cols = urwid.Columns([self.main_display, (15, self.info_window)])
         layout = urwid.Pile((
             ('pack', self.menu_bar),
             ('weight', 1, cols),
