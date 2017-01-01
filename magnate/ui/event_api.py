@@ -27,7 +27,13 @@ import attr
 
 from ..utils.attrs import enum_converter, enum_validator
 
+
+# Enums are class-like but here we are using the function interface for
+# creating them so that we don't have to manually specify ids for each
+# category
+#pylint: disable=invalid-name
 OrderStatusType = enum.Enum('OrderStatusType', ('presale', 'submitted', 'rejected', 'finalized'))
+#pylint: enable=invalid-name
 
 
 @attr.s
@@ -53,4 +59,4 @@ class Order:
     buy = attr.ib(validator=attr.validators.instance_of(bool), default=True)
     status = attr.ib(default=OrderStatusType.presale,
                      validator=partial(enum_validator, OrderStatusType),
-                     convert=partial(enum_converter,OrderStatusType))
+                     convert=partial(enum_converter, OrderStatusType))
