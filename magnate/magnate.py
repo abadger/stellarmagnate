@@ -209,7 +209,7 @@ class Magnate:
         Run the program.  This is the main entrypoint to the magnate client
         """
         ui_plugins = load('magnate.ui', subclasses=UserInterface)
-        for UIClass in ui_plugins:
+        for UIClass in ui_plugins:  #pylint: disable=invalid-name
             if UIClass.__module__.startswith('magnate.ui.{}'.format(self.cfg['ui_plugin'])):
                 break
         else:
@@ -223,6 +223,6 @@ class Magnate:
 
         # UIClass is always available because we'd have already returned (via
         # the for-else) if UIClass was not defined
-        ui = UIClass(self.pubpen) #pylint: disable=undefined-loop-variable
+        user_interface = UIClass(self.pubpen) #pylint: disable=undefined-loop-variable
 
-        return ui.run()
+        return user_interface.run()
