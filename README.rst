@@ -35,15 +35,15 @@ basic framework that separates the User Interface from the game's logic is in
 place.  An urwid (text-based) interface is slowly being written.
 
 To log in, use the username "toshio" and any password.
-The game currently supports moving from planet to planet.
+The game currently supports moving from planet to planet and buying and
+selling commodities on those planets.  That's enough to be playable but it's
+far from fun at this point.
 
 The large TODO list includes:
 
 * Finish the basic functionality which is encompassed in the DESIGN.urwid file
-  * Ability to buy/sell commodities
   * Ability to buy/sell bigger ships
   * Ability to buy/sell ship components
-  * A quick view of player/ship information
   * Banking system
 * Save and load of an in progress game
 * When saving, use the username and password to store the file for
