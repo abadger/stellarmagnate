@@ -202,11 +202,15 @@ class InfoWindow(urwid.WidgetWrap):
         pass
 
 
-MAX_MESSAGES = 5
+MAX_MESSAGES = 3
 class MessageWindow(urwid.WidgetWrap):
     """Display system messages"""
+    _MIN_TIME_BETWEEN_MESSAGES = 0.7
+    _CAN_PRINT_MESSAGE = True
+
     def __init__(self, pubpen):
         self.pubpen = pubpen
+        self.loop = self.pubpen.loop
 
         self.message_list = urwid.SimpleFocusListWalker([])
         list_box = urwid.ListBox(self.message_list)
@@ -217,15 +221,26 @@ class MessageWindow(urwid.WidgetWrap):
         self.pubpen.subscribe('user.order_failure', self.add_message)
         self.pubpen.subscribe('ship.movement_failure', self.add_message)
 
+    def _allow_messages(self):
+        self._CAN_PRINT_MESSAGE = True
+
     def add_message(self, msg):
         """
         Add a message to the MessageWindow.
 
         Reap older messages if there are too many
         """
+        if not self._CAN_PRINT_MESSAGE:
+            self.loop.call_later(self._MIN_TIME_BETWEEN_MESSAGES, self.add_message, msg)
+            return
+
         self.message_list.append(urwid.Text(msg))
         while len(self.message_list) > MAX_MESSAGES:
             self.message_list.pop(0)
+
+        self._CAN_PRINT_MESSAGE = False
+        self.loop.call_later(self._MIN_TIME_BETWEEN_MESSAGES, self._allow_messages)
+
 
 class ShipyardDisplay(urwid.WidgetWrap):
     """Display for the user to manage their ship and equipment"""
@@ -381,7 +396,7 @@ class MainWindow(urwid.LineBox):
         self.msg_window = MessageWindow(self.pubpen)
 
         pile = urwid.Pile((self.main_display,
-                           (3, self.msg_window),
+                           (MAX_MESSAGES, self.msg_window),
                           ))
         cols = urwid.Columns((pile, (15, self.info_window)))
         layout = urwid.Pile((
