@@ -90,8 +90,8 @@ class Ship:
 
         :event ship.info:
         """
-        self.pubpen.publish('ship.info', self.type, self.holdspace,
-                            self.filled_hold, self.filled_hold, self.manifest)
+        self.pubpen.publish('ship.info', self.type, self.holdspace - self.filled_hold,
+                            self.filled_hold, self.manifest)
 
     def add_cargo(self, new_entry):
         """
