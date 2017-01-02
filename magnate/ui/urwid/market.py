@@ -148,6 +148,7 @@ class TransactionDialog(urwid.WidgetWrap):
     def handle_place_order(self, *args):
         """Request to make the transaction"""
         if self.buy_button.state is True:
+            self.order.buy = True
             if self.hold_box.get_state() is True:
                 ### TODO: place the min() of quantity or hold free space here.
                 # put rest in warehouse
@@ -161,6 +162,7 @@ class TransactionDialog(urwid.WidgetWrap):
                                                                      self.handle_transaction_finalized)
             self.pubpen.publish('action.user.order', self.order)
         elif self.sell_button.state is True:
+            self.order.buy = False
             if self.hold_box.get_state() is True:
                 ### TODO: place the min() of quantity or amount of commodity in hold
                 # take rest from warehouse
@@ -314,12 +316,11 @@ class MarketDisplay(urwid.WidgetWrap):
             entry.set_attr_map({})
         self.price_list[idx].set_attr_map({None: 'reversed'})
 
-    def handle_new_location(self, new_location, old_location):
+    def handle_new_location(self, new_location, *args):
         """
         Update the market display when the ship moves
 
         :arg new_location: The location the ship has moved to
-        :arg old_location: The location the ship has moved from
         """
         self.location = new_location
         self.commodity_list.clear()

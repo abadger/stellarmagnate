@@ -19,6 +19,7 @@ Dispatcher manages the communication between the backend and various user
 interfaces.
 """
 
+from .ship import ManifestEntry
 
 class Dispatcher:
     """Manage the communication between the backend and frontends"""
@@ -74,22 +75,33 @@ class Dispatcher:
 
             # Purchase the commodity
             if not fatal_error:
-                self.user.cash -= total_sale
+                new_cash = self.user.cash - total_sale
+                try:
+                    self.user.ship.add_cargo(ManifestEntry(order.commodity, order.hold_quantity, order.price))
+                except ValueError:
+                    self.pubpen.publish("user.order_failure", "Amount ordered, {}, will not fit into the ship's hold".format(order.hold_quantity))
+                    return
+                ### FIXME: add to the user's warehouse space
                 pass
-                ### FIXME: add to the user's hold and warehouse space
-                pass
+                self.user.cash = new_cash
                 self.pubpen.publish('market.{}.purchased'.format(order.location), order.commodity, order.hold_quantity + order.warehouse_quantity)
         else:
             # Check that the price matches or is better
             if order.price > current_price:
                 fatal_error = True
-                self.pubpen.publish('user.order_failure', msg='Current market price is lower than on the order.  Refresh prices and try again')
-            ### FIXME: Check that the user has enough commodity
+                self.pubpen.publish('user.order_failure', 'Current market price is lower than on the order.  Refresh prices and try again')
+
+            try:
+                self.user.ship.remove_cargo(order.commodity, order.hold_quantity)
+            except ValueError:
+                fatal_error = True
+                self.pubpen.publish('user.order_failure', 'We do not have {} of {} available to sell'.format(order.commodity, order.hold_quantity))
+            ### FIXME: Check that the user has enough commodity in warehouse
             pass
 
             # Report that the commodities were sold
             if not fatal_error:
-                ### FIXME:  Deduct from the user's hold and warehouse space
+                ### FIXME:  Deduct from the user's warehouse space
                 self.user.cash += total_sale
                 self.pubpen.publish('market.{}.sold'.format(order.location), order.commodity, order.hold_quantity + order.warehouse_quantity)
 

@@ -112,7 +112,7 @@ class MenuBar(urwid.WidgetWrap):
     """Menu displaying major player options"""
     _selectable = True
 
-    def __init__(self, pubpen, line=u'\u2500'):
+    def __init__(self, pubpen):
         self.pubpen = pubpen
 
         self.port_entry = urwid.Text('(P)ort District')
@@ -176,14 +176,12 @@ class InfoWindow(urwid.WidgetWrap):
         # our information
         self.pubpen.subscribe('ship.moved', self.handle_new_location)
         ### FIXME: Subscribe to purchased, sold
-        #self.pubpen.subscribe('ship.cargo.update')
-        #self.pubpen.subscribe('user.cash.update')
+        self.pubpen.subscribe('ship.cargo.update', self.handle_cargo_update)
+        self.pubpen.subscribe('user.cash.update', self.handle_cash_update)
         #self.pubpen.subscribe('user.bank.update')
         #self.pubpen.subscribe('user.loan.update')
 
         # Secondary triggers: These are responses to requests for information
-        #self.pubpen.subscribe('ship.cargo.info')
-        pass
         self.pubpen.subscribe('ship.info', self.handle_ship_info)
         self.pubpen.subscribe('user.info', self.handle_user_info)
 
@@ -191,9 +189,21 @@ class InfoWindow(urwid.WidgetWrap):
         self.pubpen.subscribe('user.login_success', self.populate_info)
 
     def populate_info(self, *args):
-        # Populate the information for the first time
+        """Populate the information for the first time"""
         self.pubpen.publish('query.user.info')
         self.pubpen.publish('query.ship.info')
+
+    def handle_cargo_update(self, manifest, free_space, filled_space):
+        """Update cargo information when it is updated in the backend"""
+        free_space = format_number(free_space)
+        self.free_space.set_text(' {}'.format(free_space))
+
+        filled_space = format_number(filled_space)
+        self.filled_space.set_text(' {}'.format(filled_space))
+
+    def handle_cash_update(self, new_cash, *args):
+        """Update cash display when cash is updated on the backend"""
+        self.cash.set_text(' ${}'.format(new_cash))
 
     def handle_new_location(self, location, *args):
         """Update the warehouse and finance information when we get to a new location"""
@@ -214,6 +224,7 @@ class InfoWindow(urwid.WidgetWrap):
         pass
 
     def handle_ship_info(self, ship_type, free_space, filled_space, *args):
+        """Update ship info for new ship info from the backend"""
         self.ship_type.set_text(' {}'.format(ship_type))
 
         free_space = format_number(free_space)
@@ -223,6 +234,7 @@ class InfoWindow(urwid.WidgetWrap):
         self.filled_space.set_text(' {}'.format(filled_space))
 
     def handle_user_info(self, username, cash, location):
+        """Update cash and location-dependent info for new user info"""
         self.cash.set_text(' ${}'.format(cash))
         self.handle_new_location(location)
 
@@ -231,7 +243,7 @@ MAX_MESSAGES = 3
 class MessageWindow(urwid.WidgetWrap):
     """Display system messages"""
     _MIN_TIME_BETWEEN_MESSAGES = 0.7
-    _CAN_PRINT_MESSAGE = True
+    _can_print_message = True
 
     def __init__(self, pubpen):
         self.pubpen = pubpen
@@ -246,16 +258,13 @@ class MessageWindow(urwid.WidgetWrap):
         self.pubpen.subscribe('user.order_failure', self.add_message)
         self.pubpen.subscribe('ship.movement_failure', self.add_message)
 
-    def _allow_messages(self):
-        self._CAN_PRINT_MESSAGE = True
-
     def add_message(self, msg):
         """
         Add a message to the MessageWindow.
 
         Reap older messages if there are too many
         """
-        if not self._CAN_PRINT_MESSAGE:
+        if not self._can_print_message:
             self.loop.call_later(self._MIN_TIME_BETWEEN_MESSAGES, self.add_message, msg)
             return
 
@@ -263,8 +272,9 @@ class MessageWindow(urwid.WidgetWrap):
         while len(self.message_list) > MAX_MESSAGES:
             self.message_list.pop(0)
 
-        self._CAN_PRINT_MESSAGE = False
-        self.loop.call_later(self._MIN_TIME_BETWEEN_MESSAGES, self._allow_messages)
+        self._can_print_message = False
+        self.loop.call_later(self._MIN_TIME_BETWEEN_MESSAGES,
+                             partial(setattr, self, '_can_print_message', True))
 
 
 class ShipyardDisplay(urwid.WidgetWrap):

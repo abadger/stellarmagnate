@@ -19,8 +19,6 @@ Data structures related to Player controlled ships
 """
 import attr
 
-from . import dispatcher
-
 
 @attr.s
 class ManifestEntry:
@@ -35,7 +33,7 @@ class ManifestEntry:
 
     #: Average price paid for the commodity.  This may be used to
     #: automatically show profit and loss
-    price_paid = attr.ib(validator=attr.validators.instance_of(float))
+    price_paid = attr.ib(validator=attr.validators.instance_of(float), convert=float)
 
     # When we start using depreciation in price:
     #average_age = attr.ib(validator.attr.validators.instance_of(float))
@@ -89,6 +87,10 @@ class Ship:
             return getattr(self.ship_data, key)
 
     def handle_ship_info(self):
+        """Publish information about the ship on request
+
+        :event ship.info:
+        """
         self.pubpen.publish('ship.info', self.type, self.holdspace,
                             self.filled_hold, self.filled_hold, self.manifest)
 
@@ -115,6 +117,8 @@ class Ship:
 
         self.filled_hold += new_entry.quantity
 
+        self.pubpen.publish('ship.cargo.update', self.manifest[new_entry.commodity], self.holdspace - self.filled_hold, self.filled_hold)
+
     def remove_cargo(self, commodity, amount):
         """
         Remove an amount of cargo from the hold
@@ -131,10 +135,14 @@ class Ship:
 
         transfer = ManifestEntry(commodity, amount, self.manifest[commodity].price_paid)
         if amount == self.manifest[commodity].quantity:
+            amount_left = ManifestEntry(commodity, 0, self.manifest[commodity].price_paid)
             del self.manifest[commodity]
         else:
             self.manifest[commodity].quantity -= amount
+            amount_left = self.manifest[commodity]
         self.filled_hold -= amount
+
+        self.pubpen.publish('ship.cargo.update', amount_left, self.holdspace - self.filled_hold, self.filled_hold)
 
         return transfer
 
@@ -163,10 +171,10 @@ class Ship:
             pass
         self._destinations = temp_destinations
 
-        self.pubpen.publish('ship.destinations', self.destinations)
         previous_location = self._location.name if self._location is not None else None
-        self.pubpen.publish('ship.moved', location.name, previous_location)
         self._location = location
+        self.pubpen.publish('ship.destinations', self.destinations)
+        self.pubpen.publish('ship.moved', location.name, previous_location)
 
     @property
     def destinations(self):

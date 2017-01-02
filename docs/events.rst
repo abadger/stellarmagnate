@@ -17,6 +17,13 @@ User events
 
 User events return information about user objects.
 
+.. py:function:: user.cash.update(new_cash: int, old_cash: int)
+
+    Emitted when a change occurs in the amount of a user's cash on hand
+
+    :arg int new_cash: The amount of cash a user now has
+    :arg old_cash: The amount of cash the user had before
+
 .. py:function:: user.login_success(username: string)
 
     Emitted when a user logs in successfully.
@@ -51,14 +58,15 @@ Ship Events
 
 Ship events return information about ship objects.
 
-.. py:function:: ship.cargo.update(cargo: dict)
+.. py:function:: ship.cargo.update(amount_left: ManifestEntry, free_space: int, filled_hold: int)
 
     Emitted when a ship's cargo manifest changes (commodities are bought and
     sold or transferred to a warehouse)
 
-    :arg dict cargo: A dict of cargo in the ship's hold.  Format is:
-        :key: cargoname (ie: "Food")
-        :value: amount (ie: 50)
+    :arg ManifestEntry amount_left: A :class:`magnate.ship.ManifestEntry` that
+        shows how much of a commodity is left on board.
+    :arg int free_space: Amount of the hold that's free
+    :arg int filled_hold: Amount of the hold that's filled
 
 .. py:function:: ship.destinations(destinations: list)
 

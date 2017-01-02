@@ -49,7 +49,7 @@ class User:
     def __init__(self, pubpen, username):
         self.pubpen = pubpen
         self.username = username
-        self.cash = 500
+        self._cash = 500
         self.ship = None
 
         self.pubpen.subscribe('query.user.info', self.handle_user_info)
@@ -62,8 +62,27 @@ class User:
         self.pubpen.publish('user.info', self.username, self.cash,
                             self.ship.location.name)
 
+    @property
+    def cash(self):
+        """Property for retrieving user's cash"""
+        return self._cash
 
-def _parse_args(self, args=sys.argv):
+    @cash.setter
+    def cash(self, new_cash):
+        """
+        Prevent user's cash from going below zero
+
+        :event user.cash.update: Publish when the user's cash changes.
+        """
+        if not isinstance(new_cash, int) or new_cash < 0:
+            raise ValueError('Invalid value of cash: {}'.format(new_cash))
+
+        old_cash = self._cash
+        self._cash = new_cash
+        self.pubpen.publish('user.cash.update', new_cash, old_cash)
+
+
+def _parse_args(self, args=tuple(sys.argv)):
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(description='A space themed trading game')
     parser.add_argument('--version', action='version', version=__version__)
