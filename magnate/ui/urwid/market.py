@@ -16,13 +16,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """ Handle the display of Markets and Commodities"""
 
-import locale
 from functools import partial
 
 import urwid
 
 from ..event_api import Order
 from .indexed_menu import IndexedMenuButton, IndexedMenuEnumerator
+from .numbers import format_number
 from .sideless_linebox import SidelessLineBox
 
 
@@ -272,11 +272,9 @@ class MarketDisplay(urwid.WidgetWrap):
         :arg prices: Dict that maps commodity names to prices
         """
         for commodity, price in prices.items():
-            price_formatted = locale.format('%d', price, grouping=True)
-            if len(price_formatted) > 7:
-                price_formatted = '{:.1E}'.format(price)
+            formatted_price = format_number(price)
 
-            button = IndexedMenuButton('${}'.format(price_formatted))
+            button = IndexedMenuButton('${}'.format(formatted_price))
             self.price_list.append(urwid.AttrMap(button, None))
 
         self._highlight_focused_commodity_line()
@@ -289,11 +287,9 @@ class MarketDisplay(urwid.WidgetWrap):
             on the ship.
         """
         for commodity, amount in amounts.items():
-            amount_formatted = locale.format('%d', amount, grouping=True)
-            if len(amount_formatted) > 7:
-                amount_formatted = '{:.1E}'.format(amount)
+            formatted_amount = format_number(amount)
 
-            button = IndexedMenuButton('${}'.format(amount_formatted))
+            button = IndexedMenuButton('${}'.format(formatted_amount))
             self.hold_list.append(urwid.AttrMap(button, None))
 
         self._highlight_focused_commodity_line()
