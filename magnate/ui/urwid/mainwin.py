@@ -234,7 +234,7 @@ class InfoWindow(urwid.WidgetWrap):
 
     def handle_user_info(self, username, cash, location):
         """Update cash and location-dependent info for new user info"""
-        self.cash.set_text(' ${}'.format(cash))
+        self.cash.set_text(' ${}'.format(format_number(cash)))
         self.handle_new_location(location)
 
 
