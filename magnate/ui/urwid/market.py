@@ -250,7 +250,7 @@ class MarketDisplay(urwid.WidgetWrap):
 
         self.pubpen.subscribe('ship.moved', self.handle_new_location)
         self.pubpen.subscribe('ship.info', self.handle_ship_info)
-        #self.pubpen.subscribe('ship.cargo.update', self.handle_cargo_update)
+        self.pubpen.subscribe('ship.cargo.update', self.handle_cargo_update)
 
     #
     # Helpers
@@ -276,7 +276,15 @@ class MarketDisplay(urwid.WidgetWrap):
     def _sync_commodity_map(self, commodity_map, widget_list, money=False):
         new_commodity_map = OrderedDict()
         for commodity in self.commodity_idx_map:
-            new_commodity_map[commodity] = commodity_map.get(commodity, None)
+            new_value = commodity_map.get(commodity, None)
+            if money:
+                if new_value is None:
+                    new_value = 0
+            else:
+                if new_value == 0:
+                    new_value = None
+
+            new_commodity_map[commodity] = new_value
         commodity_map = new_commodity_map
 
         widget_list.clear()
@@ -339,9 +347,10 @@ class MarketDisplay(urwid.WidgetWrap):
             self.commodity_hold_map[key] = value.quantity
         self._construct_commodity_list(self.commodity_hold_map)
 
-    def handle_cargo_data(self, cargo):
+    def handle_cargo_update(self, cargo, free_space, filled_space):
         """Update the market display when cargo info changes"""
-        pass
+        self.commodity_hold_map[cargo.commodity] = cargo.quantity
+        self._construct_commodity_list(self.commodity_hold_map)
 
     def handle_new_warehouse_info(self, warehouse_info):
         """Update the market display when warehouse info changes"""
