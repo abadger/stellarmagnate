@@ -1,4 +1,3 @@
-#
 # Stellar Magnate - A space-themed commodity trading game
 # Copyright (C) 2016, Toshio Kuratomi <toshio@fedoraproject.org>
 #

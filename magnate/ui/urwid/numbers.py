@@ -1,6 +1,5 @@
-#
 # Stellar Magnate - A space-themed commodity trading game
-# Copyright (C) 2016, Toshio Kuratomi <toshio@fedoraproject.org>
+# Copyright (C) 2017 Toshio Kuratomi <toshio@fedoraproject.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
