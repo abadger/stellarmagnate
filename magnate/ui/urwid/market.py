@@ -273,7 +273,15 @@ class MarketDisplay(urwid.WidgetWrap):
         self.price_list[idx].set_attr_map({None: 'reversed'})
         self.hold_list[idx].set_attr_map({None: 'reversed'})
 
-    def _sync_commodity_map(self, commodity_map, widget_list, money=False):
+    def _sync_commodity_map(self, commodity_map, money=False):
+        """
+        Make sure the given commodity map contains the same commodities in the
+        same order as the main commodity map
+
+        :arg commodity_map: The auxilliary commodity map to check
+        :kwarg money: Whether the mapping contains a monetary amount.  This
+            influences how zero values are formatted
+        """
         new_commodity_map = OrderedDict()
         for commodity in self.commodity_idx_map:
             new_value = commodity_map.get(commodity, None)
@@ -283,12 +291,24 @@ class MarketDisplay(urwid.WidgetWrap):
             else:
                 if new_value == 0:
                     new_value = None
-
             new_commodity_map[commodity] = new_value
-        commodity_map = new_commodity_map
 
+        commodity_map = new_commodity_map
+        return commodity_map
+
+    @staticmethod
+    def _sync_widget_list(widget_list, commodity_map, money=False):
+        """
+        Make sure the given widget_list contains all the commodities in the correct order
+
+        :arg widget_list: List of widgets that display a specific piece of
+            information about the commodity.  For instance, price of the item.
+        :arg commodity_map: Ordered mapping of the commodities to the information.
+        :kwarg money: Whether the information is a monetary value.  This influences
+            the formatting of the information.
+        """
         widget_list.clear()
-        for commodity, value in commodity_map.items():
+        for value in commodity_map.values():
             if isinstance(value, int):
                 formatted_number = format_number(value)
                 if money:
@@ -300,8 +320,6 @@ class MarketDisplay(urwid.WidgetWrap):
                     value = " "
                 button = IndexedMenuButton(value)
             widget_list.append(urwid.AttrMap(button, None))
-
-        return commodity_map
 
     def _construct_commodity_list(self, commodities):
         """
@@ -319,8 +337,12 @@ class MarketDisplay(urwid.WidgetWrap):
 
                 self.commodity_idx_map[commodity] = len(self.commodity_list) - 1
 
-        self.commodity_price_map = self._sync_commodity_map(self.commodity_price_map, self.price_list, money=True)
-        self.commodity_hold_map = self._sync_commodity_map(self.commodity_hold_map, self.hold_list, money=False)
+        self.commodity_price_map = self._sync_commodity_map(self.commodity_price_map, money=True)
+        self.commodity_hold_map = self._sync_commodity_map(self.commodity_hold_map, money=False)
+
+        self._sync_widget_list(self.price_list, self.commodity_price_map, money=True)
+        self._sync_widget_list(self.hold_list, self.commodity_hold_map, money=False)
+
 
         self._highlight_focused_line()
 
@@ -339,7 +361,7 @@ class MarketDisplay(urwid.WidgetWrap):
             self.commodity_price_map[commodity] = price
         self._construct_commodity_list(self.commodity_price_map)
 
-    def handle_ship_info(self, ship_type, free_space, filled_space, manifest):
+    def handle_ship_info(self, ship_type, free_space, filled_space, manifest): #pylint: disable=unused-argument
         """
         Update the display with hold information for all commodities
         """
@@ -347,7 +369,7 @@ class MarketDisplay(urwid.WidgetWrap):
             self.commodity_hold_map[key] = value.quantity
         self._construct_commodity_list(self.commodity_hold_map)
 
-    def handle_cargo_update(self, cargo, free_space, filled_space):
+    def handle_cargo_update(self, cargo, *args):
         """Update the market display when cargo info changes"""
         self.commodity_hold_map[cargo.commodity] = cargo.quantity
         self._construct_commodity_list(self.commodity_hold_map)
