@@ -26,6 +26,7 @@ import urwid
 
 from .gamemenu import GameMenuDialog
 from .market import MarketDisplay, TransactionDialog
+from .sideless_linebox import SidelessLineBox
 from .travel import TravelDisplay
 
 # ui elements:
@@ -106,7 +107,7 @@ class StatusBar(urwid.Columns):
         self.update_location(new_location)
 
 
-class MenuBar(urwid.Pile):
+class MenuBar(urwid.WidgetWrap):
     """Menu displaying major player options"""
     _selectable = True
 
@@ -129,10 +130,7 @@ class MenuBar(urwid.Pile):
             ('weight', 1, urwid.Divider(' ')),
             ), dividechars=5)
 
-        super().__init__((
-            ('pack', self.menu_entries),
-            ('weight', 1, urwid.Divider(line)),
-            ))
+        super().__init__(self.menu_entries)
 
 
 class InfoWindow(urwid.WidgetWrap):
@@ -169,7 +167,8 @@ class InfoWindow(urwid.WidgetWrap):
                                             header8, self.bank,
                                             header9, self.loan])
         info = urwid.ListBox(info_list)
-        super().__init__(info)
+        box = SidelessLineBox(info, tlcorner='─', trcorner='─', lline=' ', rline=None, bline=None)
+        super().__init__(box)
 
         # Primary triggers: These are events that tell us we need to refresh
         # our information
@@ -203,6 +202,28 @@ class InfoWindow(urwid.WidgetWrap):
         pass
 
 
+MAX_MESSAGES = 5
+class MessageWindow(urwid.WidgetWrap):
+    """Display system messages"""
+    def __init__(self, pubpen):
+        self.pubpen = pubpen
+
+        self.message_list = urwid.SimpleFocusListWalker([])
+        list_box = urwid.ListBox(self.message_list)
+        message_win = SidelessLineBox(list_box, tline=None, lline=None, bline=None,
+                                      trcorner='│', brcorner='│')
+        super().__init__(message_win)
+
+    def add_message(self, msg):
+        """
+        Add a message to the MessageWindow.
+
+        Reap older messages if there are too many
+        """
+        self.message_list.append(urwid.Text(msg))
+        while len(self.message_list) > MAX_MESSAGES:
+            self.message_list.pop(0)
+
 class ShipyardDisplay(urwid.WidgetWrap):
     """Display for the user to manage their ship and equipment"""
     _selectable = True
@@ -210,7 +231,7 @@ class ShipyardDisplay(urwid.WidgetWrap):
     def __init__(self, pubpen):
         self.pubpen = pubpen
 
-        blank = urwid.Text('This test page intentionaly left blank')
+        blank = urwid.Text('This test page intentionally left blank')
         container = urwid.Filler(blank)
         super().__init__(container)
         pass
@@ -223,7 +244,7 @@ class FinancialDisplay(urwid.WidgetWrap):
     def __init__(self, pubpen):
         self.pubpen = pubpen
 
-        blank = urwid.Text('This test page intentionaly left blank')
+        blank = urwid.Text('This test page intentionally left blank')
         container = urwid.Filler(blank)
         super().__init__(container)
         pass
@@ -240,7 +261,9 @@ class MainDisplay(urwid.WidgetWrap):
     def __init__(self, pubpen):
         self.pubpen = pubpen
         self.display_stack = []
-        self.blank = urwid.LineBox(urwid.SolidFill(' '))
+        self.blank = SidelessLineBox(urwid.SolidFill(' '), lline=None,
+                                     blcorner='─', tlcorner='─',
+                                     trcorner='\u252c', brcorner='\u2524')
         self.background = urwid.WidgetPlaceholder(self.blank)
 
         super().__init__(self.background)
@@ -352,8 +375,12 @@ class MainWindow(urwid.LineBox):
         self.menu_bar = MenuBar(self.pubpen)
         self.info_window = InfoWindow(self.pubpen)
         self.main_display = MainDisplay(self.pubpen)
+        self.msg_window = MessageWindow(self.pubpen)
 
-        cols = urwid.Columns([self.main_display, (15, self.info_window)])
+        pile = urwid.Pile((self.main_display,
+                           (3, self.msg_window),
+                          ))
+        cols = urwid.Columns((pile, (15, self.info_window)))
         layout = urwid.Pile((
             ('pack', self.menu_bar),
             ('weight', 1, cols),

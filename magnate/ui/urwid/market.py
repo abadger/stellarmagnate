@@ -23,6 +23,7 @@ import urwid
 
 from ..event_api import Order
 from .indexed_menu import IndexedMenuButton, IndexedMenuEnumerator
+from .sideless_linebox import SidelessLineBox
 
 
 class TransactionDialog(urwid.WidgetWrap):
@@ -73,7 +74,9 @@ class TransactionDialog(urwid.WidgetWrap):
         filler = urwid.Filler(padding, valign='middle',
                               height=len(self.layout_list) + 2)
 
-        outer_layout = urwid.LineBox(filler)
+        outer_layout = SidelessLineBox(filler, lline=None, tlcorner='─',
+                                       blcorner='─', trcorner='\u252c',
+                                       brcorner='\u2524')
         super().__init__(outer_layout)
 
         urwid.connect_signal(self.commit_button, 'click', self.handle_place_order)
@@ -218,24 +221,24 @@ class MarketDisplay(urwid.WidgetWrap):
         self.hold = urwid.ListBox(self.hold_list)
         self.warehouse = urwid.ListBox(self.warehouse_list)
 
-        market_col = urwid.LineBox(self.commodity, title='Commodity',
-                                   trcorner='\u2500', rline=' ',
-                                   brcorner='\u2500')
-        price_col = urwid.LineBox(self.price, title='Price',
-                                  trcorner='\u2500', rline=' ',
-                                  brcorner='\u2500', tlcorner='\u2500',
-                                  lline=' ', blcorner='\u2500')
-        #amount_col = urwid.LineBox(self.amount, title='For Sale',
-        #                             trcorner='\u2500', rline=' ',
+        market_col = SidelessLineBox(self.commodity, title='Commodity', title_align='left',
+                                     lline=None, tlcorner='─', trcorner='─',
+                                     rline=None, blcorner='─', brcorner='─')
+        price_col = SidelessLineBox(self.price, title='Price', title_align='left',
+                                    trcorner='\u2500', rline=None,
+                                    brcorner='\u2500', tlcorner='\u2500',
+                                    lline=None, blcorner='\u2500')
+        #amount_col = SidelessLineBox(self.amount, title='For Sale',
+        #                             trcorner='\u2500', rline=None,
         #                             brcorner='\u2500', tlcorner='\u2500',
-        #                             lline=' ', blcorner='\u2500')
-        hold_col = urwid.LineBox(self.hold, title='Hold',
-                                 trcorner='\u2500', rline=' ',
-                                 brcorner='\u2500', tlcorner='\u2500',
-                                 lline=' ', blcorner='\u2500')
-        warehouse_col = urwid.LineBox(self.warehouse, title='Warehouse',
-                                      tlcorner='\u2500', lline=' ',
-                                      blcorner='\u2500')
+        #                             lline=None, blcorner='\u2500')
+        hold_col = SidelessLineBox(self.hold, title='Hold',
+                                   trcorner='\u2500', rline=None,
+                                   brcorner='\u2500', tlcorner='\u2500',
+                                   lline=None, blcorner='\u2500')
+        warehouse_col = SidelessLineBox(self.warehouse, title='Warehouse',
+                                        tlcorner='\u2500', lline=None, blcorner='\u2500',
+                                        trcorner='\u252c', brcorner='\u2524')
 
         self.market_display = urwid.Columns([('weight', 2, market_col), (13, price_col), (20, hold_col), (20, warehouse_col)])
 
