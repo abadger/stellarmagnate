@@ -80,6 +80,7 @@ class TransactionDialog(urwid.WidgetWrap):
 
         urwid.connect_signal(self.commit_button, 'click', self.handle_place_order)
         urwid.connect_signal(self.cancel_button, 'click', self.handle_transaction_finalized)
+
         self.pubpen.subscribe('ui.urwid.order_info', self.create_new_transaction)
 
     def create_new_transaction(self, commodity, price, location):
@@ -246,10 +247,23 @@ class MarketDisplay(urwid.WidgetWrap):
         super().__init__(self.market_display)
 
         self.pubpen.subscribe('ship.moved', self.handle_new_location)
-        #self.pubpen.subscribe('ship.cargo') => handle new cargo information
+        #self.pubpen.subscribe('ship.info', self.handle_ship_info)
+        #self.pubpen.subscribe('ship.cargo.update', self.handle_cargo_update)
 
+    def _highlight_focused_commodity_line(self):
+        """Highlight the other portions of the commodity line that match with the commodity that's in focus"""
+        try:
+            idx = self.commodity.focus_position
+        except IndexError:
+            # The commodity list hasn't been refreshed yet.
+            idx = 0
+        for entry in self.price_list:
+            entry.set_attr_map({})
+        self.price_list[idx].set_attr_map({None: 'reversed'})
+
+    #
     # Populate the columns of the Market Display
-
+    #
     def _construct_commodity_list(self, commodities):
         """
         Display the commodities that can be bought and sold
@@ -290,30 +304,33 @@ class MarketDisplay(urwid.WidgetWrap):
         for commodity, amount in amounts.items():
             formatted_amount = format_number(amount)
 
-            button = IndexedMenuButton('${}'.format(formatted_amount))
+            button = IndexedMenuButton('{}'.format(formatted_amount))
             self.hold_list.append(urwid.AttrMap(button, None))
 
         self._highlight_focused_commodity_line()
 
-    def handle_commodity_select(self, commodity, *args):
+    #
+    # Handle updates to the displyed info
+    #
+    def handle_market_info(self, prices):
         """
-        Create a buy/sell dialog when the commodity is selected
+        Update the display with prices about all commodities in a market
 
-        :arg commodity: The name of the commodity selected
+        :arg prices: a dict mapping commodity names to prices
         """
-        self.pubpen.publish('ui.urwid.order_info', commodity, self.commodity_price_map[commodity], self.location)
-        urwid.emit_signal(self, 'open_transaction_dialog')
+        self.pubpen.unsubscribe(self._market_query_sub_id)
+        self._market_query_sub_id = None
+        self._construct_commodity_list(prices.keys())
+        self._construct_price_list(prices)
+        self.commodity_price_map = prices
 
-    def _highlight_focused_commodity_line(self):
-        """Highlight the other portions of the commodity line that match with the commodity that's in focus"""
-        try:
-            idx = self.commodity.focus_position
-        except IndexError:
-            # The commodity list hasn't been refreshed yet.
-            idx = 0
-        for entry in self.price_list:
-            entry.set_attr_map({})
-        self.price_list[idx].set_attr_map({None: 'reversed'})
+    def handle_cargo_data(self, cargo):
+        """Update the market display when cargo info changes"""
+        pass
+
+    def handle_new_warehouse_info(self, warehouse_info):
+        """Update the market display when warehouse info changes"""
+        pass
 
     def handle_new_location(self, new_location, *args):
         """
@@ -335,25 +352,14 @@ class MarketDisplay(urwid.WidgetWrap):
         self.pubpen.publish('query.market.{}.info'.format(new_location))
         self.pubpen.publish('query.warehouse.{}.info'.format(new_location))
 
-    def handle_market_info(self, prices):
+    def handle_commodity_select(self, commodity, *args):
         """
-        Update the display with prices about all commodities in a market
+        Create a buy/sell dialog when the commodity is selected
 
-        :arg prices: a dict mapping commodity names to prices
+        :arg commodity: The name of the commodity selected
         """
-        self.pubpen.unsubscribe(self._market_query_sub_id)
-        self._market_query_sub_id = None
-        self._construct_commodity_list(prices.keys())
-        self._construct_price_list(prices)
-        self.commodity_price_map = prices
-
-    def handle_cargo_data(self, cargo):
-        """Update the market display when cargo info changes"""
-        pass
-
-    def handle_new_warehouse_info(self, warehouse_info):
-        """Update the market display when warehouse info changes"""
-        pass
+        self.pubpen.publish('ui.urwid.order_info', commodity, self.commodity_price_map[commodity], self.location)
+        urwid.emit_signal(self, 'open_transaction_dialog')
 
     def keypress(self, size, key):
         """Handle all keyboard shortcuts for the market menu"""
