@@ -76,13 +76,14 @@ Ship events return information about ship objects.
     :arg list destinations: A list of strings showing where the ship can
         travel from here.
 
-.. py:function:: ship.info(ship_type: string, free_space: int, manifest: dict of ManifestEntry)
+.. py:function:: ship.info(ship_type: string, free_space: int, filled_space: int, manifest: dict of ManifestEntry)
 
     Emitted in response to a :py:func:`query.ship.info`.  This contains all
     relevant information about a ship.
 
     :arg string ship_type: The type of ship
     :arg int free_space: How much hold space is available
+    :arg int filled_space: How much hold space is used
     :arg dict manifest: The commodities that are in the hold.  This is
         a dictionary of ManifestEntry types
 
