@@ -224,6 +224,10 @@ class MarketDisplay(urwid.WidgetWrap):
         #self.amount = urwid.ListBox(self.amount)
         self.hold = urwid.ListBox(self.hold_list)
         self.warehouse = urwid.ListBox(self.warehouse_list)
+        self.price._selectable = False
+        #self.amount._selectable = False
+        self.hold._selectable = False
+        self.warehouse._selectable = False
 
         market_col = SidelessLineBox(self.commodity, title='Commodity', title_align='left',
                                      lline=None, tlcorner='─', trcorner='─',
@@ -296,8 +300,7 @@ class MarketDisplay(urwid.WidgetWrap):
         commodity_map = new_commodity_map
         return commodity_map
 
-    @staticmethod
-    def _sync_widget_list(widget_list, commodity_map, money=False):
+    def _sync_widget_list(self, widget_list, commodity_map, money=False):
         """
         Make sure the given widget_list contains all the commodities in the correct order
 
@@ -308,7 +311,7 @@ class MarketDisplay(urwid.WidgetWrap):
             the formatting of the information.
         """
         widget_list.clear()
-        for value in commodity_map.values():
+        for commodity, value in commodity_map.items():
             if isinstance(value, int):
                 formatted_number = format_number(value)
                 if money:
@@ -319,6 +322,7 @@ class MarketDisplay(urwid.WidgetWrap):
                 if value is None:
                     value = " "
                 button = IndexedMenuButton(value)
+            urwid.connect_signal(button, 'click', partial(self.handle_commodity_select, commodity))
             widget_list.append(urwid.AttrMap(button, None))
 
     def _construct_commodity_list(self, commodities):
@@ -407,6 +411,11 @@ class MarketDisplay(urwid.WidgetWrap):
 
         :arg commodity: The name of the commodity selected
         """
+        # If the user selected the line via the mouse, then we need to sync
+        # the highlighted line
+        self.commodity.set_focus(self.commodity_idx_map[commodity])
+        self._highlight_focused_line()
+
         self.pubpen.publish('ui.urwid.order_info', commodity, self.commodity_price_map[commodity], self.location)
         urwid.emit_signal(self, 'open_transaction_dialog')
 
@@ -431,12 +440,3 @@ class MarketDisplay(urwid.WidgetWrap):
         else:
             super().keypress(size, key)  #pylint: disable=not-callable
         return key
-
-    def mouse_event(self, *args, **kwargs):
-        """Handle all mouse clicks for the market menu"""
-        ### FIXME: Handle button clicks outside of the Commodity list
-        super().mouse_event(*args, **kwargs)  #pylint: disable=not-callable
-        self._highlight_focused_line()
-        ### FIXME: !!! Set commodity to the commodity that was clicked on
-        self.pubpen.publish('ui.urwid.order_info', commodity, self.commodity_price_map[commodity], self.location)
-        urwid.emit_signal(self, 'open_transaction_dialog')
