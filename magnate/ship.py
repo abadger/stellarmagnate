@@ -72,7 +72,6 @@ class Ship:
         self.pubpen = magnate.pubpen
         self.ship_data = ship_data
 
-        self.name = None
         self._location = None
         self._destinations = []
 
@@ -81,11 +80,17 @@ class Ship:
 
         self.location = location
 
+        self.pubpen.subscribe('query.ship.info', self.handle_ship_info)
+
     def __getattr__(self, key):
         try:
             return super().__getattr__(self)
         except AttributeError:
             return getattr(self.ship_data, key)
+
+    def handle_ship_info(self):
+        self.pubpen.publish('ship.info', self.type, self.holdspace,
+                            self.filled_hold, self.filled_hold, self.manifest)
 
     def add_cargo(self, new_entry):
         """

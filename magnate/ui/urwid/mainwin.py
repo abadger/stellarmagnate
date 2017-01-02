@@ -26,6 +26,7 @@ import urwid
 
 from .gamemenu import GameMenuDialog
 from .market import MarketDisplay, TransactionDialog
+from .numbers import format_number
 from .sideless_linebox import SidelessLineBox
 from .travel import TravelDisplay
 
@@ -138,6 +139,7 @@ class InfoWindow(urwid.WidgetWrap):
     _selectable = False
     def __init__(self, pubpen):
         self.pubpen = pubpen
+        self._location = None
 
         self._warehouse_sub_id = None
         #self._bank_sub_id = None
@@ -145,9 +147,9 @@ class InfoWindow(urwid.WidgetWrap):
         header2 = urwid.Text('Ship Type:')
         self.ship_type = urwid.Text('  ')
         header3 = urwid.Text('Free space:')
-        self.hold_free = urwid.Text('  ')
+        self.free_space = urwid.Text('  ')
         header4 = urwid.Text('Cargo:')
-        self.hold_used = urwid.Text('  ')
+        self.filled_space = urwid.Text('  ')
         header5 = urwid.Text('Warehouse:')
         self.warehouse_free = urwid.Text('  ')
         header6 = urwid.Text('Transshipment:')
@@ -159,8 +161,8 @@ class InfoWindow(urwid.WidgetWrap):
         header9 = urwid.Text('Loan:')
         self.loan = urwid.Text('  ')
         info_list = urwid.SimpleListWalker([header2, self.ship_type,
-                                            header3, self.hold_free,
-                                            header4, self.hold_used,
+                                            header3, self.free_space,
+                                            header4, self.filled_space,
                                             header5, self.warehouse_free,
                                             header6, self.warehouse_used,
                                             header7, self.cash,
@@ -180,13 +182,23 @@ class InfoWindow(urwid.WidgetWrap):
         #self.pubpen.subscribe('user.loan.update')
 
         # Secondary triggers: These are responses to requests for information
-        #self.pubpen.subscribe('ship.info')
         #self.pubpen.subscribe('ship.cargo.info')
-        #self.pubpen.subscribe('user.info')
         pass
+        self.pubpen.subscribe('ship.info', self.handle_ship_info)
+        self.pubpen.subscribe('user.info', self.handle_user_info)
+
+        # Defer populating the initial values until a user has logged in
+        self.pubpen.subscribe('user.login_success', self.populate_info)
+
+    def populate_info(self, *args):
+        # Populate the information for the first time
+        self.pubpen.publish('query.user.info')
+        self.pubpen.publish('query.ship.info')
 
     def handle_new_location(self, location, *args):
         """Update the warehouse and finance information when we get to a new location"""
+        if self._location == location:
+            return
         # Unsubscribe old location triggers
         #if self._warehouse_sub_id is not None:
         #    self.pubpen.unsubscribe(self._warehouse_sub_id)
@@ -200,6 +212,19 @@ class InfoWindow(urwid.WidgetWrap):
         #self.pubpen.publish('query.warehouse.{}.info'.format(location))
         #self.pubpen.publish('query.bank.{}.info'.format(location))
         pass
+
+    def handle_ship_info(self, ship_type, free_space, filled_space, *args):
+        self.ship_type.set_text(' {}'.format(ship_type))
+
+        free_space = format_number(free_space)
+        self.free_space.set_text(' {}'.format(free_space))
+
+        filled_space = format_number(filled_space)
+        self.filled_space.set_text(' {}'.format(filled_space))
+
+    def handle_user_info(self, username, cash, location):
+        self.cash.set_text(' ${}'.format(cash))
+        self.handle_new_location(location)
 
 
 MAX_MESSAGES = 3

@@ -51,6 +51,15 @@ Ship Events
 
 Ship events return information about ship objects.
 
+.. py:function:: ship.cargo.update(cargo: dict)
+
+    Emitted when a ship's cargo manifest changes (commodities are bought and
+    sold or transferred to a warehouse)
+
+    :arg dict cargo: A dict of cargo in the ship's hold.  Format is:
+        :key: cargoname (ie: "Food")
+        :value: amount (ie: 50)
+
 .. py:function:: ship.destinations(destinations: list)
 
     Emitted when the destinations a ship can travel to changes.  This usually
@@ -58,6 +67,16 @@ Ship events return information about ship objects.
 
     :arg list destinations: A list of strings showing where the ship can
         travel from here.
+
+.. py:function:: ship.info(ship_type: string, free_space: int, manifest: dict of ManifestEntry)
+
+    Emitted in response to a :py:func:`query.ship.info`.  This contains all
+    relevant information about a ship.
+
+    :arg string ship_type: The type of ship
+    :arg int free_space: How much hold space is available
+    :arg dict manifest: The commodities that are in the hold.  This is
+        a dictionary of ManifestEntry types
 
 .. py:function:: ship.moved(new_location: string, old_location: string)
 
@@ -71,15 +90,6 @@ Ship events return information about ship objects.
     Emitted when a ship attempted to move but failed.
 
     :arg string msg: A message explaining why the movement failed
-
-.. py:function:: ship.cargo.update(cargo: dict)
-
-    Emitted when a ship's cargo manifest changes (commodities are bought and
-    sold or transferred to a warehouse)
-
-    :arg dict cargo: A dict of cargo in the ship's hold.  Format is:
-        :key: cargoname (ie: "Food")
-        :value: amount (ie: 50)
 
 
 -------------

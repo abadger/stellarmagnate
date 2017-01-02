@@ -60,7 +60,7 @@ class User:
         :event user.info: All the information about the user
         """
         self.pubpen.publish('user.info', self.username, self.cash,
-                            self.ship.location)
+                            self.ship.location.name)
 
 
 def _parse_args(self, args=sys.argv):
@@ -194,11 +194,11 @@ class Magnate:
     def login(self, username, password):
         """Log a user into the game"""
         if 'toshio' in username.lower():
-            self.pubpen.publish('user.login_success', username)
-
             # Game can begin in earnest now
             self.user = User(self.pubpen, username)
             self.user.ship = self.create_ship('Passenger', 'Earth')
+
+            self.pubpen.publish('user.login_success', username)
             return self.user
         else:
             self.pubpen.publish('user.login_failure',
