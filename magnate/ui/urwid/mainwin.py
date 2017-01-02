@@ -14,6 +14,11 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+Main window onto the Stellar Magnate Client
+
+This handles the toplevel window and its direct subelements.
+"""
 
 from functools import partial
 
@@ -53,6 +58,7 @@ from .travel import TravelDisplay
 # [_] Weapon purchase
 
 class StatusBar(urwid.Columns):
+    """Display a horizontal border with a field for username and location"""
     _selectable = False
     def __init__(self, pubpen, spacer=u'u2500'):
         self.pubpen = pubpen
@@ -76,26 +82,32 @@ class StatusBar(urwid.Columns):
     # Widget methods
     #
     def update_username(self, username):
+        """Update the user's name in the statusbar"""
         self.who.set_text('\u2524 Name: {} \u251C'.format(username))
 
     def update_location(self, location):
+        """Update the ship's location in the statusbar"""
         self.where.set_text('\u2524 Location: {} \u251C'.format(location))
 
     #
     # Handlers
     #
     def handle_user_info(self, username, cash, location):
+        """Update both username and location when we've explicitly requested the information"""
         self.update_username(username)
         self.update_location(location)
 
     def handle_login(self, username):
+        """Update the user's name when they log in"""
         self.update_username(username)
 
-    def handle_ship_moved(self, new_location, old_location):
+    def handle_ship_moved(self, new_location, *args):
+        """Update the ship's location when the ship moves"""
         self.update_location(new_location)
 
 
 class MenuBar(urwid.Pile):
+    """Menu displaying major player options"""
     _selectable = True
 
     def __init__(self, pubpen, line=u'\u2500'):
@@ -124,6 +136,7 @@ class MenuBar(urwid.Pile):
 
 
 class InfoWindow(urwid.WidgetWrap):
+    """Window to display a quick summary of some player information"""
     _selectable = False
     def __init__(self, pubpen):
         self.pubpen = pubpen
@@ -131,8 +144,6 @@ class InfoWindow(urwid.WidgetWrap):
         self._warehouse_sub_id = None
         #self._bank_sub_id = None
         ### FIXME: Implement bank, warehouse, bank, and loan
-        header1 = urwid.Text('Ship:')
-        self.ship_name = urwid.Text('  ')
         header2 = urwid.Text('Ship Type:')
         self.ship_type = urwid.Text('  ')
         header3 = urwid.Text('Free space:')
@@ -149,8 +160,7 @@ class InfoWindow(urwid.WidgetWrap):
         self.bank = urwid.Text('  ')
         header9 = urwid.Text('Loan:')
         self.loan = urwid.Text('  ')
-        info_list = urwid.SimpleListWalker([header1, self.ship_name,
-                                            header2, self.ship_type,
+        info_list = urwid.SimpleListWalker([header2, self.ship_type,
                                             header3, self.hold_free,
                                             header4, self.hold_used,
                                             header5, self.warehouse_free,
@@ -177,6 +187,7 @@ class InfoWindow(urwid.WidgetWrap):
         pass
 
     def handle_new_location(self, location, *args):
+        """Update the warehouse and finance information when we get to a new location"""
         # Unsubscribe old location triggers
         #if self._warehouse_sub_id is not None:
         #    self.pubpen.unsubscribe(self._warehouse_sub_id)
@@ -193,6 +204,7 @@ class InfoWindow(urwid.WidgetWrap):
 
 
 class ShipyardDisplay(urwid.WidgetWrap):
+    """Display for the user to manage their ship and equipment"""
     _selectable = True
 
     def __init__(self, pubpen):
@@ -205,6 +217,7 @@ class ShipyardDisplay(urwid.WidgetWrap):
 
 
 class FinancialDisplay(urwid.WidgetWrap):
+    """Display for the user to manage their bank and loan amounts"""
     _selectable = True
 
     def __init__(self, pubpen):
@@ -217,6 +230,13 @@ class FinancialDisplay(urwid.WidgetWrap):
 
 
 class MainDisplay(urwid.WidgetWrap):
+    """
+    The MainDisplay is the main interaction point of the urwid interface
+
+    MainDisplay changes as the user interacts with the interface, showing the
+    market, commodity, travel menu etc.  Most of the user's active
+    participation will be with the MainDisplay.
+    """
     def __init__(self, pubpen):
         self.pubpen = pubpen
         self.display_stack = []
@@ -278,6 +298,12 @@ class MainDisplay(urwid.WidgetWrap):
         self.background.original_widget = widget
 
     def pop_display(self, *args):
+        """
+        Remove a display from the stack.
+
+        .. seealso::
+            :meth:`~magnate.ui.urwid.mainwin.MainDisplay.push_display`
+        """
         widget = None
         while widget is None:
             if len(self.display_stack) <= 1:
@@ -292,6 +318,12 @@ class MainDisplay(urwid.WidgetWrap):
         self.background.original_widget = widget
 
     def keypress(self, size, key):
+        """
+        Handle global keyboard shortcuts
+
+        These keyboard shortcuts handle the toplevel menu which is always
+        displayed.
+        """
         if key == 'esc':
             self.pop_display()
         elif key in frozenset('pP'):
@@ -310,6 +342,7 @@ class MainDisplay(urwid.WidgetWrap):
 
 
 class MainWindow(urwid.LineBox):
+    """Toplevel window mapping the top of the screen"""
     def __init__(self, pubpen):
         self.pubpen = pubpen
 

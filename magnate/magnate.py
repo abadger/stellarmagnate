@@ -64,6 +64,11 @@ class User:
 
 
 class Magnate:
+    """
+    The main Magnate client class
+
+    This handles initializing and setting up the game client.
+    """
     def __init__(self):
         # Parse command line arguments
         args = self._parse_args(sys.argv)
@@ -82,6 +87,7 @@ class Magnate:
         # Attributes
         #
         self.pubpen = None
+        self.dispatcher = None
 
         # Base data attributes
         self._load_data_definitions()
@@ -89,7 +95,7 @@ class Magnate:
         # Instantiated attributes
         self.user = None
         self.equipment = None
-        self.market = None
+        self.markets = None
 
     def _parse_args(self, args=sys.argv):
         """Parse command line arguments"""
@@ -162,10 +168,12 @@ class Magnate:
         self.ship_data = ships
 
     def _load_save(self):
+        """Load a save file"""
         ### FIXME: Need to load game from save file
         pass
 
     def _setup_markets(self):
+        """Setup the stateful bits of markets"""
         self.markets = OrderedDict()
         for loc in self.system_data['Sol'].locations.values():
             commodities = OrderedDict((c.name, Commodity(self.pubpen, c)) for c in self.commodity_data.values())
@@ -173,6 +181,12 @@ class Magnate:
             self.markets[loc.name] = market
 
     def create_ship(self, ship_type):
+        """
+        Create a new instance of a ship type
+
+        :arg ship_type: The class name of the ship to create
+        :return: a new :class:`magnate.ship.Ship`
+        """
         return Ship(self.pubpen, self.ship_data[ship_type])
 
     def login(self, username, password):
@@ -207,6 +221,9 @@ class Magnate:
 
 
     def run(self):
+        """
+        Run the program.  This is the main entrypoint to the magnate client
+        """
         ui_plugins = load('magnate.ui', subclasses=UserInterface)
         for UIClass in ui_plugins:
             if UIClass.__module__.startswith('magnate.ui.{}'.format(self.cfg['ui_plugin'])):

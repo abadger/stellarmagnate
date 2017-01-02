@@ -14,6 +14,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+""" Handle the display of Markets and Commodities"""
 
 import locale
 from functools import partial
@@ -121,9 +122,15 @@ class TransactionDialog(urwid.WidgetWrap):
         #   set total_sale to quantity field * price
 
     def validate_check_box_change(self):
+        """Make sure that at least one of the hold/warehouse checkboxes is always checked"""
         pass
 
     def handle_transaction_finalized(self, *args, **kwargs):
+        """
+        Clear the transation dialog state when we are told the transaction is finished.
+
+        This cleans up the event notifications and closes the dialog.
+        """
         if self._order_sold_sub_id:
             self.pubpen.unsubscribe(self._order_sold_sub_id)
             self._order_sold_sub_id = None
@@ -249,7 +256,7 @@ class MarketDisplay(urwid.WidgetWrap):
 
                 button = IndexedMenuButton('({}) {}'.format(idx, commodity))
                 self.commodity_list.append(urwid.AttrMap(button, None, focus_map='reversed'))
-                urwid.connect_signal(button, 'click', partial(self.handle_button_click, commodity))
+                urwid.connect_signal(button, 'click', partial(self.handle_commodity_select, commodity))
 
                 self.commodity_idx_map[commodity] = len(self.commodity_list) - 1
 
@@ -286,15 +293,17 @@ class MarketDisplay(urwid.WidgetWrap):
 
         self._highlight_focused_commodity_line()
 
-    def handle_button_click(self, commodity, *args):
-        # popup the Buy/Sell Window
+    def handle_commodity_select(self, commodity, *args):
+        """
+        Create a buy/sell dialog when the commodity is selected
 
+        :arg commodity: The name of the commodity selected
+        """
         self.pubpen.publish('ui.urwid.order_info', commodity, self.commodity_price_map[commodity], self.location)
         urwid.emit_signal(self, 'open_transaction_dialog')
-        ### TODO: this should move to when the sale/buy is confirmed
-        #urwid.emit_signal(self, 'close_market_display')
 
     def _highlight_focused_commodity_line(self):
+        """Highlight the other portions of the commodity line that match with the commodity that's in focus"""
         try:
             idx = self.commodity.focus_position
         except IndexError:
@@ -305,6 +314,12 @@ class MarketDisplay(urwid.WidgetWrap):
         self.price_list[idx].set_attr_map({None: 'reversed'})
 
     def handle_new_location(self, new_location, old_location):
+        """
+        Update the market display when the ship moves
+
+        :arg new_location: The location the ship has moved to
+        :arg old_location: The location the ship has moved from
+        """
         self.location = new_location
         self.commodity_list.clear()
         self.commodity_idx_map.clear()
@@ -320,6 +335,11 @@ class MarketDisplay(urwid.WidgetWrap):
         self.pubpen.publish('query.warehouse.{}.info'.format(new_location))
 
     def handle_market_info(self, prices):
+        """
+        Update the display with prices about all commodities in a market
+
+        :arg prices: a dict mapping commodity names to prices
+        """
         self.pubpen.unsubscribe(self._market_query_sub_id)
         self._market_query_sub_id = None
         self._construct_commodity_list(prices.keys())
@@ -327,13 +347,15 @@ class MarketDisplay(urwid.WidgetWrap):
         self.commodity_price_map = prices
 
     def handle_cargo_data(self, cargo):
+        """Update the market display when cargo info changes"""
         pass
 
     def handle_new_warehouse_info(self, warehouse_info):
+        """Update the market display when warehouse info changes"""
         pass
 
     def keypress(self, size, key):
-        """Handle all keyboard shortcuts for the travel menu"""
+        """Handle all keyboard shortcuts for the market menu"""
         if key in self.keypress_map:
             # Open up the commodity menu to buy sell this item
             pass
@@ -355,6 +377,7 @@ class MarketDisplay(urwid.WidgetWrap):
         return key
 
     def mouse_event(self, *args, **kwargs):
+        """Handle all mouse clicks for the market menu"""
         ### FIXME: Handle button clicks outside of the Commodity list
         super().mouse_event(*args, **kwargs)  #pylint: disable=not-callable
         self._highlight_focused_commodity_line()
