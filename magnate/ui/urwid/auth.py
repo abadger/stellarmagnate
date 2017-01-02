@@ -53,8 +53,8 @@ class LoginScreen(urwid.WidgetWrap):
         self.status_message = urwid.Text(' ', align='center')
         entry_with_status = urwid.Pile([entry_box, self.status_message])
 
-        self.display = urwid.Padding(entry_with_status, align='center')
-        self.display = urwid.Filler(self.display, valign='middle')
+        padded_entry_with_status = urwid.Padding(entry_with_status, align='center')
+        self.display = urwid.Filler(padded_entry_with_status, valign='middle')
         decorate = urwid.LineBox(self.display)
         super().__init__(decorate)
 

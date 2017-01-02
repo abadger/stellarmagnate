@@ -63,6 +63,28 @@ class User:
                             self.ship.location)
 
 
+def _parse_args(self, args=sys.argv):
+    """Parse command line arguments"""
+    parser = argparse.ArgumentParser(description='A space themed trading game')
+    parser.add_argument('--version', action='version', version=__version__)
+    parser.add_argument('--conf-file', dest='cfg_file', action='store', default=None,
+                        help='Alternate location for configuration file')
+    parser.add_argument('--_testing-configuration', dest='test_cfg', action='store_true',
+                        help='Overrides data file locations for running from a source checkout.'
+                             ' For development only')
+
+    ui_plugin_names = []
+    ui_plugins = load('magnate.ui', subclasses=UserInterface)
+    for plugin in ui_plugins:
+        ui_plugin_names.append(plugin.__module__[len('magnate.ui.'):])
+
+    parser.add_argument('--ui-plugin', dest='ui_plugin', action='store', default=None,
+                        help='Specify a user interface plugin to use.'
+                             ' Valid plugin names: {}'.format(', '.join(ui_plugin_names)))
+
+    return parser.parse_args(args[1:])
+
+
 class Magnate:
     """
     The main Magnate client class
@@ -71,7 +93,7 @@ class Magnate:
     """
     def __init__(self):
         # Parse command line arguments
-        args = self._parse_args(sys.argv)
+        args = _parse_args(sys.argv)
 
         # Read configuration in
         conf_args = []
@@ -96,27 +118,6 @@ class Magnate:
         self.user = None
         self.equipment = None
         self.markets = None
-
-    def _parse_args(self, args=sys.argv):
-        """Parse command line arguments"""
-        parser = argparse.ArgumentParser(description='A space themed trading game')
-        parser.add_argument('--version', action='version', version=__version__)
-        parser.add_argument('--conf-file', dest='cfg_file', action='store', default=None,
-                            help='Alternate location for configuration file')
-        parser.add_argument('--_testing-configuration', dest='test_cfg', action='store_true',
-                            help='Overrides data file locations for running from a source checkout.'
-                                 ' For development only')
-
-        ui_plugin_names = []
-        ui_plugins = load('magnate.ui', subclasses=UserInterface)
-        for plugin in ui_plugins:
-            ui_plugin_names.append(plugin.__module__[len('magnate.ui.'):])
-
-        parser.add_argument('--ui-plugin', dest='ui_plugin', action='store', default=None,
-                            help='Specify a user interface plugin to use.'
-                                 ' Valid plugin names: {}'.format(', '.join(ui_plugin_names)))
-
-        return parser.parse_args(args[1:])
 
     def _load_data_definitions(self):
         """
@@ -237,6 +238,8 @@ class Magnate:
         self._setup_markets()
         self.dispatcher = Dispatcher(self.pubpen, self, self.markets)
 
-        ui = UIClass(self.pubpen)
+        # UIClass is always available because we'd have already returned (via
+        # the for-else) if UIClass was not defined
+        ui = UIClass(self.pubpen) #pylint: disable=undefined-loop-variable
 
         return ui.run()

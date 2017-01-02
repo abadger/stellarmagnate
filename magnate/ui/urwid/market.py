@@ -56,10 +56,12 @@ class TransactionDialog(urwid.WidgetWrap):
         self.cancel_button = urwid.Button('Cancel')
         commit_widget = urwid.Columns([urwid.Text(''), (len('Place Order') + 4, self.commit_button), (len('Cancel') + 4, self.cancel_button)])
 
-        self.outer_layout_list = urwid.SimpleFocusListWalker([self.buysell_widget, self.hold_box, self.warehouse_box, self.sale_info, quantity_widget, commit_widget])
-        outer_layout = urwid.ListBox(self.outer_layout_list)
+        self.layout_list = urwid.SimpleFocusListWalker([self.buysell_widget, self.hold_box,
+                                                        self.warehouse_box, self.sale_info,
+                                                        quantity_widget, commit_widget])
+        layout = urwid.ListBox(self.layout_list)
 
-        self.dialog = urwid.LineBox(outer_layout, tlcorner='\u2554',
+        self.dialog = urwid.LineBox(layout, tlcorner='\u2554',
                                     tline='\u2550', trcorner='\u2557',
                                     blcorner='\u255A', bline='\u2550',
                                     brcorner='\u255D', lline='\u2551',
@@ -69,7 +71,7 @@ class TransactionDialog(urwid.WidgetWrap):
                                 width=max(len('Quantity: ') + len('MAX') + 4 + 20,
                                           len('Place Order') + len('Cancel') + 8))
         filler = urwid.Filler(padding, valign='middle',
-                              height=len(self.outer_layout_list) + 2)
+                              height=len(self.layout_list) + 2)
 
         outer_layout = urwid.LineBox(filler)
         super().__init__(outer_layout)
@@ -95,7 +97,7 @@ class TransactionDialog(urwid.WidgetWrap):
         self.sale_info.set_text('Total Sale: $0')
         self.quantity.set_edit_text("")
         self.buysell_widget.focus_position = 0
-        self.outer_layout_list.set_focus(0)
+        self.layout_list.set_focus(0)
         pass
         # recalculate hold and warehouse space
 
