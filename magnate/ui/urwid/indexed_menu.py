@@ -32,7 +32,7 @@ class IndexedMenuEnumerator(MutableMapping):
     A selection is used by calling code to tell which entry was selected via
     a keypress
     """
-    idx_names = [str(c) for c in itertools.chain(range(1, 9), [0], (c for c in punctuation if c not in frozenset('(){}[]<>')))]
+    idx_names = [str(c) for c in itertools.chain(range(1, 10), [0], (c for c in punctuation if c not in frozenset('(){}[]<>')))]
 
     def __init__(self):
         self.association = {}
