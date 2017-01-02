@@ -250,7 +250,7 @@ class MarketDisplay(urwid.WidgetWrap):
         #self.pubpen.subscribe('ship.info', self.handle_ship_info)
         #self.pubpen.subscribe('ship.cargo.update', self.handle_cargo_update)
 
-    def _highlight_focused_commodity_line(self):
+    def _highlight_focused_line(self):
         """Highlight the other portions of the commodity line that match with the commodity that's in focus"""
         try:
             idx = self.commodity.focus_position
@@ -292,7 +292,7 @@ class MarketDisplay(urwid.WidgetWrap):
             button = IndexedMenuButton('${}'.format(formatted_price))
             self.price_list.append(urwid.AttrMap(button, None))
 
-        self._highlight_focused_commodity_line()
+        self._highlight_focused_line()
 
     def _construct_hold_list(self, amounts):
         """
@@ -307,10 +307,10 @@ class MarketDisplay(urwid.WidgetWrap):
             button = IndexedMenuButton('{}'.format(formatted_amount))
             self.hold_list.append(urwid.AttrMap(button, None))
 
-        self._highlight_focused_commodity_line()
+        self._highlight_focused_line()
 
     #
-    # Handle updates to the displyed info
+    # Handle updates to the displayed info
     #
     def handle_market_info(self, prices):
         """
@@ -323,6 +323,9 @@ class MarketDisplay(urwid.WidgetWrap):
         self._construct_commodity_list(prices.keys())
         self._construct_price_list(prices)
         self.commodity_price_map = prices
+
+    def handle_ship_info(self, shipdata):
+        pass
 
     def handle_cargo_data(self, cargo):
         """Update the market display when cargo info changes"""
@@ -378,7 +381,7 @@ class MarketDisplay(urwid.WidgetWrap):
             # First let the children handle the change in focus...
             super().keypress(size, key)  #pylint: disable=not-callable
             # Then highlight the same entry in other columns
-            self._highlight_focused_commodity_line()
+            self._highlight_focused_line()
         else:
             super().keypress(size, key)  #pylint: disable=not-callable
         return key
@@ -387,7 +390,7 @@ class MarketDisplay(urwid.WidgetWrap):
         """Handle all mouse clicks for the market menu"""
         ### FIXME: Handle button clicks outside of the Commodity list
         super().mouse_event(*args, **kwargs)  #pylint: disable=not-callable
-        self._highlight_focused_commodity_line()
+        self._highlight_focused_line()
         ### FIXME: !!! Set commodity to the commodity that was clicked on
         self.pubpen.publish('ui.urwid.order_info', commodity, self.commodity_price_map[commodity], self.location)
         urwid.emit_signal(self, 'open_transaction_dialog')
