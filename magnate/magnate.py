@@ -176,19 +176,20 @@ class Magnate:
     def _setup_markets(self):
         """Setup the stateful bits of markets"""
         self.markets = OrderedDict()
+        ### FIXME: Eventually need to handle other systems besides Sol
         for loc in self.system_data['Sol'].locations.values():
             commodities = OrderedDict((c.name, Commodity(self.pubpen, c)) for c in self.commodity_data.values())
-            market = Market(self.pubpen, loc, commodities)
+            market = Market(self, loc, commodities)
             self.markets[loc.name] = market
 
-    def create_ship(self, ship_type):
+    def create_ship(self, ship_type, location):
         """
         Create a new instance of a ship type
 
         :arg ship_type: The class name of the ship to create
         :return: a new :class:`magnate.ship.Ship`
         """
-        return Ship(self.pubpen, self.ship_data[ship_type])
+        return Ship(self, self.ship_data[ship_type], self.markets[location])
 
     def login(self, username, password):
         """Log a user into the game"""
@@ -197,29 +198,11 @@ class Magnate:
 
             # Game can begin in earnest now
             self.user = User(self.pubpen, username)
-            self.user.ship = self.create_ship('Passenger')
+            self.user.ship = self.create_ship('Passenger', 'Earth')
             return self.user
         else:
             self.pubpen.publish('user.login_failure',
                                 'Unknown account: {}'.format(username))
-#    def login(self, username, password):
-#        """Log a user into the game"""
-#        if 'toshio' in username.lower():
-#            self.pubpen.publish('user.login_success', username)
-#            # Game can begin in earnest now
-#            self.markets, self.ship_list = load_data_definition(self.pubpen, 'stellar.yml')
-#
-#            ### FIXME: In the future a ship should know what location it is
-#            # at.  And then it should be able to lookup what locations it can
-#            # reach from that planet.
-#            global ALL_DESTINATIONS
-#            ALL_DESTINATIONS = tuple(m for m in self.markets)
-#            self.user = User(self.pubpen, username)
-#            self.user.ship = Ship(self.pubpen, self.ship_list['Passenger'])
-#        else:
-#            self.pubpen.publish('user.login_failure',
-#                                'Unknown account: {}'.format(username))
-
 
     def run(self):
         """
@@ -236,7 +219,7 @@ class Magnate:
         loop = asyncio.get_event_loop()
         self.pubpen = PubPen(loop)
         self._setup_markets()
-        self.dispatcher = Dispatcher(self.pubpen, self, self.markets)
+        self.dispatcher = Dispatcher(self, self.markets)
 
         # UIClass is always available because we'd have already returned (via
         # the for-else) if UIClass was not defined

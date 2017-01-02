@@ -67,13 +67,13 @@ class ShipData:
 
 class Ship:
     """A user's ship"""
-    def __init__(self, pubpen, ship_data, location='Earth'):
-        self.pubpen = pubpen
+    def __init__(self, magnate, ship_data, location):
+        self.magnate = magnate
+        self.pubpen = magnate.pubpen
         self.ship_data = ship_data
 
         self.name = None
         self._location = None
-        ### FIXME: Move this into the locations?
         self._destinations = []
 
         self.manifest = {}
@@ -150,17 +150,17 @@ class Ship:
             location
         :raises ValueError: when the new location is not valid
         """
-        ### FIXME: Needto make this retrieve the destinations from the location
-        temp_destination = list(dispatcher.ALL_DESTINATIONS)
+        temp_destinations = [l for l in location.system.locations]
         try:
-            temp_destination.remove(location)
+            temp_destinations.remove(location.name)
         except ValueError:
             # No worries, we just want to make sure we can't go to ourselves
             pass
-        self._destinations = temp_destination
+        self._destinations = temp_destinations
 
         self.pubpen.publish('ship.destinations', self.destinations)
-        self.pubpen.publish('ship.moved', location, self._location)
+        previous_location = self._location.name if self._location is not None else None
+        self.pubpen.publish('ship.moved', location.name, previous_location)
         self._location = location
 
     @property

@@ -128,8 +128,9 @@ class Market:
     """
     Location at which :class:`Commodities` can be bought and sold.
     """
-    def __init__(self, pubpen, location_data, commodity_data):
-        self.pubpen = pubpen
+    def __init__(self, magnate, location_data, commodity_data):
+        self.magnate = magnate
+        self.pubpen = magnate.pubpen
         self.location = location_data
         self.commodities = commodity_data
 

@@ -19,15 +19,13 @@ Dispatcher manages the communication between the backend and various user
 interfaces.
 """
 
-ALL_DESTINATIONS = tuple()
-
 
 class Dispatcher:
     """Manage the communication between the backend and frontends"""
 
-    def __init__(self, pubpen, magnate, markets):
-        self.pubpen = pubpen
+    def __init__(self, magnate, markets):
         self.magnate = magnate
+        self.pubpen = magnate.pubpen
         self.markets = markets
         self.user = None
 
@@ -56,7 +54,7 @@ class Dispatcher:
         fatal_error = False
 
         # Check that the user is in the location
-        if order.location != self.user.ship.location:
+        if order.location != self.user.ship.location.name:
             fatal_error = True
             self.pubpen.publish('user.order_failure', msg='Cannot process an order when the player is not at the location')
 
@@ -104,7 +102,7 @@ class Dispatcher:
             :msg: Ship too heavy
         """
         try:
-            self.user.ship.location = location
-        except ValueError:
+            self.user.ship.location = self.magnate.markets[location]
+        except (ValueError, KeyError):
             self.pubpen.publish('ship.movement_failure', 'Unknown destination')
             return
