@@ -94,7 +94,7 @@ class Dispatcher:
                 self.user.ship.remove_cargo(order.commodity, order.hold_quantity)
             except ValueError:
                 fatal_error = True
-                self.pubpen.publish('user.order_failure', 'We do not have {} of {} available to sell'.format(order.commodity, order.hold_quantity))
+                self.pubpen.publish('user.order_failure', 'We do not have {} of {} available to sell'.format(order.hold_quantity, order.commodity))
             ### FIXME: Check that the user has enough commodity in warehouse
             pass
 
