@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """ Handle the display of Markets and Commodities"""
 
+from collections import OrderedDict
 from functools import partial
 
 import urwid
@@ -200,8 +201,9 @@ class MarketDisplay(urwid.WidgetWrap):
         self.location = None
         self.commodities = []
         self.keypress_map = IndexedMenuEnumerator()
-        self.commodity_idx_map = {}
-        self.commodity_price_map = {}
+        self.commodity_idx_map = OrderedDict()
+        self.commodity_price_map = OrderedDict()
+        self.commodity_hold_map = OrderedDict()
         self._market_query_sub_id = None
 
         # Columns
@@ -234,11 +236,11 @@ class MarketDisplay(urwid.WidgetWrap):
         #                             trcorner='\u2500', rline=None,
         #                             brcorner='\u2500', tlcorner='\u2500',
         #                             lline=None, blcorner='\u2500')
-        hold_col = SidelessLineBox(self.hold, title='Hold',
+        hold_col = SidelessLineBox(self.hold, title='Hold', title_align='left',
                                    trcorner='\u2500', rline=None,
                                    brcorner='\u2500', tlcorner='\u2500',
                                    lline=None, blcorner='\u2500')
-        warehouse_col = SidelessLineBox(self.warehouse, title='Warehouse',
+        warehouse_col = SidelessLineBox(self.warehouse, title='Warehouse', title_align='left',
                                         tlcorner='\u2500', lline=None, blcorner='\u2500',
                                         trcorner='\u252c', brcorner='\u2524')
 
@@ -247,23 +249,52 @@ class MarketDisplay(urwid.WidgetWrap):
         super().__init__(self.market_display)
 
         self.pubpen.subscribe('ship.moved', self.handle_new_location)
-        #self.pubpen.subscribe('ship.info', self.handle_ship_info)
+        self.pubpen.subscribe('ship.info', self.handle_ship_info)
         #self.pubpen.subscribe('ship.cargo.update', self.handle_cargo_update)
 
+    #
+    # Helpers
+    #
     def _highlight_focused_line(self):
         """Highlight the other portions of the commodity line that match with the commodity that's in focus"""
         try:
             idx = self.commodity.focus_position
         except IndexError:
             # The commodity list hasn't been refreshed yet.
-            idx = 0
+            return
+
+        # Reset the auxilliary lists
         for entry in self.price_list:
             entry.set_attr_map({})
-        self.price_list[idx].set_attr_map({None: 'reversed'})
+        for entry in self.hold_list:
+            entry.set_attr_map({})
 
-    #
-    # Populate the columns of the Market Display
-    #
+        # Highlight the appropriate line in each auxilliary list
+        self.price_list[idx].set_attr_map({None: 'reversed'})
+        self.hold_list[idx].set_attr_map({None: 'reversed'})
+
+    def _sync_commodity_map(self, commodity_map, widget_list, money=False):
+        new_commodity_map = OrderedDict()
+        for commodity in self.commodity_idx_map:
+            new_commodity_map[commodity] = commodity_map.get(commodity, None)
+        commodity_map = new_commodity_map
+
+        widget_list.clear()
+        for commodity, value in commodity_map.items():
+            if isinstance(value, int):
+                formatted_number = format_number(value)
+                if money:
+                    button = IndexedMenuButton('${}'.format(formatted_number))
+                else:
+                    button = IndexedMenuButton('{}'.format(formatted_number))
+            else:
+                if value is None:
+                    value = " "
+                button = IndexedMenuButton(value)
+            widget_list.append(urwid.AttrMap(button, None))
+
+        return commodity_map
+
     def _construct_commodity_list(self, commodities):
         """
         Display the commodities that can be bought and sold
@@ -280,32 +311,8 @@ class MarketDisplay(urwid.WidgetWrap):
 
                 self.commodity_idx_map[commodity] = len(self.commodity_list) - 1
 
-    def _construct_price_list(self, prices):
-        """
-        Display the prices for commoditites
-
-        :arg prices: Dict that maps commodity names to prices
-        """
-        for commodity, price in prices.items():
-            formatted_price = format_number(price)
-
-            button = IndexedMenuButton('${}'.format(formatted_price))
-            self.price_list.append(urwid.AttrMap(button, None))
-
-        self._highlight_focused_line()
-
-    def _construct_hold_list(self, amounts):
-        """
-        Display the amount of a commodity in the ship's hold
-
-        :arg amounts: Dictionary mapping commodity names to the amount stored
-            on the ship.
-        """
-        for commodity, amount in amounts.items():
-            formatted_amount = format_number(amount)
-
-            button = IndexedMenuButton('{}'.format(formatted_amount))
-            self.hold_list.append(urwid.AttrMap(button, None))
+        self.commodity_price_map = self._sync_commodity_map(self.commodity_price_map, self.price_list, money=True)
+        self.commodity_hold_map = self._sync_commodity_map(self.commodity_hold_map, self.hold_list, money=False)
 
         self._highlight_focused_line()
 
@@ -320,12 +327,17 @@ class MarketDisplay(urwid.WidgetWrap):
         """
         self.pubpen.unsubscribe(self._market_query_sub_id)
         self._market_query_sub_id = None
-        self._construct_commodity_list(prices.keys())
-        self._construct_price_list(prices)
-        self.commodity_price_map = prices
+        for commodity, price in prices.items():
+            self.commodity_price_map[commodity] = price
+        self._construct_commodity_list(self.commodity_price_map)
 
-    def handle_ship_info(self, shipdata):
-        pass
+    def handle_ship_info(self, ship_type, free_space, filled_space, manifest):
+        """
+        Update the display with hold information for all commodities
+        """
+        for key, value in manifest.items():
+            self.commodity_hold_map[key] = value.quantity
+        self._construct_commodity_list(self.commodity_hold_map)
 
     def handle_cargo_data(self, cargo):
         """Update the market display when cargo info changes"""
@@ -348,10 +360,13 @@ class MarketDisplay(urwid.WidgetWrap):
         self.price_list.clear()
         self.commodity_price_map.clear()
 
-        #self.pubpen.subscribe('market.{}.update'.format(new_location)) => handle new market data
-        #self.pubpen.subscribe('warehouse.{}.update'.format(new_location)) => handle new warehouse info
+        # Sync up information
         if self._market_query_sub_id is None:
             self._market_query_sub_id = self.pubpen.subscribe('market.{}.info'.format(new_location), self.handle_market_info)
+        self.pubpen.publish('query.ship.info')
+
+        #self.pubpen.subscribe('market.{}.update'.format(new_location)) => handle new market data
+        #self.pubpen.subscribe('warehouse.{}.update'.format(new_location)) => handle new warehouse info
         self.pubpen.publish('query.market.{}.info'.format(new_location))
         self.pubpen.publish('query.warehouse.{}.info'.format(new_location))
 
