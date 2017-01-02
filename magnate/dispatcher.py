@@ -56,7 +56,7 @@ class Dispatcher:
         # Check that the user is in the location
         if order.location != self.user.ship.location.name:
             fatal_error = True
-            self.pubpen.publish('user.order_failure', msg='Cannot process an order when the player is not at the location')
+            self.pubpen.publish('user.order_failure', 'Cannot process an order when the player is not at the location')
 
         current_price = self.markets[order.location].prices[order.commodity]
         total_sale = current_price * (order.hold_quantity + order.warehouse_quantity)
@@ -65,12 +65,12 @@ class Dispatcher:
             # Check that the price matches or is better
             if order.price < current_price:
                 fatal_error = True
-                self.pubpen.publish('user.order_failure', msg='Current market price is higher than on the order.  Refresh prices and try again')
+                self.pubpen.publish('user.order_failure', 'Current market price is higher than on the order.  Refresh prices and try again')
 
             # Check that the user has enough cash
             if total_sale > self.user.cash:
                 fatal_error = True
-                self.pubpen.publish("user.order_failure", msg="Total amount of money for this sale exceeds the user's cash")
+                self.pubpen.publish("user.order_failure", "Total amount of money for this sale exceeds the user's cash")
 
             # Purchase the commodity
             if not fatal_error:
@@ -83,7 +83,7 @@ class Dispatcher:
             # Check that the price matches or is better
             if order.price > current_price:
                 fatal_error = True
-                self.pubpen.publish('user.order_failure', 'Current market price is lower than on the order.  Refresh prices and try again')
+                self.pubpen.publish('user.order_failure', msg='Current market price is lower than on the order.  Refresh prices and try again')
             ### FIXME: Check that the user has enough commodity
             pass
 

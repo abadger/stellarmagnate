@@ -213,6 +213,9 @@ class MessageWindow(urwid.WidgetWrap):
         message_win = SidelessLineBox(list_box, tline=None, lline=None, bline=None,
                                       trcorner='│', brcorner='│')
         super().__init__(message_win)
+        self.pubpen.subscribe('user.login_failure', self.add_message)
+        self.pubpen.subscribe('user.order_failure', self.add_message)
+        self.pubpen.subscribe('ship.movement_failure', self.add_message)
 
     def add_message(self, msg):
         """
