@@ -24,8 +24,9 @@ from functools import partial
 import urwid
 
 from .gamemenu import GameMenuDialog
-from .market import MarketDisplay, TransactionDialog
+from .market import MarketDisplay
 from .numbers import format_number
+from .order_dialog import OrderDialog
 from .sideless_linebox import SidelessLineBox
 from .travel import TravelDisplay
 
@@ -333,7 +334,7 @@ class MainDisplay(urwid.WidgetWrap):
         # Widgets traded in and out of the main display area
 
         self.market_display = MarketDisplay(self.pubpen)
-        self.transaction_dialog = TransactionDialog(self.pubpen)
+        self.order_dialog = OrderDialog(self.pubpen)
         self.travel_menu = TravelDisplay(self.pubpen)
         self.game_menu = GameMenuDialog(self.pubpen)
         self.shipyard_display = ShipyardDisplay(self.pubpen)
@@ -341,7 +342,7 @@ class MainDisplay(urwid.WidgetWrap):
 
         self.display_map = {
             'MarketDisplay': self.market_display,
-            'TransactionDialog': self.transaction_dialog,
+            'OrderDialog': self.order_dialog,
             'ShipyardDisplay': self.shipyard_display,
             'FinancialDisplay': self.financial_display,
             'TravelDisplay': self.travel_menu,
@@ -352,9 +353,9 @@ class MainDisplay(urwid.WidgetWrap):
         self.push_display('Blank')
 
         urwid.connect_signal(self.market_display, 'close_market_display', self.pop_display)
-        urwid.connect_signal(self.market_display, 'open_transaction_dialog',
-                             partial(self.push_display, 'TransactionDialog'))
-        urwid.connect_signal(self.transaction_dialog, 'close_transaction_dialog', self.pop_display)
+        urwid.connect_signal(self.market_display, 'open_order_dialog',
+                             partial(self.push_display, 'OrderDialog'))
+        urwid.connect_signal(self.order_dialog, 'close_order_dialog', self.pop_display)
         urwid.connect_signal(self.travel_menu, 'close_travel_menu', self.pop_display)
         urwid.connect_signal(self.game_menu, 'close_game_menu', self.pop_display)
 
@@ -396,7 +397,7 @@ class MainDisplay(urwid.WidgetWrap):
             else:
                 self.display_stack.pop()
                 widget = self.display_map[self.display_stack[-1]]
-                if widget in (self.game_menu, self.transaction_dialog):
+                if widget in (self.game_menu, self.order_dialog):
                     # Never go back to the game menu
                     widget = None
 

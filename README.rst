@@ -57,4 +57,15 @@ The large TODO list includes:
   * Organize ships into fleets and automate fleet orders
   * Write a second, graphical UI.  Try to be different than the urwid UI to
     make sure that the UI concepts aren't leaking into the core engine.
-* 
+* Some things that make it harder to make money
+  * Pirates; pay off or fight off
+  * License fees: Pay at the capital planet or be attacked by police
+  * Contraband: Police attack you if they find you are carrying this
+  * Maintainance fees
+    * Docking charge
+    * Fuel cost
+    * Repair costs
+  * Transit time
+    * Outer planets take more time
+      * Orbit data can be used to make this more interesting as well
+
