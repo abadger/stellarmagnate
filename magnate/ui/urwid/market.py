@@ -36,11 +36,14 @@ class TransactionDialog(urwid.WidgetWrap):
         self.order = None
         self._order_purchased_sub_id = None
         self._order_sold_sub_id = None
+        self._market_update_sub_id = None
+        self._user_info_sub_id = None
 
         self.free_space = 0
         self.commodity_in_hold = 0
         self.free_warehouse = 0
         self.commodity_in_warehouse = 0
+        self.user_cash = None
 
         transaction_type_group = []
         self.buy_button = urwid.RadioButton(transaction_type_group, 'Buy')
@@ -85,49 +88,85 @@ class TransactionDialog(urwid.WidgetWrap):
         super().__init__(outer_layout)
 
         urwid.connect_signal(self.buy_button, 'change', self.handle_buy_sell_toggle)
+        urwid.connect_signal(self.quantity, 'change', self.handle_quantity_change)
         urwid.connect_signal(self.commit_button, 'click', self.handle_place_order)
         urwid.connect_signal(self.cancel_button, 'click', self.handle_transaction_finalized)
+        urwid.connect_signal(self.max_button, 'click', self.handle_max_quantity)
 
         self.pubpen.subscribe('ui.urwid.order_info', self.create_new_transaction)
-        #self.pubpen.subscribe('user.info', self.handle.user_info)
-        #self.pubpen.subscribe('user.cash.update', self.handle.user_case_update)
+        self.pubpen.subscribe('user.cash.update', self.handle_user_cash_update)
         self.pubpen.subscribe('ship.info', self.handle_ship_info)
         self.pubpen.subscribe('ship.cargo.update', self.handle_cargo_update)
-        #self.pubpen.subscribe('warehouse.info', self.handle_warehouse_info)
-        #self.pubpen.subscribe('warehouse.cargo.update', self.handle_cargo_update)
+        #self.pubpen.subscribe('warehouse.{}.info', self.handle_warehouse_info)
+        #self.pubpen.subscribe('warehouse.{}.cargo.update', self.handle_cargo_update)
 
-    def handle_ship_info(self, ship_type, free_space, filled_space, manifest):
-        """Update the hold space """
-        self.free_space = free_space
-        if self.order is not None:
-            commodity = self.order.commodity
-            manifest_entry = manifest.get(commodity, None)
-            self.commodity_in_hold = manifest_entry.quantity if manifest_entry else 0
-        else:
-            commodity = ''
-
-        if self.buy_button.state is True:
+    #
+    # Urwid event handlers for the dialog box elements
+    #
+    def handle_buy_sell_toggle(self, radio_button, new_state):
+        """Change interface slightly depending on whether we're buying or selling"""
+        ### FIXME: Implement warehouse
+        if (radio_button is self.buy_button and new_state is True) or (radio_button is self.sell_button and new_state is False):
             self.hold_box.set_label('Hold: {} Free Space'.format(format_number(self.free_space)))
+            #self.warehouse_box.set_label('Warehouse: {}'.format(format_number(self.free_warehouse)))
         else:
             self.hold_box.set_label('Hold: {} {}'.format(format_number(self.commodity_in_hold),
-                                                         commodity))
+                                                         self.order.commodity))
+            #self.warehouse_box.set_label('Warehouse: {}'.format(format_number(self.commodity_in_warehouse)))
+        ###FIXME: If quantity exceeds maximum, reduce it to the maximum
 
-    def handle_cargo_update(self, manifest, free_space, *args):
-        """Update the hold space whenever we receive a cargo update event"""
-        self.free_space = free_space
-        if self.order is not None:
-            commodity = self.order.commodity
-            if manifest.commodity == commodity:
-                self.commodity_in_hold = manifest.quantity
+    def handle_quantity_change(self, edit_widget, new_text):
+        """Update total sale as the edit widget is changed"""
+        try:
+            quantity = int(new_text)
+        except ValueError:
+            # EditInt's change signal also fires when the widget is first
+            # created or cleared (and thus has empty string or other
+            # non-numbers)
+            return
+        total_sale = quantity * self.order.price
+        self.sale_info.set_text('Total Sale: ${}'.format(format_number(total_sale)))
+
+    def handle_max_quantity(self, *args):
+        """Calculate the maximum quantity to buy or sell"""
+
+        if self.buy_button.state:
+            # Find out how much space we have available in the hold and local
+            # warehouse
+            available_space = 0
+            if self.hold_box.state:
+                available_space += self.free_space
+            if self.warehouse_box.state:
+                available_space += self.free_warehouse
+
+            # maximum amount we can buy is the smaller of space available or cash/price
+            maximum_quantity = min(available_space, self.user_cash // self.order.price)
+            total_sale = self.order.price * maximum_quantity
+
+            # set quantity field to maximum_quantity
+            self.quantity.set_edit_text('{}'.format(maximum_quantity))
+            # Set the total_sale information to the amount we'd pay for the
+            # maximum
+            self.sale_info.set_text('Total Sale: ${}'.format(format_number(total_sale)))
         else:
-            commodity = ''
+            # Find how much of the commodity we have to sell
+            amount = 0
+            if self.hold_box.state:
+                amount += self.commodity_in_hold
+            if self.warehouse_box.state:
+                amount += self.commodity_in_warehouse
 
-        if self.buy_button.state is True:
-            self.hold_box.set_label('Hold: {} Free Space'.format(format_number(self.free_space)))
-        else:
-            self.hold_box.set_label('Hold: {} {}'.format(format_number(self.commodity_in_hold),
-                                                         commodity))
+            # Set the quantity and total sale fields to reflect this amount
+            self.quantity.set_edit_text('{}'.format(amount))
+            self.sale_info.set_text('Total Sale: ${}'.format(format_number(amount * self.order.price)))
 
+    def validate_check_box_change(self):
+        """Make sure that at least one of the hold/warehouse checkboxes is always checked"""
+        pass
+
+    #
+    # Event handlers for processing the transaction
+    #
     def create_new_transaction(self, commodity, price, location):
         """Reset the dialog box whenever a new sale is started
 
@@ -146,41 +185,25 @@ class TransactionDialog(urwid.WidgetWrap):
         self.quantity.set_edit_text("")
         self.buysell_widget.focus_position = 0
         self.layout_list.set_focus(0)
-        pass
+
         # recalculate hold and warehouse space
         self.pubpen.publish('query.ship.info')
         ### FIXME: Recalculate warehouse space
-
-    def handle_buy_sell_toggle(self, radio_button, new_state):
-        """Change interface slightly depending on whether we're buying or selling"""
-        ### FIXME: Implement warehouse
-        if (radio_button is self.buy_button and new_state is True) or (radio_button is self.sell_button and new_state is False):
-            self.hold_box.set_label('Hold: {} Free Space'.format(format_number(self.free_space)))
-            #self.warehouse_box.set_label('Warehouse: {}'.format(format_number(self.free_warehouse)))
-        else:
-            self.hold_box.set_label('Hold: {} {}'.format(format_number(self.commodity_in_hold),
-                                                         self.order.commodity))
-            #self.warehouse_box.set_label('Warehouse: {}'.format(format_number(self.commodity_in_warehouse)))
-        ###FIXME: If quantity exceeds maximum, reduce it to the maximum
-
-    def handle_max_quantity(self):
-        """Calculate the maximum quantity to buy or sell"""
         pass
-        # For buy, if hold is checked use hold_space for maximum_space
-        #       if warehouse, add that to the maximum_space
-        #   calculate maximum amount to buy for user's money.
-        #   if amount to buy > maximum_space, reduce to maximum_space
-        #   set quantity field to maximum_space
-        #   set total_sale to quantity * price
-        #
-        # For sell, if hold is checked, set amount_to_sell to hold
-        #       if warehouse, add to amount_to_sell
-        #   set quantity field to amount_to_sell
-        #   set total_sale to quantity field * price
 
-    def validate_check_box_change(self):
-        """Make sure that at least one of the hold/warehouse checkboxes is always checked"""
-        pass
+        # Watch out for price changes
+        if self._market_update_sub_id:
+            self.pubpen.unsubscribe(self._market_update_sub_id)
+        self._market_update_sub_id = self.pubpen.subscribe('market.{}.update'.format(location),
+                                                           self.handle_market_update)
+
+        # If we haven't acquired information about the user's cash yet, query
+        # once for it.  After the initial time, the user.cash.update event
+        # should keep us informed
+        if self.user_cash is None:
+            if not self._user_info_sub_id:
+                self._user_info_sub_id = self.pubpen.subscribe('user.info', self.handle_user_info)
+            self.pubpen.publish('query.user.info')
 
     def handle_transaction_finalized(self, *args, **kwargs):
         """
@@ -194,6 +217,9 @@ class TransactionDialog(urwid.WidgetWrap):
         if self._order_purchased_sub_id:
             self.pubpen.unsubscribe(self._order_purchased_sub_id)
             self._order_purchased_sub_id = None
+        if self._market_update_sub_id:
+            self.pubpen.unsubscribe(self._market_update_sub_id)
+            self._market_update_sub_id = None
 
         urwid.emit_signal(self, 'close_transaction_dialog')
 
@@ -231,12 +257,66 @@ class TransactionDialog(urwid.WidgetWrap):
             # Error
             assert self.buy_button.state is True or self.sell_button.state is True, 'Neither the buy nor sell button was selected'
 
+    #
+    # Pubpen events to gather data
+    #
+    def handle_user_info(self, username, cash, *args):
+        """Update the user's cash amount"""
+        if self._user_info_sub_id:
+            self.pubpen.unsubscribe(self._user_info_sub_id)
+            self._user_info_sub_id = None
+        self.user_cash = cash
+        ### FIXME: should we error or reduce quantity?
+
+    def handle_user_cash_update(self, new_cash, *args):
+        """Update the user's cash amount"""
+        self.user_cash = new_cash
+        ### FIXME: should we error or reduce quantity?
+
+    def handle_ship_info(self, ship_type, free_space, filled_space, manifest):
+        """Update the hold space """
+        self.free_space = free_space
+        if self.order is not None:
+            commodity = self.order.commodity
+            manifest_entry = manifest.get(commodity, None)
+            self.commodity_in_hold = manifest_entry.quantity if manifest_entry else 0
+        else:
+            commodity = ''
+
+        if self.buy_button.state is True:
+            self.hold_box.set_label('Hold: {} Free Space'.format(format_number(self.free_space)))
+        else:
+            self.hold_box.set_label('Hold: {} {}'.format(format_number(self.commodity_in_hold),
+                                                         commodity))
+    def handle_cargo_update(self, manifest, free_space, *args):
+        """Update the hold space whenever we receive a cargo update event"""
+        self.free_space = free_space
+        if self.order is not None:
+            commodity = self.order.commodity
+            if manifest.commodity == commodity:
+                self.commodity_in_hold = manifest.quantity
+        else:
+            commodity = ''
+
+        if self.buy_button.state is True:
+            self.hold_box.set_label('Hold: {} Free Space'.format(format_number(self.free_space)))
+        else:
+            self.hold_box.set_label('Hold: {} {}'.format(format_number(self.commodity_in_hold),
+                                                         commodity))
+
+    def handle_market_update(self, commodity, price):
+        """Update the price in the dialog if it's been updated on the backend"""
+        if self.order is not None:
+            if commodity == self.order.commodity:
+                self.order.price = price
+            self.dialog.set_title('{} - ${}'.format(commodity, price))
+
     def keypress(self, size, key):
         """Handle all keyboard shortcuts for the transaction dialog"""
         if key == 'esc':
             self.handle_transaction_finalized()
-        elif key == 'enter':
-            self.handle_place_order()
+        #elif key == 'enter':
+        #    self.handle_place_order()
         else:
             super().keypress(size, key)  #pylint: disable=not-callable
         return key
