@@ -256,7 +256,7 @@ class Market:
                          'adjustment': 0,
                          'msg': 'Production levels for {} were right on target'.format(commodity)
                         }
-            self.pubpen.publish('market.{}.event'.format(self.location.name), event['msg'])
+            self.pubpen.publish('market.event', self.location.name, commodity, price, event['msg'])
 
         if not is_event:
             if price_decrease:

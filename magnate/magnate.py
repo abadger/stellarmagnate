@@ -164,6 +164,8 @@ class Magnate:
 
         commodities = OrderedDict()
         for commodity in data['commodity']:
+            for event in commodity['event']:
+                event['msg'] = event['msg'].translate({ord('\n'): ' '})
             commodities[commodity['name']] = CommodityData(commodity['name'],
                                                            commodity['type'],
                                                            commodity['mean_price'],

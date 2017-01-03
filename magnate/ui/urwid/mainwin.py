@@ -256,6 +256,16 @@ class MessageWindow(urwid.WidgetWrap):
         self.pubpen.subscribe('user.login_failure', self.add_message)
         self.pubpen.subscribe('user.order_failure', self.add_message)
         self.pubpen.subscribe('ship.movement_failure', self.add_message)
+        self.pubpen.subscribe('market.event', self.handle_market_event)
+
+    def handle_market_event(self, location, commodity, price, msg):
+        """
+        Format market event message.
+
+        These are different as they can take place anywhere, not just in the
+        location where the user is present.
+        """
+        self.add_message('NEWS from {}: {}'.format(location, msg))
 
     def add_message(self, msg):
         """

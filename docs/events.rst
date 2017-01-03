@@ -107,10 +107,11 @@ Market Events
 
 Market events carry information about a specific market to the client.
 
-.. py:function:: market.{location}.event(msg: string)
+.. py:function:: market.event(location, commodity, price, msg: string)
 
     Emitted when an event occurs at a market.  This is for informational
     purposes.  The client may choose to display the message for game flavour.
+    Once markets become stateful, this may become more useful.
 
     :arg string msg: A message about the market
 

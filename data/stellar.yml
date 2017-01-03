@@ -53,12 +53,12 @@ commodity:
     event:
     - type: sale
       adjustment: 5
-      msg: |
+      msg: >
         This year's food harvest reaches unheard of levels!  Surplus drives
         prices down.
     - type: shortage
       adjustment: 5
-      msg: |
+      msg: >
         Famine drives the price of food through the roof.
   - name: Iron
     id: 1
@@ -69,11 +69,11 @@ commodity:
     event:
     - type: sale
       adjustment: 20
-      msg: |
+      msg: >
         New mines open.  Ore prices plumment.
     - type: shortage
       adjustment: 200
-      msg: |
+      msg: >
         New industries demand more metals!
   - name: Liquid Hydrogen
     id: 2
@@ -84,11 +84,11 @@ commodity:
     event:
     - type: sale
       adjustment: 200
-      msg: |
+      msg: >
         A new source of hydrogen has been found
     - type: shortage
       adjustment: 10
-      msg: |
+      msg: >
         Shortage of energy sends fuel prices skyward!
   - name: Medicine
     id: 3
@@ -99,11 +99,11 @@ commodity:
     event:
     - type: sale
       adjustment: 300
-      msg: |
+      msg: >
         New pharmaceutical methods create a surplus of medicine.
     - type: shortage
       adjustment: 2600
-      msg: |
+      msg: >
         Plague spreads like wildfire!
   - name: Weapons
     id: 4
@@ -114,11 +114,11 @@ commodity:
     event:
     - type: sale
       adjustment: 1000
-      msg: |
+      msg: >
         Key arms manufacturer makes bid to undersell the competition.
     - type: shortage
       adjustment: 3500
-      msg: |
+      msg: >
         Warfare erupts on the planet!
   - name: Drugs
     id: 5
@@ -129,11 +129,11 @@ commodity:
     event:
     - type: sale
       adjustment: 2000
-      msg: |
+      msg: >
         Cheap drugs flood the market.
     - type: shortage
       adjustment: 7000
-      msg: |
+      msg: >
         Addicts are buying drugs at an alarming rate.
 equipment:
   - name: Cargo Module (100 units)
@@ -148,7 +148,7 @@ equipment:
       low_percentage: 0.5
       high_percentage: 2
       adjustment: 5000
-      msg: |
+      msg: >
         The shipyard offers to sell you a few refurbished cargo modules.
   - name: Laser Array
     id: 1
@@ -162,7 +162,7 @@ equipment:
       low_percentage: 0.5
       high_percentage: 2
       adjustment: 5000
-      msg: |
+      msg: >
         A local arms dealer has some shipboard laser arrays he's willing to
         sell for cheap.
 property:
@@ -177,7 +177,7 @@ property:
     - type: sale
       low_percentage: 0.5
       high_percentage: 2
-      msg: |
+      msg: >
         The local government is auctioning off cheap warehouse space to
         encourage off-world trade.
 ship:
