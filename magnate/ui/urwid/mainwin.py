@@ -202,7 +202,7 @@ class InfoWindow(urwid.WidgetWrap):
 
     def handle_cash_update(self, new_cash, *args):
         """Update cash display when cash is updated on the backend"""
-        self.cash.set_text(' ${}'.format(new_cash))
+        self.cash.set_text(' ${}'.format(format_number(new_cash)))
 
     def handle_new_location(self, location, *args):
         """Update the warehouse and finance information when we get to a new location"""
