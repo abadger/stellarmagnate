@@ -17,3 +17,9 @@
 Holds metadata about this release of the Stellar Magnate software
 """
 __version__ = '0.1'
+
+AUTHOR = 'Toshio Kuratomi'
+MAINTAINER = 'Toshio Kuratomi'
+PROGRAM_NAME = 'Stellar Magnate'
+COPYRIGHT_YEAR = '2017'
+LICENSE = 'GNU Affero General Public License v3 or later (AGPLv3+)'

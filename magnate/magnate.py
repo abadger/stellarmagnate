@@ -213,6 +213,7 @@ class Magnate:
 
     def login(self, username, password):
         """Log a user into the game"""
+
         if 'toshio' in username.lower():
             # Game can begin in earnest now
             self.user = User(self.pubpen, username)

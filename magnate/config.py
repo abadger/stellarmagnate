@@ -35,6 +35,9 @@ base_data_dir = {data_dir}/base
 # Directory with schema that explains the structure of the data files
 schema_dir = {data_dir}/schemas
 
+# Directory to save games in
+save_dir = ~/.stellarmagnate/saves
+
 # name of the User Interface plugin to use
 ui_plugin = urwid
 """.format(data_dir='/usr/share/stellarmagnate',).split('\n')
@@ -47,6 +50,7 @@ schema_dir = {0}
 CONFIG_SPEC = """
 base_data_dir = string()
 schema_dir = string()
+save_dir = string()
 ui_plugin = string()
 """.split('\n')
 

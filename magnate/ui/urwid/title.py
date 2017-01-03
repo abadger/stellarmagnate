@@ -19,6 +19,7 @@ A splash screen for the Stellar Magnate Program
 
 import urwid
 
+from ... import release
 
 class TitleCard(urwid.LineBox):
     """Display a splash screen"""
@@ -27,9 +28,9 @@ class TitleCard(urwid.LineBox):
     def __init__(self, pubpen):
         self.pubpen = pubpen
 
-        program_name = urwid.Text('Stellar Magnate', align='center')
-        copyright_name = urwid.Text('(C) 2016, Toshio Kuratomi', align='center')
-        license_name = urwid.Text('GNU Affero General Public License 3 or later', align='center')
+        program_name = urwid.Text(release.PROGRAM_NAME, align='center')
+        copyright_name = urwid.Text('© {}, {}'.format(release.COPYRIGHT_YEAR, release.AUTHOR), align='center')
+        license_name = urwid.Text(release.LICENSE, align='center')
 
         screen = urwid.Filler(urwid.Pile([program_name, copyright_name, license_name]), valign='middle')
         super().__init__(screen)
