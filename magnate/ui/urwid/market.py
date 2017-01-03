@@ -37,6 +37,11 @@ class TransactionDialog(urwid.WidgetWrap):
         self._order_purchased_sub_id = None
         self._order_sold_sub_id = None
 
+        self.free_space = 0
+        self.commodity_in_hold = 0
+        self.free_warehouse = 0
+        self.commodity_in_warehouse = 0
+
         transaction_type_group = []
         self.buy_button = urwid.RadioButton(transaction_type_group, 'Buy')
         self.sell_button = urwid.RadioButton(transaction_type_group, 'Sell')
@@ -79,10 +84,49 @@ class TransactionDialog(urwid.WidgetWrap):
                                        brcorner='\u2524')
         super().__init__(outer_layout)
 
+        urwid.connect_signal(self.buy_button, 'change', self.handle_buy_sell_toggle)
         urwid.connect_signal(self.commit_button, 'click', self.handle_place_order)
         urwid.connect_signal(self.cancel_button, 'click', self.handle_transaction_finalized)
 
         self.pubpen.subscribe('ui.urwid.order_info', self.create_new_transaction)
+        #self.pubpen.subscribe('user.info', self.handle.user_info)
+        #self.pubpen.subscribe('user.cash.update', self.handle.user_case_update)
+        self.pubpen.subscribe('ship.info', self.handle_ship_info)
+        self.pubpen.subscribe('ship.cargo.update', self.handle_cargo_update)
+        #self.pubpen.subscribe('warehouse.info', self.handle_warehouse_info)
+        #self.pubpen.subscribe('warehouse.cargo.update', self.handle_cargo_update)
+
+    def handle_ship_info(self, ship_type, free_space, filled_space, manifest):
+        """Update the hold space """
+        self.free_space = free_space
+        if self.order is not None:
+            commodity = self.order.commodity
+            manifest_entry = manifest.get(commodity, None)
+            self.commodity_in_hold = manifest_entry.quantity if manifest_entry else 0
+        else:
+            commodity = ''
+
+        if self.buy_button.state is True:
+            self.hold_box.set_label('Hold: {} Free Space'.format(format_number(self.free_space)))
+        else:
+            self.hold_box.set_label('Hold: {} {}'.format(format_number(self.commodity_in_hold),
+                                                         commodity))
+
+    def handle_cargo_update(self, manifest, free_space, *args):
+        """Update the hold space whenever we receive a cargo update event"""
+        self.free_space = free_space
+        if self.order is not None:
+            commodity = self.order.commodity
+            if manifest.commodity == commodity:
+                self.commodity_in_hold = manifest.quantity
+        else:
+            commodity = ''
+
+        if self.buy_button.state is True:
+            self.hold_box.set_label('Hold: {} Free Space'.format(format_number(self.free_space)))
+        else:
+            self.hold_box.set_label('Hold: {} {}'.format(format_number(self.commodity_in_hold),
+                                                         commodity))
 
     def create_new_transaction(self, commodity, price, location):
         """Reset the dialog box whenever a new sale is started
@@ -104,13 +148,20 @@ class TransactionDialog(urwid.WidgetWrap):
         self.layout_list.set_focus(0)
         pass
         # recalculate hold and warehouse space
+        self.pubpen.publish('query.ship.info')
+        ### FIXME: Recalculate warehouse space
 
-    def handle_buy_sell_toggle(self):
+    def handle_buy_sell_toggle(self, radio_button, new_state):
         """Change interface slightly depending on whether we're buying or selling"""
-        pass
-        # If buy sell changed, then change hold and warehouse numbers
-        # (free space for buy, amount of item for sell)
-        # If quantity exceeds maximum, reduce it to the maximum
+        ### FIXME: Implement warehouse
+        if (radio_button is self.buy_button and new_state is True) or (radio_button is self.sell_button and new_state is False):
+            self.hold_box.set_label('Hold: {} Free Space'.format(format_number(self.free_space)))
+            #self.warehouse_box.set_label('Warehouse: {}'.format(format_number(self.free_warehouse)))
+        else:
+            self.hold_box.set_label('Hold: {} {}'.format(format_number(self.commodity_in_hold),
+                                                         self.order.commodity))
+            #self.warehouse_box.set_label('Warehouse: {}'.format(format_number(self.commodity_in_warehouse)))
+        ###FIXME: If quantity exceeds maximum, reduce it to the maximum
 
     def handle_max_quantity(self):
         """Calculate the maximum quantity to buy or sell"""
@@ -224,10 +275,12 @@ class MarketDisplay(urwid.WidgetWrap):
         #self.amount = urwid.ListBox(self.amount)
         self.hold = urwid.ListBox(self.hold_list)
         self.warehouse = urwid.ListBox(self.warehouse_list)
+        #pylint: disable=protected-access
         self.price._selectable = False
         #self.amount._selectable = False
         self.hold._selectable = False
         self.warehouse._selectable = False
+        #pylint: enable=protected-access
 
         market_col = SidelessLineBox(self.commodity, title='Commodity', title_align='left',
                                      lline=None, tlcorner='─', trcorner='─',
