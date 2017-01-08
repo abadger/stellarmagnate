@@ -40,17 +40,19 @@ from .travel import TravelDisplay
 #     [_] Export signals for selecting the menu entries
 #     [x] Travel
 #     [_] Finance
-#     [_] Market
-#     [_] Shipyard
+#     [x] Market
+#     [_] Port 
 # [_] Game Menu
 #   [x] Quit
 #   [_] Save
 #   [_] Load
 # [_] commodities market
-#   [_] Hold space
+#   [x] Hold space
 #   [_] Warehouse space
-# [_] Commodities purchase
 # [_] Info window
+#   [_] Warehouse
+#   [-] Bank
+#   [_] Loan
 # [_] Financial menu
 # [_] Financial  action menu
 # [_] Fleet menu
@@ -115,8 +117,8 @@ class MenuBar(urwid.WidgetWrap):
     def __init__(self, pubpen):
         self.pubpen = pubpen
 
+        self.yard_entry = urwid.Text('(C)ommodity Exchange')
         self.port_entry = urwid.Text('(P)ort District')
-        self.yard_entry = urwid.Text('Ship(Y)ard')
         self.financial_entry = urwid.Text('(F)inancial')
         self.travel_entry = urwid.Text('(T)ravel')
         self.game_menu_entry = urwid.Text('(M)enu')
@@ -287,7 +289,7 @@ class MessageWindow(urwid.WidgetWrap):
                              partial(setattr, self, '_can_print_message', True))
 
 
-class ShipyardDisplay(urwid.WidgetWrap):
+class PortDisplay(urwid.WidgetWrap):
     """Display for the user to manage their ship and equipment"""
     _selectable = True
 
@@ -337,13 +339,13 @@ class MainDisplay(urwid.WidgetWrap):
         self.order_dialog = OrderDialog(self.pubpen)
         self.travel_menu = TravelDisplay(self.pubpen)
         self.game_menu = GameMenuDialog(self.pubpen)
-        self.shipyard_display = ShipyardDisplay(self.pubpen)
+        self.port_display = PortDisplay(self.pubpen)
         self.financial_display = FinancialDisplay(self.pubpen)
 
         self.display_map = {
             'MarketDisplay': self.market_display,
             'OrderDialog': self.order_dialog,
-            'ShipyardDisplay': self.shipyard_display,
+            'PortDisplay': self.port_display,
             'FinancialDisplay': self.financial_display,
             'TravelDisplay': self.travel_menu,
             'GameMenuDialog': self.game_menu,
@@ -412,10 +414,10 @@ class MainDisplay(urwid.WidgetWrap):
         """
         if key == 'esc':
             self.pop_display()
-        elif key in frozenset('pP'):
+        elif key in frozenset('cC'):
             self.push_display('MarketDisplay')
-        elif key in frozenset('yY'):
-            self.push_display('ShipyardDisplay')
+        elif key in frozenset('pP'):
+            self.push_display('PortDisplay')
         elif key in frozenset('fF'):
             self.push_display('FinancialDisplay')
         elif key in frozenset('tT'):
