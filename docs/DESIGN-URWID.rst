@@ -96,6 +96,15 @@ Info Window:
 |
 +-----------------+
 
+v1 Ships
+
++- Equipment -------- Price --- Current --+
+| (1) Cargo Space     $10K     1000
+| (2) Lasers          $5000       1
+| (3) Warehouse       $15K    20000
++-----------------------------------------+
+
+
 Financial
 +-----------------+
 | (1) The Syndicate        =========> Mob; high limit; high interest loan.  Present anywhere.  Deposit: low interest, 100% safe, but may be 0-50% inaccessible at any given time
