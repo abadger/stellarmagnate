@@ -117,7 +117,7 @@ class MenuBar(urwid.WidgetWrap):
     def __init__(self, pubpen):
         self.pubpen = pubpen
 
-        self.yard_entry = urwid.Text('(C)ommodity Exchange')
+        self.exchange_entry = urwid.Text('(C)ommodity Exchange')
         self.port_entry = urwid.Text('(P)ort District')
         self.financial_entry = urwid.Text('(F)inancial')
         self.travel_entry = urwid.Text('(T)ravel')
@@ -125,13 +125,13 @@ class MenuBar(urwid.WidgetWrap):
 
         self.menu_entries = urwid.Columns((
             ('weight', 1, urwid.Divider(' ')),
-            ('pack', self.port_entry),
-            ('pack', self.yard_entry),
-            ('pack', self.financial_entry),
-            ('pack', self.travel_entry),
-            ('pack', self.game_menu_entry),
+            (len('(C)ommodity Exchange') + 4, self.exchange_entry),
+            (len('(P)ort District') + 4, self.port_entry),
+            (len('(F)inancial') + 4, self.financial_entry),
+            (len('(T)ravel') + 4, self.travel_entry),
+            (len('(M)enu') + 4, self.game_menu_entry),
             ('weight', 1, urwid.Divider(' ')),
-            ), dividechars=5)
+            ), dividechars=1)
 
         super().__init__(self.menu_entries)
 
