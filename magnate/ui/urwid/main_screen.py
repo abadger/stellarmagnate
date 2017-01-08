@@ -23,12 +23,12 @@ from functools import partial
 
 import urwid
 
-from .gamemenu import GameMenuDialog
-from .market import MarketDisplay
+from .gamemenu_dialog import GameMenuDialog
+from .market_display import MarketDisplay
 from .numbers import format_number
 from .order_dialog import OrderDialog
 from .sideless_linebox import SidelessLineBox
-from .travel import TravelDisplay
+from .travel_display import TravelDisplay
 
 # ui elements:
 # [x] Travel Menu
