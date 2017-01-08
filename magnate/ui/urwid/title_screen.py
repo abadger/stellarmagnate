@@ -21,7 +21,7 @@ import urwid
 
 from ... import release
 
-class TitleCard(urwid.LineBox):
+class TitleScreen(urwid.LineBox):
     """Display a splash screen"""
     signals = ['close_title_card']
 

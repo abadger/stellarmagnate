@@ -19,9 +19,9 @@ The main entrypoint into the urwid user interface
 import urwid
 
 from magnate.ui.api import UserInterface
-from .auth import LoginScreen
-from .mainwin import MainWindow
-from .title import TitleCard
+from .auth_screen import LoginScreen
+from .main_screen import MainScreen
+from .title_screen import TitleScreen
 
 
 class Interface(UserInterface):
@@ -34,9 +34,9 @@ class Interface(UserInterface):
 
         # Windows
 
-        self.title_card = TitleCard(pubpen)
+        self.title_card = TitleScreen(pubpen)
         self.login_screen = LoginScreen(pubpen)
-        self.main_window = MainWindow(pubpen)
+        self.main_window = MainScreen(pubpen)
         self.root_win = urwid.Frame(urwid.SolidFill(' '))
 
         # Arrange the widgets

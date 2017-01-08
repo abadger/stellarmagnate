@@ -429,7 +429,7 @@ class MainDisplay(urwid.WidgetWrap):
         return
 
 
-class MainWindow(urwid.LineBox):
+class MainScreen(urwid.LineBox):
     """Toplevel window mapping the top of the screen"""
     def __init__(self, pubpen):
         self.pubpen = pubpen
