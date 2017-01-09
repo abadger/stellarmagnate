@@ -110,7 +110,7 @@ class StatusBar(urwid.Columns):
         self.update_location(new_location)
 
 
-class MenuBar(urwid.WidgetWrap):
+class MenuBarWindow(urwid.WidgetWrap):
     """Menu displaying major player options"""
     _selectable = True
 
@@ -315,13 +315,13 @@ class FinancialDisplay(urwid.WidgetWrap):
         pass
 
 
-class MainDisplay(urwid.WidgetWrap):
+class MainWindow(urwid.WidgetWrap):
     """
-    The MainDisplay is the main interaction point of the urwid interface
+    The MainWindow is the main interaction point of the urwid interface
 
-    MainDisplay changes as the user interacts with the interface, showing the
+    MainWindow changes as the user interacts with the interface, showing the
     market, commodity, travel menu etc.  Most of the user's active
-    participation will be with the MainDisplay.
+    participation will be with the MainWindow.
     """
     def __init__(self, pubpen):
         self.pubpen = pubpen
@@ -390,7 +390,7 @@ class MainDisplay(urwid.WidgetWrap):
         Remove a display from the stack.
 
         .. seealso::
-            :meth:`~magnate.ui.urwid.mainwin.MainDisplay.push_display`
+            :meth:`~magnate.ui.urwid.mainwin.MainWindow.push_display`
         """
         widget = None
         while widget is None:
@@ -437,17 +437,17 @@ class MainScreen(urwid.LineBox):
         #
         # Always displayed widgets
         #
-        self.menu_bar = MenuBar(self.pubpen)
+        self.menu_bar_window = MenuBarWindow(self.pubpen)
         self.info_window = InfoWindow(self.pubpen)
-        self.main_display = MainDisplay(self.pubpen)
+        self.main_window = MainWindow(self.pubpen)
         self.msg_window = MessageWindow(self.pubpen)
 
-        pile = urwid.Pile((self.main_display,
+        pile = urwid.Pile((self.main_window,
                            (MAX_MESSAGES, self.msg_window),
                           ))
         cols = urwid.Columns((pile, (15, self.info_window)))
         layout = urwid.Pile((
-            ('pack', self.menu_bar),
+            ('pack', self.menu_bar_window),
             ('weight', 1, cols),
             ))
         self.top = urwid.Frame(layout)
