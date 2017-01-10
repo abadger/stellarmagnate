@@ -24,8 +24,10 @@ from functools import partial
 import urwid
 
 from .gamemenu_dialog import GameMenuDialog
+from .info_win import InfoWindow
 from .market_display import MarketDisplay
-from .numbers import format_number
+from .menu_bar_win import MenuBarWindow
+from .message_win import MessageWindow
 from .order_dialog import OrderDialog
 from .sideless_linebox import SidelessLineBox
 from .travel_display import TravelDisplay
@@ -108,185 +110,6 @@ class StatusBar(urwid.Columns):
     def handle_ship_moved(self, new_location, *args):
         """Update the ship's location when the ship moves"""
         self.update_location(new_location)
-
-
-class MenuBarWindow(urwid.WidgetWrap):
-    """Menu displaying major player options"""
-    _selectable = True
-
-    def __init__(self, pubpen):
-        self.pubpen = pubpen
-
-        self.exchange_entry = urwid.Text('(C)ommodity Exchange')
-        self.port_entry = urwid.Text('(P)ort District')
-        self.financial_entry = urwid.Text('(F)inancial')
-        self.travel_entry = urwid.Text('(T)ravel')
-        self.game_menu_entry = urwid.Text('(M)enu')
-
-        self.menu_entries = urwid.Columns((
-            ('weight', 1, urwid.Divider(' ')),
-            (len('(C)ommodity Exchange') + 4, self.exchange_entry),
-            (len('(P)ort District') + 4, self.port_entry),
-            (len('(F)inancial') + 4, self.financial_entry),
-            (len('(T)ravel') + 4, self.travel_entry),
-            (len('(M)enu') + 4, self.game_menu_entry),
-            ('weight', 1, urwid.Divider(' ')),
-            ), dividechars=1)
-
-        super().__init__(self.menu_entries)
-
-
-class InfoWindow(urwid.WidgetWrap):
-    """Window to display a quick summary of some player information"""
-    _selectable = False
-    def __init__(self, pubpen):
-        self.pubpen = pubpen
-        self._location = None
-
-        self._warehouse_sub_id = None
-        #self._bank_sub_id = None
-        ### FIXME: Implement bank, warehouse, bank, and loan
-        header2 = urwid.Text('Ship Type:')
-        self.ship_type = urwid.Text('  ')
-        header3 = urwid.Text('Free space:')
-        self.free_space = urwid.Text('  ')
-        header4 = urwid.Text('Cargo:')
-        self.filled_space = urwid.Text('  ')
-        header5 = urwid.Text('Warehouse:')
-        self.warehouse_free = urwid.Text('  ')
-        header6 = urwid.Text('Transshipment:')
-        self.warehouse_used = urwid.Text('  ')
-        header7 = urwid.Text('Cash:')
-        self.cash = urwid.Text('  ')
-        header8 = urwid.Text('Bank:')
-        self.bank = urwid.Text('  ')
-        header9 = urwid.Text('Loan:')
-        self.loan = urwid.Text('  ')
-        info_list = urwid.SimpleListWalker([header2, self.ship_type,
-                                            header3, self.free_space,
-                                            header4, self.filled_space,
-                                            header5, self.warehouse_free,
-                                            header6, self.warehouse_used,
-                                            header7, self.cash,
-                                            header8, self.bank,
-                                            header9, self.loan])
-        info = urwid.ListBox(info_list)
-        box = SidelessLineBox(info, tlcorner='─', trcorner='─', lline=' ', rline=None, bline=None)
-        super().__init__(box)
-
-        # Primary triggers: These are events that tell us we need to refresh
-        # our information
-        self.pubpen.subscribe('ship.moved', self.handle_new_location)
-        ### FIXME: Subscribe to purchased, sold
-        self.pubpen.subscribe('ship.cargo.update', self.handle_cargo_update)
-        self.pubpen.subscribe('user.cash.update', self.handle_cash_update)
-        #self.pubpen.subscribe('user.bank.update')
-        #self.pubpen.subscribe('user.loan.update')
-
-        # Secondary triggers: These are responses to requests for information
-        self.pubpen.subscribe('ship.info', self.handle_ship_info)
-        self.pubpen.subscribe('user.info', self.handle_user_info)
-
-        # Defer populating the initial values until a user has logged in
-        self.pubpen.subscribe('user.login_success', self.populate_info)
-
-    def populate_info(self, *args):
-        """Populate the information for the first time"""
-        self.pubpen.publish('query.user.info')
-        self.pubpen.publish('query.ship.info')
-
-    def handle_cargo_update(self, manifest, free_space, filled_space):
-        """Update cargo information when it is updated in the backend"""
-        free_space = format_number(free_space)
-        self.free_space.set_text(' {}'.format(free_space))
-
-        filled_space = format_number(filled_space)
-        self.filled_space.set_text(' {}'.format(filled_space))
-
-    def handle_cash_update(self, new_cash, *args):
-        """Update cash display when cash is updated on the backend"""
-        self.cash.set_text(' ${}'.format(format_number(new_cash)))
-
-    def handle_new_location(self, location, *args):
-        """Update the warehouse and finance information when we get to a new location"""
-        if self._location == location:
-            return
-        # Unsubscribe old location triggers
-        #if self._warehouse_sub_id is not None:
-        #    self.pubpen.unsubscribe(self._warehouse_sub_id)
-        #if self._bank_sub_id is not None:
-        #    self.pubpen.unsubscribe(self._bank_sub_id)
-
-        # Subscribe to new location triggers
-        #self._warehouse_sub_id = self.pubpen.subscribe('warehouse.{}.info'.format(location))
-        #self._bank_sub_id = self.pubpen.subscribe('bank.{}.info'.format(location))
-
-        #self.pubpen.publish('query.warehouse.{}.info'.format(location))
-        #self.pubpen.publish('query.bank.{}.info'.format(location))
-        pass
-
-    def handle_ship_info(self, ship_type, free_space, filled_space, *args):
-        """Update ship info for new ship info from the backend"""
-        self.ship_type.set_text(' {}'.format(ship_type))
-
-        free_space = format_number(free_space)
-        self.free_space.set_text(' {}'.format(free_space))
-
-        filled_space = format_number(filled_space)
-        self.filled_space.set_text(' {}'.format(filled_space))
-
-    def handle_user_info(self, username, cash, location):
-        """Update cash and location-dependent info for new user info"""
-        self.cash.set_text(' ${}'.format(format_number(cash)))
-        self.handle_new_location(location)
-
-
-MAX_MESSAGES = 3
-class MessageWindow(urwid.WidgetWrap):
-    """Display system messages"""
-    _MIN_TIME_BETWEEN_MESSAGES = 0.7
-    _can_print_message = True
-
-    def __init__(self, pubpen):
-        self.pubpen = pubpen
-        self.loop = self.pubpen.loop
-
-        self.message_list = urwid.SimpleFocusListWalker([])
-        list_box = urwid.ListBox(self.message_list)
-        message_win = SidelessLineBox(list_box, tline=None, lline=None, bline=None,
-                                      trcorner='│', brcorner='│')
-        super().__init__(message_win)
-        self.pubpen.subscribe('user.login_failure', self.add_message)
-        self.pubpen.subscribe('user.order_failure', self.add_message)
-        self.pubpen.subscribe('ship.movement_failure', self.add_message)
-        self.pubpen.subscribe('market.event', self.handle_market_event)
-
-    def handle_market_event(self, location, commodity, price, msg):
-        """
-        Format market event message.
-
-        These are different as they can take place anywhere, not just in the
-        location where the user is present.
-        """
-        self.add_message('NEWS from {}: {}'.format(location, msg))
-
-    def add_message(self, msg):
-        """
-        Add a message to the MessageWindow.
-
-        Reap older messages if there are too many
-        """
-        if not self._can_print_message:
-            self.loop.call_later(self._MIN_TIME_BETWEEN_MESSAGES, self.add_message, msg)
-            return
-
-        self.message_list.append(urwid.Text(msg))
-        while len(self.message_list) > MAX_MESSAGES:
-            self.message_list.pop(0)
-
-        self._can_print_message = False
-        self.loop.call_later(self._MIN_TIME_BETWEEN_MESSAGES,
-                             partial(setattr, self, '_can_print_message', True))
 
 
 class PortDisplay(urwid.WidgetWrap):
@@ -443,7 +266,7 @@ class MainScreen(urwid.LineBox):
         self.msg_window = MessageWindow(self.pubpen)
 
         pile = urwid.Pile((self.main_window,
-                           (MAX_MESSAGES, self.msg_window),
+                           (self.msg_window.height, self.msg_window),
                           ))
         cols = urwid.Columns((pile, (15, self.info_window)))
         layout = urwid.Pile((
