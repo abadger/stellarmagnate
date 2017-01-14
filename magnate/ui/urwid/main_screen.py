@@ -112,17 +112,68 @@ class StatusBar(urwid.Columns):
         self.update_location(new_location)
 
 
-class PortDisplay(urwid.WidgetWrap):
+from .commodity_catalog import CatalogColumn, CommodityCatalog
+class PortDisplay(CommodityCatalog):
     """Display for the user to manage their ship and equipment"""
-    _selectable = True
+
+    signals = ['close_port_display', 'open_equip_order_dialog']
 
     def __init__(self, pubpen):
-        self.pubpen = pubpen
+        auxiliary_cols = [CatalogColumn('Price', 13, money=True),
+                          #CatalogColumn('Amount', 20),
+                          CatalogColumn('Currently Owned', 20),
+                         ]
 
-        blank = urwid.Text('This test page intentionally left blank')
-        container = urwid.Filler(blank)
-        super().__init__(container)
+        #
+        # Indexes to special columns
+        #
+        self.hold_col_idx = 1
+        self.warehouse_col_idx = 2
+
+        super().__init__(pubpen, 'ui.urwid.equip_order_info',
+                         primary_title='Equipment', auxiliary_cols=auxiliary_cols,
+                         price_col_idx=0)
+
+        #
+        # Event handlers
+        #
+        self.pubpen.subscribe('ship.info', self.handle_ship_info)
+        self.pubpen.subscribe('ship.cargo.update', self.handle_cargo_update)
+
+    #
+    # Handle updates to the displayed info
+    #
+    def handle_ship_info(self, ship_type, free_space, filled_space, manifest): #pylint: disable=unused-argument
+        """Update the display with total hold space owned"""
         pass
+
+    def handle_cargo_update(self, cargo, *args):
+        """Update the display with total hold space owned"""
+        pass
+
+    def handle_new_warehouse_info(self, warehouse_info):
+        """Update the equipment display with total warehouse space owned"""
+        pass
+
+    def handle_new_location(self, new_location, *args):
+        """
+        Update the market display when the ship moves
+
+        :arg new_location: The location the ship has moved to
+        """
+        super().handle_new_location(new_location, *args)
+
+        pass
+        ### TODO: events geared towards the equipment, not the market
+        # Sync up information
+        #if self._market_query_sub_id is None:
+        #    self._market_query_sub_id = self.pubpen.subscribe('market.{}.info'.format(new_location), self.handle_market_info)
+        #self.pubpen.publish('query.ship.info')
+
+        #self.pubpen.subscribe('market.{}.update'.format(new_location)) => handle new market data
+        #self.pubpen.subscribe('warehouse.{}.update'.format(new_location)) => handle new warehouse info
+        #self.pubpen.publish('query.market.{}.info'.format(new_location))
+        #self.pubpen.publish('query.warehouse.{}.info'.format(new_location))
 
 
 class FinancialDisplay(urwid.WidgetWrap):
