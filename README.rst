@@ -9,8 +9,9 @@ Stellar Magnate
 Introduction
 ------------
 
-In the late 1980s I played a game called Planetary Travel by `Brian
-Winn<http://gel.msu.edu/winn/index.html>`_.  The game was a textual trading
+In the late 1980s I played a game called `Planetary Travel
+<https://archive.org/details/Big_Red_294_Planetary_Travel>`_ by `Brian
+Winn <http://gel.msu.edu/winn/index.html>`_.  The game was a textual trading
 game where you had to take a small amount of money and a space ship and travel
 between the planets of our solar system to make money.
 
@@ -34,10 +35,10 @@ the software, not because it's ready for widespread usage.  Currently, the
 basic framework that separates the User Interface from the game's logic is in
 place.  An urwid (text-based) interface is slowly being written.
 
-To log in, use the username "toshio" and any password.
-The game currently supports moving from planet to planet and buying and
-selling commodities on those planets.  That's enough to be playable but it's
-far from fun at this point.
+To log in, use the username "toshio" and any password.  The game currently
+supports moving from planet to planet and buying and selling commodities on
+those planets.  That's enough to be playable but it's far from fun at this
+point.
 
 The large TODO list includes:
 
@@ -61,7 +62,7 @@ The large TODO list includes:
   * Pirates; pay off or fight off
   * License fees: Pay at the capital planet or be attacked by police
   * Contraband: Police attack you if they find you are carrying this
-  * Maintainance fees
+  * Maintenance fees
     * Docking charge
     * Fuel cost
     * Repair costs
