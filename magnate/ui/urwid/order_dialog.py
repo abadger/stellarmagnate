@@ -17,7 +17,7 @@
 
 import urwid
 
-from ..event_api import Order
+from ...order import Order
 from .numbers import format_number
 from .sideless_linebox import SidelessLineBox
 

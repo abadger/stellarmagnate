@@ -47,7 +47,7 @@ class Dispatcher:
         """
         Attempt to purchase or sell a commodity for the user
 
-        :arg order: a :class:`magnate.ui.event_api.Order` with all the
+        :arg order: a :class:`magnate.order.Order` with all the
             relevant information to buy or sell the commodity
         :event user.order_failure: Emitted when the order could not be processed
         """
