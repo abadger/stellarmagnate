@@ -33,7 +33,8 @@ If you're downloading the game at this point, you're sure to find that it is
 somewhat lacking in features.  It is hosted on github as a cheap way to backup
 the software, not because it's ready for widespread usage.  Currently, the
 basic framework that separates the User Interface from the game's logic is in
-place.  An urwid (text-based) interface is slowly being written.
+place.  An `urwid <http://urwid.org/>`_ (text-based) interface is being
+developed alongside the initial implementation of the game.
 
 To log in, use the username "toshio" and any password.  The game currently
 supports moving from planet to planet and buying and selling commodities on
@@ -42,31 +43,40 @@ point.
 
 The large TODO list includes:
 
-* Finish the basic functionality which is encompassed in the DESIGN.urwid file
+* Finish the basic functionality which is encompassed in the DESIGN.urwid and
+  MECHANICS files
+
   * Ability to buy/sell bigger ships
   * Ability to buy/sell ship components
   * Banking system
+
 * Save and load of an in progress game
 * When saving, use the username and password to store the file for
   a particular user
 * Events: market high and low prices
 * Encounters: hostile ships, contraband, etc
 * Advance the game play
+
   * A market system which fluctuates with time and location.
   * Client-server and multiplayer
   * New markets in other systems
   * Organize ships into fleets and automate fleet orders
   * Write a second, graphical UI.  Try to be different than the urwid UI to
     make sure that the UI concepts aren't leaking into the core engine.
+
 * Some things that make it harder to make money
+
   * Pirates; pay off or fight off
   * License fees: Pay at the capital planet or be attacked by police
   * Contraband: Police attack you if they find you are carrying this
   * Maintenance fees
+
     * Docking charge
     * Fuel cost
     * Repair costs
-  * Transit time
-    * Outer planets take more time
-      * Orbit data can be used to make this more interesting as well
 
+  * Transit time
+
+    * Outer planets take more time
+
+      * Orbit data can be used to make this more interesting as well
