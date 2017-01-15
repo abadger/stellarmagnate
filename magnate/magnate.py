@@ -171,6 +171,7 @@ class Magnate:
                                                            commodity['mean_price'],
                                                            commodity['standard_deviation'],
                                                            commodity['depreciation_rate'],
+                                                           1,
                                                            commodity['event'],
                                                           )
         self.commodity_data = commodities

@@ -138,7 +138,7 @@ commodity:
 equipment:
   - name: Cargo Module (100 units)
     id: 0
-    type: shipparts
+    type: ship parts
     mean_price: 25000
     standard_deviation: 670
     depreciation_rate: 1
@@ -152,7 +152,7 @@ equipment:
         The shipyard offers to sell you a few refurbished cargo modules.
   - name: Laser Array
     id: 1
-    type: shipparts
+    type: ship parts
     mean_price: 16000
     standard_deviation: 335
     depreciation_rate: 1

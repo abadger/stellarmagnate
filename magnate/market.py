@@ -17,10 +17,10 @@
 Classes to model the Location and Markets in Stellar Magnate
 """
 
-import random
 from collections import OrderedDict
 from enum import Enum
 from functools import partial
+import random
 
 import attr
 
@@ -54,7 +54,9 @@ CommodityType = Enum('CommodityType', ('food', 'metal', 'fuel',
                                        'low bulk chemical',
                                        'high bulk chemical',
                                        'low bulk machine',
-                                       'high bulk machine'))
+                                       'high bulk machine',
+                                       'ship parts',
+                                       'property'))
 
 
 LocationType = Enum('LocationType', ('star', 'planet', 'moon',
@@ -77,6 +79,7 @@ class CommodityData:
     mean_price = attr.ib(validator=attr.validators.instance_of(int))
     standard_deviation = attr.ib(validator=attr.validators.instance_of(int))
     depreciation_rate = attr.ib(convert=float, validator=attr.validators.instance_of(float))
+    hold_space = attr.ib(convert=int, validator=attr.validators.instance_of(int))
     events = attr.ib(default=attr.Factory(list),
                      validator=attr.validators.optional(attr.validators.instance_of(list)))
 

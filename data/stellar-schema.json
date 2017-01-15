@@ -116,7 +116,7 @@
                     },
                     "type": {
                         "type": "string",
-                        "enum": ["shipparts"]
+                        "enum": ["ship parts"]
                     },
                     "mean_price": {
                         "type": "integer",
