@@ -1,3 +1,9 @@
+.. image:: https://travis-ci.org/abadger/stellarmagnate.svg?branch=master
+    :target: https://travis-ci.org/abadger/stellarmagnate
+
+.. image:: https://coveralls.io/repos/github/abadger/stellarmagnate/badge.svg?branch=master
+    :target: https://coveralls.io/github/abadger/stellarmagnate?branch=master
+
 ===============
 Stellar Magnate
 ===============
