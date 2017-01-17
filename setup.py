@@ -1,6 +1,6 @@
 from distutils.core import setup
 
-from magnate impotr release
+from magnate import release
 
 
 setup(name="stellar-magnate",
