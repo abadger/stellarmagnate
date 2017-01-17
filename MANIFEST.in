@@ -1,1 +1,4 @@
 LICENSE
+recursive-include tests/* *.py
+test-requirements.txt
+.coveragerc
