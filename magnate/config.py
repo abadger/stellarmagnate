@@ -25,7 +25,7 @@ from kitchen.iterutils import iterate
 
 
 SYSTEM_CONFIG_FILE = '/etc/stellarmagnate/magnate.cfg'
-USER_CONFIG_FILE = '~/.stellarmagnater/magnate.cfg'
+USER_CONFIG_FILE = os.path.expanduser('~/.stellarmagnate/magnate.cfg')
 
 DEFAULT_CONFIG = """
 # Directory in which the base data lives.  Commodity names and price ranges,
@@ -63,8 +63,7 @@ def _find_config(conf_files=tuple()):
     :returns: a list of config_files.  Configuration in the last files in the
         list should override the first ones.
     """
-    paths = itertools.chain((SYSTEM_CONFIG_FILE,
-                             os.path.expanduser(USER_CONFIG_FILE)),
+    paths = itertools.chain((SYSTEM_CONFIG_FILE, USER_CONFIG_FILE),
                             (os.path.expanduser(os.path.expandvars(p)) for p in iterate(conf_files)))
 
     config_files = []
