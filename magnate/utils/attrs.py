@@ -21,6 +21,66 @@ Helper functions for python attrs classes.
 from collections.abc import MutableSequence, Sequence
 
 
+def container_validator(container_type, instance, attribute, value,
+                        not_container_type=None, contained_validator=None):
+    """
+    Validate that a value is a specific type of container and contains certain types of things
+
+    :arg container_type: Type of container (example: collections.abc.Set)
+    :arg instance: Instance of the class that we're validating
+    :arg attribute: Name of the attribute that we're validating
+    :arg value: Value of the attribute that we're validating
+    :kwarg not_container_type: If not None (the default), a type that the
+        container cannot be.  This can be used with collections.abc to specify
+        immutability.  For instance, to specify only immutable sets::
+
+            partial(container_validator, collections.abc.Set, not_container_type=collections.abc.MutableSet)
+
+    :kwarg contained_validator: Another attr validator to run on each of the
+        items inside of the container.
+    """
+    if not isinstance(value, container_type):
+        try:
+            type_name = container_type.__name__
+        except AttributeError:
+            type_name = container_type
+        raise ValueError('{} is not of type {}'.format(value, type_name))
+
+    if not_container_type is not None and isinstance(value, not_container_type):
+        try:
+            not_type_name = container_type.__name__
+        except AttributeError:
+            not_type_name = container_type
+        raise ValueError('{} must not be of type {}'.format(value, not_type_name))
+
+    if contained_validator is not None:
+        for entry in value:
+            try:
+                contained_validator(instance, attribute, entry)
+            except ValueError as e:
+                raise ValueError('This element of the container: {}, did not validate: {}'.format(entry, e))
+
+
+def container_converter(container_type, value, contained_converter=None):
+    """
+    Convert a container into another container type and convert the contained elements as well
+
+    :arg container_type: The container type to convert into.
+    :arg value: The value being converted
+    :kwarg contained_converter: Converter to run over each element.
+
+    Containers must be iterables.  The container may lose information.
+    Containers to convert into cannot be a dict.  If converting from
+    a Mapping, the value of the Mapping (not the key) is plaed into the new
+    container.
+    """
+    if contained_converter is not None:
+        value = container_type(contained_converter(i) for i in value)
+    elif not isinstance(value, container_type):
+        value = container_type(value)
+    return value
+
+
 def enum_converter(EnumType, value):
     """
     Convert a string into an :class:`enum.Enum`
