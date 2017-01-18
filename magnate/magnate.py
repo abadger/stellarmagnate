@@ -81,7 +81,7 @@ class User:
         self.pubpen.publish('user.cash.update', new_cash, old_cash)
 
 
-def _parse_args(self, args=tuple(sys.argv)):
+def _parse_args(args=tuple(sys.argv)):
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(description='A space themed trading game')
     parser.add_argument('--version', action='version', version=__version__)

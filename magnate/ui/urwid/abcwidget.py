@@ -25,4 +25,5 @@ import urwid
 
 
 class ABCWidget(urwid.WidgetMeta, ABCMeta):
+    """Combine ABCMeta and Widgetmeta together so that we can have a metaclass with both"""
     pass

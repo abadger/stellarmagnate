@@ -35,7 +35,7 @@ class CatalogColumn:
     title = attr.ib(validator=attr.validators.instance_of(str))
     space = attr.ib(validator=attr.validators.instance_of(int))
     widget_list = attr.ib(validator=attr.validators.instance_of(urwid.ListWalker),
-            default=attr.Factory(lambda: urwid.SimpleFocusListWalker([])))
+                          default=attr.Factory(lambda: urwid.SimpleFocusListWalker([])))
     data_map = attr.ib(validator=attr.validators.instance_of(OrderedDict),
                        default=attr.Factory(OrderedDict))
     money = attr.ib(validator=attr.validators.instance_of(bool),
@@ -66,6 +66,7 @@ class CommodityCatalog(urwid.WidgetWrap, metaclass=ABCWidget):
     .. note: This may be implemented as a **class** attribute rather than
         a property
     """
+    signals = []
 
     @abstractmethod
     def __init__(self, pubpen, order_info_signal, primary_title='Commodity',
@@ -300,7 +301,7 @@ class CommodityCatalog(urwid.WidgetWrap, metaclass=ABCWidget):
             # Open up the order dialog to buy sell this item
             commodity = self.keypress_map[key]
             self.pubpen.publish(self.order_info_signal, commodity,
-                                self.auxiliary_cols_map[self.price_col_idx].data_map[commodity],
+                                self.auxiliary_cols[self.price_col_idx].data_map[commodity],
                                 self.location)
             urwid.emit_signal(self, self.signals[1])
         elif key in ('left', 'right'):

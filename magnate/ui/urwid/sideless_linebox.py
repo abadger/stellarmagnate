@@ -24,40 +24,40 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # Urwid web site: http://excess.org/urwid/
-
+"""A :class:`urwid.LineBox` which has the ability to omit a border and justify its titles"""
 from urwid.widget import WidgetWrap, Divider, SolidFill, Text
 from urwid.container import Pile, Columns
 from urwid.decoration import WidgetDecoration
 
 class SidelessLineBox(WidgetDecoration, WidgetWrap):
+    """
+    Draw a line around original_widget.
+
+    Use 'title' to set an initial title text with will be centered
+    on top of the box.
+
+    Use `title_align` to align the title to the 'left', 'right', or 'center'.
+    The default is 'center'.
+
+    You can also override the widgets used for the lines/corners:
+        tline: top line
+        bline: bottom line
+        lline: left line
+        rline: right line
+        tlcorner: top left corner
+        trcorner: top right corner
+        blcorner: bottom left corner
+        brcorner: bottom right corner
+
+    .. note:: This differs from the vanilla :class:`urwid.LineBox` by
+        discarding the line if the middle of the line is set to either
+        None or the empty string.
+    """
 
     def __init__(self, original_widget, title="", title_align="center",
                  tlcorner='┌', tline='─', lline='│',
                  trcorner='┐', blcorner='└', rline='│',
                  bline='─', brcorner='┘'):
-        """
-        Draw a line around original_widget.
-
-        Use 'title' to set an initial title text with will be centered
-        on top of the box.
-
-        Use `title_align` to align the title to the 'left', 'right', or 'center'.
-        The default is 'center'.
-
-        You can also override the widgets used for the lines/corners:
-            tline: top line
-            bline: bottom line
-            lline: left line
-            rline: right line
-            tlcorner: top left corner
-            trcorner: top right corner
-            blcorner: bottom left corner
-            brcorner: bottom right corner
-
-        .. note:: This differs from the vanilla urwid LineBox by discarding
-            the a line if the middle of the line is set to either None or the
-            empty string.
-        """
 
         if tline:
             tline = Divider(tline)

@@ -17,7 +17,7 @@
 Classes to model the Location and Markets in Stellar Magnate
 """
 
-from collections import OrderedDict, abc
+from collections import abc
 from enum import Enum
 from functools import partial
 import random

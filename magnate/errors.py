@@ -23,4 +23,3 @@ class MagnateError(Exception):
 class MagnateConfigError(MagnateError):
     """Raised when processing config files"""
     pass
-

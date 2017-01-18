@@ -43,7 +43,7 @@ from .travel_display import TravelDisplay
 #     [x] Travel
 #     [_] Finance
 #     [x] Market
-#     [_] Port 
+#     [_] Port
 # [_] Game Menu
 #   [x] Quit
 #   [_] Save
