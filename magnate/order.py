@@ -24,7 +24,7 @@ from functools import partial
 
 import attr
 
-from ..utils.attrs import enum_converter, enum_validator
+from .utils.attrs import enum_converter, enum_validator
 
 
 # Enums are class-like but here we are using the function interface for
