@@ -23,7 +23,6 @@ from functools import partial
 
 import urwid
 
-from ...market import CommodityType
 from .gamemenu_dialog import GameMenuDialog
 from .info_win import InfoWindow
 from .market_display import MarketDisplay
@@ -113,6 +112,7 @@ class StatusBar(urwid.Columns):
         self.update_location(new_location)
 
 
+from ...market import CommodityType
 from .commodity_catalog import CatalogColumn, CommodityCatalog
 class PortDisplay(CommodityCatalog):
     """Display for the user to manage their ship and equipment"""
@@ -145,17 +145,13 @@ class PortDisplay(CommodityCatalog):
     #
     def handle_ship_info(self, ship_type, free_space, filled_space, *args): #pylint: disable=unused-argument
         """Update the display with total hold space owned"""
-        self.auxiliary_cols[self.owned_col_idx].data_map['Cargo Module (100 units)'] = free_space + filled_space
+        self.auxiliary_cols[self.owned_col_idx].data_map['Cargo Module (100 units)'] = (free_space + filled_space) // 100
         self._construct_commodity_list(self.auxiliary_cols[self.owned_col_idx].data_map)
 
     def handle_cargo_update(self, cargo, free_space, filled_space): #pylint: disable=unused-argument
         """Update the display with total hold space owned"""
-        self.auxiliary_cols[self.owned_col_idx].data_map['Cargo Module (100 units)'] = free_space + filled_space
+        self.auxiliary_cols[self.owned_col_idx].data_map['Cargo Module (100 units)'] = (free_space + filled_space) // 100
         self._construct_commodity_list(self.auxiliary_cols[self.owned_col_idx].data_map)
-
-    def handle_equip_info(self, equip_info):
-        """Update the display with the equipment that can be bought at this locastion"""
-        pass
 
     def handle_new_warehouse_info(self, warehouse_info):
         """Update the equipment display with total warehouse space owned"""
