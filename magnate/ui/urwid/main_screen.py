@@ -23,6 +23,7 @@ from functools import partial
 
 import urwid
 
+from ...market import CommodityType
 from .gamemenu_dialog import GameMenuDialog
 from .info_win import InfoWindow
 from .market_display import MarketDisplay
@@ -127,12 +128,11 @@ class PortDisplay(CommodityCatalog):
         #
         # Indexes to special columns
         #
-        self.hold_col_idx = 1
-        self.warehouse_col_idx = 2
+        self.owned_col_idx = 1
 
         super().__init__(pubpen, 'ui.urwid.equip_order_info',
                          primary_title='Equipment', auxiliary_cols=auxiliary_cols,
-                         price_col_idx=0)
+                         price_col_idx=0, types_traded=frozenset((CommodityType['equipment'], CommodityType['property'])))
 
         #
         # Event handlers
@@ -143,12 +143,18 @@ class PortDisplay(CommodityCatalog):
     #
     # Handle updates to the displayed info
     #
-    def handle_ship_info(self, ship_type, free_space, filled_space, manifest): #pylint: disable=unused-argument
+    def handle_ship_info(self, ship_type, free_space, filled_space, *args): #pylint: disable=unused-argument
         """Update the display with total hold space owned"""
-        pass
+        self.auxiliary_cols[self.owned_col_idx].data_map['Cargo Module (100 units)'] = free_space + filled_space
+        self._construct_commodity_list(self.auxiliary_cols[self.owned_col_idx].data_map)
 
-    def handle_cargo_update(self, cargo, *args):
+    def handle_cargo_update(self, cargo, free_space, filled_space): #pylint: disable=unused-argument
         """Update the display with total hold space owned"""
+        self.auxiliary_cols[self.owned_col_idx].data_map['Cargo Module (100 units)'] = free_space + filled_space
+        self._construct_commodity_list(self.auxiliary_cols[self.owned_col_idx].data_map)
+
+    def handle_equip_info(self, equip_info):
+        """Update the display with the equipment that can be bought at this locastion"""
         pass
 
     def handle_new_warehouse_info(self, warehouse_info):
@@ -163,16 +169,12 @@ class PortDisplay(CommodityCatalog):
         """
         super().handle_new_location(new_location, *args)
 
+        # Get holdspace info
+        self.pubpen.publish('query.ship.info')
         pass
-        ### TODO: events geared towards the equipment, not the market
+        ### TODO: events geared towards the equipment, not cargo
         # Sync up information
-        #if self._market_query_sub_id is None:
-        #    self._market_query_sub_id = self.pubpen.subscribe('market.{}.info'.format(new_location), self.handle_market_info)
-        #self.pubpen.publish('query.ship.info')
-
-        #self.pubpen.subscribe('market.{}.update'.format(new_location)) => handle new market data
         #self.pubpen.subscribe('warehouse.{}.update'.format(new_location)) => handle new warehouse info
-        #self.pubpen.publish('query.market.{}.info'.format(new_location))
         #self.pubpen.publish('query.warehouse.{}.info'.format(new_location))
 
 

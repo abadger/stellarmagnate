@@ -58,7 +58,7 @@ class Dispatcher:
             fatal_error = True
             self.pubpen.publish('user.order_failure', 'Cannot process an order when the player is not at the location')
 
-        current_price = self.markets[order.location].prices[order.commodity]
+        current_price = self.markets[order.location].commodities[order.commodity].price
         total_sale = current_price * (order.hold_quantity + order.warehouse_quantity)
 
         if order.buy:

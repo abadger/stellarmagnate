@@ -17,14 +17,15 @@
 Classes to model the Location and Markets in Stellar Magnate
 """
 
-from collections import OrderedDict
+from collections import OrderedDict, abc
 from enum import Enum
 from functools import partial
 import random
 
 import attr
 
-from .utils.attrs import enum_converter, enum_validator, sequence_of_type
+from .utils.attrs import (container_converter, container_validator,
+                          enum_converter, enum_validator, sequence_of_type)
 
 
 # What is the organization of this data?
@@ -50,13 +51,19 @@ from .utils.attrs import enum_converter, enum_validator, sequence_of_type
 # creating them so that we don't have to manually specify ids for each
 # category
 #pylint: disable=invalid-name
-CommodityType = Enum('CommodityType', ('food', 'metal', 'fuel',
+CommodityType = Enum('CommodityType', ('cargo',
+                                       'ship',
+                                       'food',
+                                       'metal',
+                                       'fuel',
                                        'low bulk chemical',
                                        'high bulk chemical',
                                        'low bulk machine',
                                        'high bulk machine',
+                                       'equipment',
                                        'ship parts',
-                                       'property'))
+                                       'property',
+                                      ))
 
 
 LocationType = Enum('LocationType', ('star', 'planet', 'moon',
@@ -70,12 +77,21 @@ class CommodityData:
     An item that can be bought and sold.
 
     :name: Name of the commodity
-    :base_price: middle of the road for the commodity
-    :fluctuation: How much the price varies compared to the base price
+    :type: A frozenset of categories that the commodity is in.  These can be any of :class:`CommodityType`
+    :mean_price: The average price of the commodity
+    :standard_deviation: One standard deviation of the price data
+    :depreciation_rate: Rate at which the commodity depreciates in price.
+        perishables and equipment depreciates at a higher rate than
+        non-perishable goods
+    :hold_space: How much hold space the item takes up
+    :events: a list of special events that affect the pricing of this item
     """
     name = attr.ib(validator=attr.validators.instance_of(str))
-    type = attr.ib(validator=partial(enum_validator, CommodityType),
-                   convert=partial(enum_converter, CommodityType))
+    type = attr.ib(validator=partial(container_validator, abc.Set,
+                                     not_container_type=abc.MutableSet,
+                                     contained_validator=partial(enum_validator, CommodityType)),
+                   convert=partial(container_converter, frozenset,
+                                   contained_converter=partial(enum_converter, CommodityType)))
     mean_price = attr.ib(validator=attr.validators.instance_of(int))
     standard_deviation = attr.ib(validator=attr.validators.instance_of(int))
     depreciation_rate = attr.ib(convert=float, validator=attr.validators.instance_of(float))
@@ -94,11 +110,17 @@ class Commodity:
         self.pubpen = pubpen
         self._commodity_data = commodity_data
 
+        self.price = None
+
     def __getattr__(self, key):
         try:
             return super().__getattr__(self)
         except AttributeError:
             return getattr(self._commodity_data, key)
+
+    def __repr__(self):
+        data_repr = self._commodity_data.__repr__()
+        return data_repr +  ' price={}'.format(self.price)
 
 
 @attr.s
@@ -116,6 +138,10 @@ class SystemData:
 class LocationData:
     """
     Location at which :class:`Commodities` can be bought and sold.
+
+    :name: The name of the location
+    :type: The type of location this is.  These can be any of :class:`LocationType`
+    :system: The stellar system which the location is within
     """
     name = attr.ib(validator=attr.validators.instance_of(str))
     type = attr.ib(validator=partial(enum_validator, LocationType),
@@ -136,13 +162,6 @@ class Market:
         self.location = location_data
         self.commodities = commodity_data
 
-        self.prices = OrderedDict()
-        # Seed prices
-        # Note: In the future, markets may have varying commodities.  Seeding
-        # the commodity prices here allows calculate_prices to operate on
-        # just the list of commodities that are available in this market.
-        for commodity in self.commodities.values():
-            self.prices[commodity.name] = commodity.mean_price
         # Will be used for cyclic pricing
         #self.price_time = datetime.datetime.utcnow()
 
@@ -163,7 +182,7 @@ class Market:
         :event market.{location}.info: Publishes the information about the
             current prices in the market
         """
-        self.pubpen.publish('market.{}.info'.format(self.location.name), self.prices.copy())
+        self.pubpen.publish('market.{}.info'.format(self.location.name), self.commodities)
 
     def handle_movement(self, new_location, *args):
         """Recalculate prices when the ship arrives at this location
@@ -175,7 +194,7 @@ class Market:
 
     def recalculate_prices(self):
         """Set new prices for all the commodities in the market"""
-        for commodity in self.prices:
+        for commodity in self.commodities:
             self._calculate_price(commodity)
 
     def _calculate_price(self, commodity):
@@ -270,5 +289,5 @@ class Market:
         if price < 1:
             price = 1
 
-        self.prices[commodity] = price
-        self.pubpen.publish('market.{}.update'.format(self.location.name), commodity, price)
+        self.commodities[commodity].price = price
+        self.pubpen.publish('market.{}.update'.format(self.location.name), self.commodities[commodity])

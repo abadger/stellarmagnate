@@ -46,7 +46,7 @@
                 }
             }
         },
-        "commodity": {
+        "cargo": {
             "type": "array",
             "uniqueness": true,
             "items": {
@@ -165,7 +165,68 @@
                 }
             }
         },
-        "property": {},
+        "property": {
+            "type": "array",
+            "uniqueness": true,
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "mean_price": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "standard_deviation": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "depreciation_rate": {
+                        "type": "number",
+                        "minimum": 0
+                    },
+                    "storage_space": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "event": {
+                        "type": "array",
+                        "uniqueness": true,
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "enum": ["sale", "shortage"]
+                                },
+                                "low_percentage": {
+                                    "type": "number",
+                                    "minimum": 0
+                                },
+                                "high_percentage": {
+                                    "type": "number",
+                                    "minimum": 0
+                                },
+                                "adjustment": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                },
+                                "msg": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "ship": {
             "type": "array",
             "uniqueness": true,

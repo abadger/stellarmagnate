@@ -162,24 +162,41 @@ class Magnate:
                 locations[loc['name']] = LocationData(loc['name'], loc['type'], self.system_data[system['name']])
             self.system_data[system['name']].locations = locations
 
+        # Commodities are anything that may be bought or sold at a particular
+        # location.  The UI may separate these out into separate pieces.
         commodities = OrderedDict()
-        for commodity in data['commodity']:
-            for event in commodity['event']:
-                event['msg'] = event['msg'].translate({ord('\n'): ' '})
+        for commodity in data['cargo']:
             commodities[commodity['name']] = CommodityData(commodity['name'],
-                                                           commodity['type'],
+                                                           frozenset((commodity['type'], 'cargo')),
                                                            commodity['mean_price'],
                                                            commodity['standard_deviation'],
                                                            commodity['depreciation_rate'],
                                                            1,
                                                            commodity['event'],
                                                           )
+
+        for commodity in data['equipment']:
+            commodities[commodity['name']] = CommodityData(commodity['name'],
+                                                           frozenset((commodity['type'], 'equipment')),
+                                                           commodity['mean_price'],
+                                                           commodity['standard_deviation'],
+                                                           commodity['depreciation_rate'],
+                                                           commodity['holdspace'],
+                                                           commodity['event'],
+                                                          )
+
+        for commodity in data['property']:
+            commodities[commodity['name']] = CommodityData(commodity['name'],
+                                                           frozenset(('property',)),
+                                                           commodity['mean_price'],
+                                                           commodity['standard_deviation'],
+                                                           commodity['depreciation_rate'],
+                                                           0,
+                                                           commodity['event'],
+                                                          )
         self.commodity_data = commodities
 
-        ### FIXME: These need to be worked out
-        self.equipment_data = data['equipment']
-        self.property_data = data['property']
-
+        ### FIXME: Put ships into commodities too.
         ships = OrderedDict()
         for ship in data['ship']:
             ships[ship['name']] = ShipData(ship['name'], ship['mean_price'],

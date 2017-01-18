@@ -22,6 +22,7 @@ from functools import partial
 import attr
 import urwid
 
+from ...market import CommodityType
 from .abcwidget import ABCWidget
 from .indexed_menu import IndexedMenuButton, IndexedMenuEnumerator
 from .numbers import format_number
@@ -68,7 +69,8 @@ class CommodityCatalog(urwid.WidgetWrap, metaclass=ABCWidget):
 
     @abstractmethod
     def __init__(self, pubpen, order_info_signal, primary_title='Commodity',
-                 auxiliary_cols=None, price_col_idx=0):
+                 auxiliary_cols=None, price_col_idx=0,
+                 types_traded=frozenset((CommodityType['cargo'], CommodityType['property'], CommodityType['ship parts']))):
         """
         CommodityCatalogs give the information needed to purchase or sell a commodity
 
@@ -83,12 +85,17 @@ class CommodityCatalog(urwid.WidgetWrap, metaclass=ABCWidget):
             for the price of the commodity.
         :kwarg price_col_idx: Offset into the list for the column listing the
             price.
+        :kwarg types_traded: Types of commodities present in this catalog.
+            Market infor returns all of the salable items in the location.
+            Sometimes we want to divide up what the user sees for sale in
+            different screens.
         """
         self.pubpen = pubpen
         self.order_info_signal = order_info_signal
+        self.types_traded = types_traded
         self.location = None
         self.keypress_map = IndexedMenuEnumerator()
-        self._market_query_sub_id = None
+        self._commodity_query_sub_id = None
 
         # Primary column -- names the commodity and will be formatted to
         # allow hotkeys to select it
@@ -232,16 +239,17 @@ class CommodityCatalog(urwid.WidgetWrap, metaclass=ABCWidget):
     #
     # Handle updates to the displayed info
     #
-    def handle_market_info(self, prices):
+    def handle_commodity_info(self, commodities):
         """
         Update the display with prices about all commodities in a market
 
         :arg prices: a dict mapping commodity names to prices
         """
-        self.pubpen.unsubscribe(self._market_query_sub_id)
-        self._market_query_sub_id = None
-        for commodity, price in prices.items():
-            self.auxiliary_cols[self.price_col_idx].data_map[commodity] = price
+        self.pubpen.unsubscribe(self._commodity_query_sub_id)
+        self._commodity_query_sub_id = None
+        for commodity in commodities.values():
+            if commodity.type.intersection(self.types_traded):
+                self.auxiliary_cols[self.price_col_idx].data_map[commodity.name] = commodity.price
         self._construct_commodity_list(self.auxiliary_cols[self.price_col_idx].data_map)
 
     @abstractmethod
@@ -250,6 +258,10 @@ class CommodityCatalog(urwid.WidgetWrap, metaclass=ABCWidget):
         Update the market display when the ship moves
 
         :arg new_location: The location the ship has moved to
+
+        This method takes care of loading market price data from the backend
+        but implementations need to subscribe to any additional sources of
+        information that they wish to display.
         """
         self.location = new_location
         self.keypress_map.clear()
@@ -257,6 +269,14 @@ class CommodityCatalog(urwid.WidgetWrap, metaclass=ABCWidget):
         self.commodity_col.data_map.clear()
         self.auxiliary_cols[self.price_col_idx].widget_list.clear()
         self.auxiliary_cols[self.price_col_idx].data_map.clear()
+
+        # Sync market information
+        if self._commodity_query_sub_id is None:
+            self._commodity_query_sub_id = self.pubpen.subscribe('market.{}.info'.format(new_location), self.handle_commodity_info)
+        self.pubpen.publish('query.market.{}.info'.format(new_location))
+        ### TODO: Implement this so that we can update once prices change on
+        # a timeout instead of in response to user moving the ship.
+        #self.pubpen.subscribe('market.{}.update'.format(new_location)) => handle new market data
 
     def handle_commodity_select(self, commodity, *args):
         """

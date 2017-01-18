@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """ Handle the display of Markets and Commodities"""
 
+from ...market import CommodityType
 from .commodity_catalog import CatalogColumn, CommodityCatalog
 
 
@@ -37,7 +38,7 @@ class MarketDisplay(CommodityCatalog):
 
         super().__init__(pubpen, 'ui.urwid.order_info',
                          primary_title='Commodity', auxiliary_cols=auxiliary_cols,
-                         price_col_idx=0)
+                         price_col_idx=0, types_traded=frozenset((CommodityType['cargo'],)))
 
         #
         # Event handlers
@@ -73,12 +74,8 @@ class MarketDisplay(CommodityCatalog):
         """
         super().handle_new_location(new_location, *args)
 
-        # Sync up information
-        if self._market_query_sub_id is None:
-            self._market_query_sub_id = self.pubpen.subscribe('market.{}.info'.format(new_location), self.handle_market_info)
-        self.pubpen.publish('query.ship.info')
-
-        #self.pubpen.subscribe('market.{}.update'.format(new_location)) => handle new market data
         #self.pubpen.subscribe('warehouse.{}.update'.format(new_location)) => handle new warehouse info
-        self.pubpen.publish('query.market.{}.info'.format(new_location))
         self.pubpen.publish('query.warehouse.{}.info'.format(new_location))
+
+        # Ship info we keep constantly in contact with
+        self.pubpen.publish('query.ship.info')
