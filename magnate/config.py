@@ -20,8 +20,11 @@ Functions to read configuration files
 import itertools
 import os.path
 
-from configobj import ConfigObj
+from configobj import ConfigObj, ConfigObjError, get_extra_values
 from kitchen.iterutils import iterate
+import validate
+
+from .errors import MagnateConfigError
 
 
 SYSTEM_CONFIG_FILE = '/etc/stellarmagnate/magnate.cfg'
@@ -45,13 +48,13 @@ ui_plugin = urwid
 TESTING_CONFIG = """
 base_data_dir = {0}
 schema_dir = {0}
-""".format(os.path.join(os.path.dirname(__file__), '..', 'data')).split('\n')
+""".format(os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'data'))).split('\n')
 
 CONFIG_SPEC = """
-base_data_dir = string()
-schema_dir = string()
-save_dir = string()
-ui_plugin = string()
+base_data_dir = string(min=1)
+schema_dir = string(min=1)
+save_dir = string(min=1)
+ui_plugin = string(min=1, max=128)
 """.split('\n')
 
 
@@ -85,15 +88,38 @@ def _read_config(paths, testing=False):
     :rtype: ConfigObj, a dict-like object with helper methods for use as a config store
     :returns: Return the configuration dict
     """
+    validator = validate.Validator()
     cfg = ConfigObj(DEFAULT_CONFIG, configspec=CONFIG_SPEC)
 
+    validation_results = cfg.validate(validator, preserve_errors=True)
+    # Since we create the DEFAULT_CONFIG, validation hsould always pass
+    assert validation_results is True, "Programmer error: DEFAULT_CONFIG is not valid"
+    unknown_cfg = get_extra_values(cfg)
+    assert not unknown_cfg, "Programmer error: DEFAULT_CONFIG has unknown keys"
+
     for cfg_file in paths:
-        new_cfg = ConfigObj(cfg_file, configspec=CONFIG_SPEC)
+        try:
+            new_cfg = ConfigObj(cfg_file, configspec=CONFIG_SPEC)
+        except ConfigObjError as e:
+            raise MagnateConfigError('Config error parsing {}:\n{}'.format(cfg_file, e))
         cfg.merge(new_cfg)
+
+        validation_results = cfg.validate(validator, preserve_errors=True)
+        if validation_results is not True:
+            raise MagnateConfigError('Config error in {}:\n{}'.format(cfg_file, validation_results))
+
+        unknown_cfg = get_extra_values(cfg)
+        if unknown_cfg:
+            raise MagnateConfigError('Config error, unknown keys in {}:\n{}'.format(cfg_file, unknown_cfg))
 
     if testing:
         testing_cfg = ConfigObj(TESTING_CONFIG, configspec=CONFIG_SPEC)
         cfg.merge(testing_cfg)
+
+        validation_results = cfg.validate(validator, preserve_errors=True)
+        assert validation_results is True, "Programmer error: TESTING_CONFIG is not valid"
+        unknown_cfg = get_extra_values(cfg)
+        assert not unknown_cfg, "Programmer error: TESTING_CONFIG has unknown keys"
 
     return cfg
 
