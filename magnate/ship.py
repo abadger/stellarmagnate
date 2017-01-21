@@ -107,16 +107,22 @@ class Ship:
 
         if new_entry.commodity in self.manifest:
             entry = self.manifest[new_entry.commodity]
-            entry.price_paid = (entry.price_paid * entry.quantity
-                                + new_entry.price_paid * new_entry.quantity) \
-                                / (entry.quantity + new_entry.quantity)
+            if (entry.quantity + new_entry.quantity) == 0:
+                entry.price_paid = 0
+            else:
+                entry.price_paid = (entry.price_paid * entry.quantity
+                                    + new_entry.price_paid * new_entry.quantity) \
+                                    / (entry.quantity + new_entry.quantity)
             entry.quantity += new_entry.quantity
         else:
-            self.manifest[new_entry.commodity] = ManifestEntry(new_entry.commodity, new_entry.quantity, new_entry.price_paid)
+            self.manifest[new_entry.commodity] = ManifestEntry(new_entry.commodity,
+                                                               new_entry.quantity,
+                                                               new_entry.price_paid)
 
         self.filled_hold += new_entry.quantity
 
-        self.pubpen.publish('ship.cargo.update', self.manifest[new_entry.commodity], self.holdspace - self.filled_hold, self.filled_hold)
+        self.pubpen.publish('ship.cargo.update', self.manifest[new_entry.commodity],
+                            self.holdspace - self.filled_hold, self.filled_hold)
 
     def remove_cargo(self, commodity, amount):
         """
