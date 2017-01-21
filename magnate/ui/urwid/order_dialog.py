@@ -15,19 +15,39 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """ Handle the display of a dialog to purchase commodities"""
 
+from abc import abstractmethod
+
 import urwid
 
 from ...order import Order
+from .abcwidget import ABCWidget
 from .numbers import format_number
 from .sideless_linebox import SidelessLineBox
 
 
-class OrderDialog(urwid.WidgetWrap):
+class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
     """Dialog box to buy or sell a commodity"""
     _selectable = True
-    signals = ['close_order_dialog']
+    """
+    Must have a signals attribute that is a list containing at least one urwid
+    signal name.
 
-    def __init__(self, pubpen):
+    (1) Signal to close the OrderDialog
+
+    This signal is referenced by offset so it's important to keep it as the
+    first signal in the list.  Other signals may be added as long as they are
+    mentioned afterwards.
+    """
+    signals = []
+
+    def __init__(self, pubpen, extra_widgets=tuple()):
+        """
+        Order form for purchasing commodities
+
+        :arg pubpen: Pubpen for events
+        :kwarg extra_widgets: Sequence of widgets that display some more
+            information about the Order.
+        """
         self.pubpen = pubpen
         self.order = None
         self._order_purchased_sub_id = None
@@ -35,11 +55,9 @@ class OrderDialog(urwid.WidgetWrap):
         self._market_update_sub_id = None
         self._user_info_sub_id = None
 
-        self.free_space = 0
-        self.commodity_in_hold = 0
-        self.free_warehouse = 0
-        self.commodity_in_warehouse = 0
         self.user_cash = None
+
+        self.extra_widgets = extra_widgets
 
         self.sale_info = urwid.Text('Total Sale: $0')
 
@@ -47,10 +65,6 @@ class OrderDialog(urwid.WidgetWrap):
         self.buy_button = urwid.RadioButton(transaction_type_group, 'Buy')
         self.sell_button = urwid.RadioButton(transaction_type_group, 'Sell')
         self.buysell_widget = urwid.Columns([(len('buy') + 5, self.buy_button), (len('Sell') + 5, self.sell_button)])
-
-        self.hold_box = urwid.CheckBox('Hold:', state=True)
-
-        self.warehouse_box = urwid.CheckBox('Warehouse:', state=True)
 
         quantity_label = urwid.Text(' Quantity: ')
         self.max_button = urwid.Button('MAX')
@@ -63,9 +77,10 @@ class OrderDialog(urwid.WidgetWrap):
         self.cancel_button = urwid.Button('Cancel')
         commit_widget = urwid.Columns([urwid.Text(''), (len('Place Order') + 4, self.commit_button), (len('Cancel') + 4, self.cancel_button)])
 
-        self.layout_list = urwid.SimpleFocusListWalker([self.sale_info, self.buysell_widget,
-                                                        self.hold_box, self.warehouse_box,
-                                                        quantity_widget, commit_widget])
+        widgets = [self.sale_info, self.buysell_widget]
+        widgets.extend(self.extra_widgets)
+        widgets.extend((quantity_widget, commit_widget))
+        self.layout_list = urwid.SimpleFocusListWalker(widgets)
         layout = urwid.ListBox(self.layout_list)
 
         self.dialog = urwid.LineBox(layout, tlcorner='\u2554',
@@ -102,16 +117,22 @@ class OrderDialog(urwid.WidgetWrap):
     # Urwid event handlers for the dialog box elements
     #
     def handle_buy_sell_toggle(self, radio_button, new_state):
-        """Change interface slightly depending on whether we're buying or selling"""
-        ### FIXME: Implement warehouse
+        """
+        Handle the buy sell toggle being changed
+
+        :arg radio_button: The button being changes
+        :arg new_state: Whether the button is selected or unselected
+
+        The base handles making sure that the quantity in the order does not
+        exceed the maximum that can be bought and sold.  Implementations may
+        want to override this to add other changes on state change
+        """
         if (radio_button is self.buy_button and new_state is True) or (radio_button is self.sell_button and new_state is False):
-            self.hold_box.set_label('Hold: {} Free Space'.format(format_number(self.free_space)))
-            #self.warehouse_box.set_label('Warehouse: {}'.format(format_number(self.free_warehouse)))
+            if self.quantity.value() > self.max_buy_quantity:
+                self.quantity.set_edit_text('{}'.format(self.max_buy_quantity))
         else:
-            self.hold_box.set_label('Hold: {} {}'.format(format_number(self.commodity_in_hold),
-                                                         self.order.commodity))
-            #self.warehouse_box.set_label('Warehouse: {}'.format(format_number(self.commodity_in_warehouse)))
-        ###FIXME: If quantity exceeds maximum, reduce it to the maximum
+            if self.quantity.value() > self.max_sell_quantity:
+                self.quantity.set_edit_text('{}'.format(self.max_sell_quantity))
 
     def handle_quantity_change(self, edit_widget, new_text):
         """Update total sale as the edit widget is changed"""
@@ -123,43 +144,39 @@ class OrderDialog(urwid.WidgetWrap):
             # non-numbers)
             return
         total_sale = quantity * self.order.price
+        ### TODO: If total_sale is greater than MAX, reduce to MAX or highlight
         self.sale_info.set_text('Total Sale: ${}'.format(format_number(total_sale)))
+
+    @property
+    @abstractmethod
+    def max_buy_quantity(self):
+        """Maximum amount of a commodity that may be bought and not be invalid"""
+        return self.user_cash // self.order.price
+
+    @property
+    @abstractmethod
+    def max_sell_quantity(self):
+        """Maximum amount of a commodity that may be sold and not be invalid"""
+        return 0
 
     def handle_max_quantity(self, *args):
         """Calculate the maximum quantity to buy or sell"""
 
         if self.buy_button.state:
-            # Find out how much space we have available in the hold and local
-            # warehouse
-            available_space = 0
-            if self.hold_box.state:
-                available_space += self.free_space
-            if self.warehouse_box.state:
-                available_space += self.free_warehouse
-
-            # maximum amount we can buy is the smaller of space available or cash/price
-            maximum_quantity = min(available_space, self.user_cash // self.order.price)
-            total_sale = self.order.price * maximum_quantity
-
             # set quantity field to maximum_quantity
-            self.quantity.set_edit_text('{}'.format(maximum_quantity))
+            self.quantity.set_edit_text('{}'.format(self.max_buy_quantity))
             # Set the total_sale information to the amount we'd pay for the
             # maximum
+            total_sale = self.order.price * self.max_buy_quantity
             self.sale_info.set_text('Total Sale: ${}'.format(format_number(total_sale)))
         else:
-            # Find how much of the commodity we have to sell
-            amount = 0
-            if self.hold_box.state:
-                amount += self.commodity_in_hold
-            if self.warehouse_box.state:
-                amount += self.commodity_in_warehouse
-
-            # Set the quantity and total sale fields to reflect this amount
-            self.quantity.set_edit_text('{}'.format(amount))
-            self.sale_info.set_text('Total Sale: ${}'.format(format_number(amount * self.order.price)))
+            # Set the quantity and total sale fields to the maximum we # can sell
+            self.quantity.set_edit_text('{}'.format(self.max_sell_quantity))
+            self.sale_info.set_text('Total Sale: ${}'.format(format_number(self.max_sell_quantity * self.order.price)))
 
     def validate_check_box_change(self):
         """Make sure that at least one of the hold/warehouse checkboxes is always checked"""
+        ### TODO: implement valiation
         pass
 
     #
@@ -182,7 +199,7 @@ class OrderDialog(urwid.WidgetWrap):
         self.sale_info.set_text('Total Sale: $0')
         self.quantity.set_edit_text("")
         self.buysell_widget.focus_position = 0
-        self.layout_list.set_focus(0)
+        self.layout_list.set_focus(1)
 
         # recalculate hold and warehouse space
         self.pubpen.publish('query.ship.info')
@@ -219,7 +236,7 @@ class OrderDialog(urwid.WidgetWrap):
             self.pubpen.unsubscribe(self._market_update_sub_id)
             self._market_update_sub_id = None
 
-        urwid.emit_signal(self, 'close_order_dialog')
+        urwid.emit_signal(self, self.signals[0])
 
     def handle_place_order(self, *args):
         """Request to make the transaction"""
@@ -318,3 +335,87 @@ class OrderDialog(urwid.WidgetWrap):
         else:
             super().keypress(size, key)  #pylint: disable=not-callable
         return key
+
+
+class CargoOrderDialog(OrderDialog):
+    signals = ['close_cargo_order_dialog']
+
+    def __init__(self, pubpen):
+        self.free_space = 0
+        self.commodity_in_hold = 0
+        self.free_warehouse = 0
+        self.commodity_in_warehouse = 0
+
+        self.hold_box = urwid.CheckBox('Hold:', state=True)
+        self.warehouse_box = urwid.CheckBox('Warehouse:', state=True)
+        super().__init__(pubpen, (self.hold_box, self.warehouse_box))
+
+        pass
+
+    @property
+    def max_buy_quantity(self):
+        """Maximum amount of a commodity that may be bought and not be invalid"""
+        # Find out how much space we have available in the hold and local
+        # warehouse
+        available_space = 0
+        if self.hold_box.state:
+            available_space += self.free_space
+        if self.warehouse_box.state:
+            available_space += self.free_warehouse
+
+        # maximum amount we can buy is the smaller of space available or cash/price
+        return min(available_space, super().max_buy_quantity)
+
+    @property
+    def max_sell_quantity(self):
+        """Maximum amount of a commodity that may be sold and not be invalid"""
+        # Find how much of the commodity we have to sell
+        amount = 0
+        if self.hold_box.state:
+            amount += self.commodity_in_hold
+        if self.warehouse_box.state:
+            amount += self.commodity_in_warehouse
+        return amount
+
+    #
+    # Urwid event handlers for the dialog box widgets
+    #
+    def handle_buy_sell_toggle(self, radio_button, new_state):
+        """Change interface slightly depending on whether we're buying or selling"""
+        super().handle_buy_sell_toggle(radio_button, new_state)
+
+        ### FIXME: Implement warehouse
+        if (radio_button is self.buy_button and new_state is True) or (radio_button is self.sell_button and new_state is False):
+            self.hold_box.set_label('Hold: {} Free Space'.format(format_number(self.free_space)))
+            #self.warehouse_box.set_label('Warehouse: {}'.format(format_number(self.free_warehouse)))
+        else:
+            self.hold_box.set_label('Hold: {} {}'.format(format_number(self.commodity_in_hold),
+                                                         self.order.commodity))
+            #self.warehouse_box.set_label('Warehouse: {}'.format(format_number(self.commodity_in_warehouse)))
+
+
+class EquipmentOrderDialog(OrderDialog):
+    signals = ['close_eq_order_dialog']
+    def __init__(self, pubpen):
+        self.current_amount
+
+        self.current_amount_label = urwid.Text('Current Amount:')
+        super().__init__(pubpen,(self.current_amount_label,))
+        pass
+
+    @property
+    def max_buy_quantity(self):
+        """Return the maximum amount of a commodity that may be sold and not be invalid"""
+        ### TODO: Each piece of equipment has different constraints on the maximum.
+        # Lasers depend on the amount of weapon mounts in the ships
+        # cargo and warehouse are unconstrained
+        return super().max_buy_quantity
+
+    @property
+    def max_sell_quantity(self):
+        """Return the maximum amount of a commodity that may be sold and not be invalid"""
+        ### TODO: Each piece of equipment has different constraints on the maximum
+        # Cargo is free_space // 100
+        # warehouse is warehouse_free // 1000
+        # lasers is total number of lasers
+        return 0

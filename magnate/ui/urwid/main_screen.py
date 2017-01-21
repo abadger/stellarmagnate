@@ -28,7 +28,7 @@ from .info_win import InfoWindow
 from .market_display import MarketDisplay
 from .menu_bar_win import MenuBarWindow
 from .message_win import MessageWindow
-from .order_dialog import OrderDialog
+from .order_dialog import CargoOrderDialog
 from .sideless_linebox import SidelessLineBox
 from .travel_display import TravelDisplay
 
@@ -208,7 +208,7 @@ class MainWindow(urwid.WidgetWrap):
         # Widgets traded in and out of the main display area
 
         self.market_display = MarketDisplay(self.pubpen)
-        self.order_dialog = OrderDialog(self.pubpen)
+        self.cargo_order_dialog = CargoOrderDialog(self.pubpen)
         self.travel_menu = TravelDisplay(self.pubpen)
         self.game_menu = GameMenuDialog(self.pubpen)
         self.port_display = PortDisplay(self.pubpen)
@@ -216,7 +216,7 @@ class MainWindow(urwid.WidgetWrap):
 
         self.display_map = {
             'MarketDisplay': self.market_display,
-            'OrderDialog': self.order_dialog,
+            'CargoOrderDialog': self.cargo_order_dialog,
             'PortDisplay': self.port_display,
             'FinancialDisplay': self.financial_display,
             'TravelDisplay': self.travel_menu,
@@ -228,8 +228,8 @@ class MainWindow(urwid.WidgetWrap):
 
         urwid.connect_signal(self.market_display, 'close_market_display', self.pop_display)
         urwid.connect_signal(self.market_display, 'open_order_dialog',
-                             partial(self.push_display, 'OrderDialog'))
-        urwid.connect_signal(self.order_dialog, 'close_order_dialog', self.pop_display)
+                             partial(self.push_display, 'CargoOrderDialog'))
+        urwid.connect_signal(self.cargo_order_dialog, 'close_cargo_order_dialog', self.pop_display)
         urwid.connect_signal(self.travel_menu, 'close_travel_menu', self.pop_display)
         urwid.connect_signal(self.game_menu, 'close_game_menu', self.pop_display)
 
@@ -271,7 +271,7 @@ class MainWindow(urwid.WidgetWrap):
             else:
                 self.display_stack.pop()
                 widget = self.display_map[self.display_stack[-1]]
-                if widget in (self.game_menu, self.order_dialog):
+                if widget in (self.game_menu, self.cargo_order_dialog):
                     # Never go back to the game menu
                     widget = None
 
