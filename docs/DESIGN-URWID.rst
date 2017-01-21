@@ -72,6 +72,23 @@ Sell Commodities
 +------------------------+
 
 
+v1 Ships
+
++- Equipment -------- Price --- Current --+
+| (1) Cargo Space     $10K     1000
+| (2) Lasers          $5000       1
+| (3) Warehouse       $15K    20000
++-----------------------------------------+
+
+Purchase Equipment
++------- Hold space - $42 ---+
+| Total Sale: $0
+| (o) Buy (o) Sell
+| Current Amount:
+| [MAX] Quantity [_____]
+|              [Place Order][Cancel]
++------------------------+
+
 Info Window:
 
 +-----------------+
@@ -95,14 +112,6 @@ Info Window:
 |   $0
 |
 +-----------------+
-
-v1 Ships
-
-+- Equipment -------- Price --- Current --+
-| (1) Cargo Space     $10K     1000
-| (2) Lasers          $5000       1
-| (3) Warehouse       $15K    20000
-+-----------------------------------------+
 
 
 Financial
