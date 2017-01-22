@@ -227,8 +227,6 @@ must have a reference to the widget that emits it.  When dealing with a deep
 hierarchy of widgets it can be painful to pass these references around so the
 Urwid interface makes use of our pubmarine event dispatcher for some things.
 
-[Currently None]
-
 .. py:function:: ui.urwid.order_info(commodity: string, price: int)
 
     Emitted to inform the transaction dialog what commodity and price the user
@@ -237,3 +235,11 @@ Urwid interface makes use of our pubmarine event dispatcher for some things.
     :arg string commodity: Name of the commodity to buy or sell
     :arg int price: Price of the commodity
 
+.. py:function:: ui.urwid.message(msg: string, severity=MsgType.info: magnate.ui.urwid.message_win.MsgType)
+
+    Emitted to have the message window display a new message.
+
+    :arg msg: The message to display to the user
+    :kwarg severity: Optional value that tells whether the message is merely
+        informational or informs the error of some error. The message_win will
+        display more severe messages with special highlighting.

@@ -16,12 +16,15 @@
 """
 Message window displays errors and events.
 """
+from enum import Enum
 from functools import partial
 
 import urwid
 
 from .urwid_fixes import LineBox
 
+
+MsgType = Enum('MsgType', ('info', 'error'))
 
 class MessageWindow(urwid.WidgetWrap):
     """Display system messages"""
@@ -38,10 +41,11 @@ class MessageWindow(urwid.WidgetWrap):
         message_win = LineBox(list_box, tline=None, lline=None, bline=None,
                                       trcorner='│', brcorner='│')
         super().__init__(message_win)
-        self.pubpen.subscribe('user.login_failure', self.add_message)
-        self.pubpen.subscribe('user.order_failure', self.add_message)
-        self.pubpen.subscribe('ship.movement_failure', self.add_message)
+        self.pubpen.subscribe('user.login_failure', partial(self.add_message, severity=MsgType['error']))
+        self.pubpen.subscribe('user.order_failure', partial(self.add_message, severity=MsgType['error']))
+        self.pubpen.subscribe('ship.movement_failure', partial(self.add_message, severity=MsgType['error']))
         self.pubpen.subscribe('market.event', self.handle_market_event)
+        self.pubpen.subscribe('ui.urwid.message', self.add_message)
 
     @property
     def height(self):
@@ -57,17 +61,21 @@ class MessageWindow(urwid.WidgetWrap):
         """
         self.add_message('NEWS from {}: {}'.format(location, msg))
 
-    def add_message(self, msg):
+    def add_message(self, msg, severity=MsgType.info):
         """
         Add a message to the MessageWindow.
 
         Reap older messages if there are too many
         """
         if not self._can_print_message:
-            self.loop.call_later(self._MIN_TIME_BETWEEN_MESSAGES, self.add_message, msg)
+            self.loop.call_later(self._MIN_TIME_BETWEEN_MESSAGES, self.add_message, msg, severity)
             return
 
-        self.message_list.append(urwid.Text(msg))
+        if severity is MsgType.error:
+            msg = urwid.Text(('reversed', msg))
+        else:
+            msg = urwid.Text(msg)
+        self.message_list.append(msg)
         while len(self.message_list) > self._MAX_MESSAGES:
             self.message_list.pop(0)
 
