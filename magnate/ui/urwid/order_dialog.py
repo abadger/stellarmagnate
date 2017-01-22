@@ -21,6 +21,7 @@ import urwid
 
 from ...order import Order
 from .abcwidget import ABCWidget
+from .message_win import MsgType
 from .numbers import format_number
 from .urwid_fixes import LineBox, IntEdit, CheckBox, RadioButton
 
@@ -135,29 +136,46 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
         """
         return 0
 
-    def validate_quantity(self):
+    def validate_quantity(self, revert_amount=None):
+        valid = True
         quantity = self.quantity.value()
 
         if self.buy_button.state:
             if quantity > self.max_buy_quantity:
-                ### TODO: better to highlight this as an error than to change it
-                # That way a user who just gets one digit wrong can edit it
-                quantity = self.max_buy_quantity
+                valid = False
+                if revert_amount is None:
+                    quantity = self.max_buy_quantity
+                else:
+                    quantity = revert_amount
                 self.quantity.set_edit_text('{}'.format(quantity))
         else:
             if quantity > self.max_sell_quantity:
-                ### TODO: better to highlight this as an error than to change it
-                # That way a user who just gets one digit wrong can edit it
-                quantity = self.max_sell_quantity
+                valid = False
+                if revert_amount is None:
+                    quantity = self.max_sell_quantity
+                else:
+                    quantity = revert_amount
                 self.quantity.set_edit_text('{}'.format(quantity))
-            pass
 
         total_sale = quantity * self.order.price
         self.sale_info.set_text('Total Sale: ${}'.format(format_number(total_sale)))
+        return valid
 
     def handle_quantity_change(self, edit_widget, old_text):
         """Update total sale as the edit widget is changed"""
-        self.validate_quantity()
+        if not old_text:
+            old_text = 0
+        was_valid = self.validate_quantity(revert_amount=int(old_text))
+
+        if not was_valid:
+            if self.buy_button.state:
+                msg_args = ('buy', self.max_buy_quantity, self.order.commodity)
+            else:
+                msg_args = ('sell', self.max_sell_quantity, self.order.commodity)
+
+            self.pubpen.publish('ui.urwid.message',
+                                'Cannot {} more than {} {} at this time'.format(*msg_args),
+                                severity=MsgType.error)
 
     def handle_buy_sell_toggle(self, radio_button, new_state):
         """
@@ -377,7 +395,7 @@ class CargoOrderDialog(OrderDialog):
 
         # recalculate hold and warehouse space
         self.pubpen.publish('query.ship.info')
-        ### FIXME: Recalculate warehouse space
+        ### TODO: Recalculate warehouse space
         pass
 
         #self.pubpen.subscribe('warehouse.{}.info', self.handle_warehouse_info)
@@ -400,11 +418,11 @@ class CargoOrderDialog(OrderDialog):
         """Make sure that at least one of the hold/warehouse checkboxes is always checked"""
         # One of hold_box or warehouse must always be checked
         if checkbox == self.hold_box:
-            if not self.warehouse_box:
-                self.hold_box.set_state(True)
+            if not self.warehouse_box.state:
+                self.hold_box.set_state(True, do_callback=False)
         else:
-            if not self.hold_box:
-                self.warehouse_box.set_state(True)
+            if not self.hold_box.state:
+                self.warehouse_box.set_state(True, do_callback=False)
 
         # Recalculate maximums
         self.validate_quantity()
