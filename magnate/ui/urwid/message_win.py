@@ -20,7 +20,7 @@ from functools import partial
 
 import urwid
 
-from .sideless_linebox import SidelessLineBox
+from .urwid_fixes import LineBox
 
 
 class MessageWindow(urwid.WidgetWrap):
@@ -35,7 +35,7 @@ class MessageWindow(urwid.WidgetWrap):
 
         self.message_list = urwid.SimpleFocusListWalker([])
         list_box = urwid.ListBox(self.message_list)
-        message_win = SidelessLineBox(list_box, tline=None, lline=None, bline=None,
+        message_win = LineBox(list_box, tline=None, lline=None, bline=None,
                                       trcorner='│', brcorner='│')
         super().__init__(message_win)
         self.pubpen.subscribe('user.login_failure', self.add_message)

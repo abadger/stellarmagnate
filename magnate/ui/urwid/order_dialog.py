@@ -22,8 +22,7 @@ import urwid
 from ...order import Order
 from .abcwidget import ABCWidget
 from .numbers import format_number
-from .sideless_linebox import SidelessLineBox
-
+from .urwid_fixes import LineBox, IntEditFix
 
 class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
     """Dialog box to buy or sell a commodity"""
@@ -68,7 +67,7 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
 
         quantity_label = urwid.Text(' Quantity: ')
         self.max_button = urwid.Button('MAX')
-        self.quantity = urwid.IntEdit()
+        self.quantity = IntEditFix()
         quantity_widget = urwid.Columns([(len('MAX') + 4, self.max_button),
                                          (len(' Quantity: '), quantity_label),
                                          self.quantity])
@@ -95,13 +94,13 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
         filler = urwid.Filler(padding, valign='middle',
                               height=len(self.layout_list) + 2)
 
-        outer_layout = SidelessLineBox(filler, lline=None, tlcorner='─',
+        outer_layout = LineBox(filler, lline=None, tlcorner='─',
                                        blcorner='─', trcorner='\u252c',
                                        brcorner='\u2524')
         super().__init__(outer_layout)
 
         urwid.connect_signal(self.buy_button, 'change', self.handle_buy_sell_toggle)
-        urwid.connect_signal(self.quantity, 'change', self.handle_quantity_change)
+        urwid.connect_signal(self.quantity, 'postchange', self.handle_quantity_change)
         urwid.connect_signal(self.commit_button, 'click', self.handle_place_order)
         urwid.connect_signal(self.cancel_button, 'click', self.handle_transaction_finalized)
         urwid.connect_signal(self.max_button, 'click', self.handle_max_quantity)
@@ -134,24 +133,35 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
             if self.quantity.value() > self.max_sell_quantity:
                 self.quantity.set_edit_text('{}'.format(self.max_sell_quantity))
 
-    def handle_quantity_change(self, edit_widget, new_text):
+    def handle_quantity_change(self, edit_widget, old_text):
         """Update total sale as the edit widget is changed"""
-        try:
-            quantity = int(new_text)
-        except ValueError:
-            # EditInt's change signal also fires when the widget is first
-            # created or cleared (and thus has empty string or other
-            # non-numbers)
-            return
+        quantity = edit_widget.value()
+
+        if self.buy_button.state:
+            if quantity > self.max_buy_quantity:
+                ### TODO: better to highlight this as an error than to change it
+                # That way a user who just gets one digit wrong can edit it
+                quantity = self.max_buy_quantity
+                edit_widget.set_edit_text('{}'.format(quantity))
+        else:
+            if quantity > self.max_sell_quantity:
+                ### TODO: better to highlight this as an error than to change it
+                # That way a user who just gets one digit wrong can edit it
+                quantity = self.max_sell_quantity
+                edit_widget.set_edit_text('{}'.format(quantity))
+            pass
+
         total_sale = quantity * self.order.price
-        ### TODO: If total_sale is greater than MAX, reduce to MAX or highlight
         self.sale_info.set_text('Total Sale: ${}'.format(format_number(total_sale)))
 
     @property
     @abstractmethod
     def max_buy_quantity(self):
         """Maximum amount of a commodity that may be bought and not be invalid"""
-        return self.user_cash // self.order.price
+        if self.user_cash and self.order.price:
+            return self.user_cash // self.order.price
+        else:
+            return 0
 
     @property
     @abstractmethod
@@ -197,7 +207,8 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
         self.hold_box.set_state(True, do_callback=False)
         self.warehouse_box.set_state(True, do_callback=False)
         self.sale_info.set_text('Total Sale: $0')
-        self.quantity.set_edit_text("")
+        self.quantity.set_edit_text('0')
+        self.quantity.edit_pos = 1
         self.buysell_widget.focus_position = 0
         self.layout_list.set_focus(1)
 

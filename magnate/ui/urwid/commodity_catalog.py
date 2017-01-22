@@ -26,8 +26,7 @@ from ...market import CommodityType
 from .abcwidget import ABCWidget
 from .indexed_menu import IndexedMenuButton, IndexedMenuEnumerator
 from .numbers import format_number
-from .sideless_linebox import SidelessLineBox
-
+from .urwid_fixes import LineBox
 
 @attr.s
 class CatalogColumn:
@@ -131,19 +130,19 @@ class CommodityCatalog(urwid.WidgetWrap, metaclass=ABCWidget):
             auxiliaries[-1]._selectable = False  #pylint: disable=protected-access
 
         ui_columns = []
-        ui_columns.append(('weight', 2, SidelessLineBox(self.commodity, title_align='left',
+        ui_columns.append(('weight', 2, LineBox(self.commodity, title_align='left',
                                                         title=self.commodity_col.title,
                                                         lline=None, tlcorner='─', trcorner='─',
                                                         rline=None, blcorner='─', brcorner='─')))
         if len(self.auxiliary_cols) > 1:
             for cat_col_idx, cat_col in enumerate(self.auxiliary_cols[:-1]):
                 ui_columns.append((cat_col.space,
-                                   SidelessLineBox(auxiliaries[cat_col_idx], title_align='left',
+                                   LineBox(auxiliaries[cat_col_idx], title_align='left',
                                                    title=cat_col.title,
                                                    lline=None, tlcorner='\u2500', blcorner='\u2500',
                                                    rline=None, trcorner='\u2500', brcorner='\u2500')))
         ui_columns.append((self.auxiliary_cols[-1].space,
-                           SidelessLineBox(auxiliaries[-1], title_align='left',
+                           LineBox(auxiliaries[-1], title_align='left',
                                            title=self.auxiliary_cols[-1].title,
                                            lline=None, tlcorner='\u2500', blcorner='\u2500',
                                            trcorner='\u252c', brcorner='\u2524')))

@@ -18,7 +18,7 @@ Game Menu widget
 """
 import urwid
 
-from .sideless_linebox import SidelessLineBox
+from .urwid_fixes import LineBox
 
 class GameMenuDialog(urwid.WidgetWrap):
     """
@@ -57,7 +57,7 @@ class GameMenuDialog(urwid.WidgetWrap):
         filler = urwid.Filler(padding, valign='middle',
                               height=len(self.buttons) + 2)
 
-        outer_layout = SidelessLineBox(filler, lline=None, blcorner='─',
+        outer_layout = LineBox(filler, lline=None, blcorner='─',
                                        tlcorner='─', trcorner='\u252c',
                                        brcorner='\u2524')
         super().__init__(outer_layout)

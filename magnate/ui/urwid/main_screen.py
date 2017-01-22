@@ -29,8 +29,8 @@ from .market_display import MarketDisplay
 from .menu_bar_win import MenuBarWindow
 from .message_win import MessageWindow
 from .order_dialog import CargoOrderDialog
-from .sideless_linebox import SidelessLineBox
 from .travel_display import TravelDisplay
+from .urwid_fixes import LineBox
 
 # ui elements:
 # [x] Travel Menu
@@ -198,7 +198,7 @@ class MainWindow(urwid.WidgetWrap):
     def __init__(self, pubpen):
         self.pubpen = pubpen
         self.display_stack = []
-        self.blank = SidelessLineBox(urwid.SolidFill(' '), lline=None,
+        self.blank = LineBox(urwid.SolidFill(' '), lline=None,
                                      blcorner='─', tlcorner='─',
                                      trcorner='\u252c', brcorner='\u2524')
         self.background = urwid.WidgetPlaceholder(self.blank)
