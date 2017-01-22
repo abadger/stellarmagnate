@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2017 Toshio Kuratomi
+# For small changes to the base urwid classes.
 #
 # The code in this file and this file alone is based on the urwid library by
 # Ian Ward.  It is licensed the same as Urwid.  The terms and conditions are
@@ -29,25 +30,139 @@
 # Classes that we're monkeypatching
 from urwid import Edit, LineBox
 
-# Classes to implement these fixes
-import urwid
-from urwid import Columns, Divider, Pile, SolidFill, Text, WidgetDecoration, WidgetWrap
+# To implement LineBox
+from urwid.graphics import Columns, Divider, Pile, SolidFill, Text, WidgetDecoration, WidgetWrap
+
 # To implement Edit and IntEdit
 from urwid.widget import (CURSOR_DOWN, CURSOR_LEFT, CURSOR_RIGHT, CURSOR_UP,
                           CURSOR_MAX_LEFT, CURSOR_MAX_RIGHT,
                           LEFT, RIGHT, SPACE,
-                          CompositeCanvas, EditError, calc_coords, calc_pos,
-                          decompose_tagmarkup, is_wide_char,
+                          CompositeCanvas, EditError, Text, calc_coords,
+                          calc_pos, decompose_tagmarkup, is_wide_char,
                           move_next_char, move_prev_char, python3_repr,
                           remove_defaults, shift_line)
+
+# To implement Checkbox and RadioButton
+from urwid.wimp import (CheckBoxError, Columns, SelectableIcon, Text,
+                        WidgetWrap, ACTIVATE, FLOW, connect_signal,
+                        is_mouse_press, python3_repr)
 
 # These two get transformed by 2to3 when urwid is installed
 unicode = str
 long = int
 
+
+# LineBox changes to specify title alignment and go borderless
+# https://github.com/urwid/urwid/pull/215
+def lb__init__(self, original_widget, title="", title_align="center",
+               tlcorner=u'┌', tline=u'─', lline=u'│',
+               trcorner=u'┐', blcorner=u'└', rline=u'│',
+               bline=u'─', brcorner=u'┘'):
+        """
+        Draw a line around original_widget.
+
+        Use 'title' to set an initial title text with will be centered
+        on top of the box.
+
+        Use `title_align` to align the title to the 'left', 'right', or 'center'.
+        The default is 'center'.
+
+        You can also override the widgets used for the lines/corners:
+            tline: top line
+            bline: bottom line
+            lline: left line
+            rline: right line
+            tlcorner: top left corner
+            trcorner: top right corner
+            blcorner: bottom left corner
+            brcorner: bottom right corner
+
+        If empty string is specified for one of the lines/corners, then no
+        character will be output there.  This allows for seamless use of
+        adjoining LineBoxes.
+        """
+
+        if tline:
+            tline = Divider(tline)
+        if bline:
+            bline = Divider(bline)
+        if lline:
+            lline = SolidFill(lline)
+        if rline:
+            rline = SolidFill(rline)
+        tlcorner, trcorner = Text(tlcorner), Text(trcorner)
+        blcorner, brcorner = Text(blcorner), Text(brcorner)
+
+        if not tline and title:
+            raise ValueError('Cannot have a title when tline is empty string')
+
+        self.title_widget = Text(self.format_title(title))
+
+        if tline:
+            if title_align not in ('left', 'center', 'right'):
+                raise ValueError('title_align must be one of "left", "right", or "center"')
+            if title_align == 'left':
+                tline_widgets = [('flow', self.title_widget), tline]
+            else:
+                tline_widgets = [tline, ('flow', self.title_widget)]
+                if title_align == 'center':
+                    tline_widgets.append(tline)
+            self.tline_widget = Columns(tline_widgets)
+            top = Columns([
+                ('fixed', 1, tlcorner),
+                self.tline_widget,
+                ('fixed', 1, trcorner)
+            ])
+
+        else:
+            self.tline_widget = None
+            top = None
+
+        middle_widgets = []
+        if lline:
+            middle_widgets.append(('fixed', 1, lline))
+        middle_widgets.append(original_widget)
+        focus_col = len(middle_widgets) - 1
+        if rline:
+            middle_widgets.append(('fixed', 1, rline))
+
+        middle = Columns(middle_widgets,
+                box_columns=[0, 2], focus_column=focus_col)
+
+        if bline:
+            bottom = Columns([
+                ('fixed', 1, blcorner), bline, ('fixed', 1, brcorner)
+            ])
+        else:
+            bottom = None
+
+        pile_widgets = []
+        if top:
+            pile_widgets.append(('flow', top))
+        pile_widgets.append(middle)
+        focus_pos = len(pile_widgets) - 1
+        if bottom:
+            pile_widgets.append(('flow', bottom))
+        pile = Pile(pile_widgets, focus_item=focus_pos)
+
+        WidgetDecoration.__init__(self, original_widget)
+        WidgetWrap.__init__(self, pile)
+
+def lb_set_title(self, text):
+    if not self.title_widget:
+        raise ValueError('Cannot set title when tline is unset')
+    self.title_widget.set_text(self.format_title(text))
+    self.tline_widget._invalidate()
+
+
+LineBox.__init__ = lb__init__
+LineBox.set_title = lb_set_title
+
+
 # See https://github.com/urwid/urwid/pull/214/files
 # for the actual changes to this class
-class EditFix(urwid.Text):
+# Need the whole class in order to implement new signals
+class Edit(Text):
     """
     Text editing widget implements cursor movement, text insertion and
     deletion.  A caption may prefix the editing area.  Uses text class
@@ -638,7 +753,7 @@ class EditFix(urwid.Text):
         return x,y
 
 
-class IntEditFix(EditFix):
+class IntEdit(Edit):
     """Edit widget for integer values"""
 
     def valid_char(self, ch):
@@ -699,108 +814,344 @@ class IntEditFix(EditFix):
             return 0
 
 
-# LineBox changes to specify title alignment and go borderless
-# https://github.com/urwid/urwid/pull/215
-def lb__init__(self, original_widget, title="", title_align="center",
-               tlcorner=u'┌', tline=u'─', lline=u'│',
-               trcorner=u'┐', blcorner=u'└', rline=u'│',
-               bline=u'─', brcorner=u'┘'):
+# See https://github.com/urwid/urwid/pull/214/files
+# for the actual changes to this class
+# Need the whole class in order to implement new signals
+class CheckBox(WidgetWrap):
+    def sizing(self):
+        return frozenset([FLOW])
+
+    states = {
+        True: SelectableIcon("[X]"),
+        False: SelectableIcon("[ ]"),
+        'mixed': SelectableIcon("[#]") }
+    reserve_columns = 4
+
+    # allow users of this class to listen for change events
+    # sent when the state of this widget is modified
+    # (this variable is picked up by the MetaSignals metaclass)
+    signals = ["change", 'postchange']
+
+    def __init__(self, label, state=False, has_mixed=False,
+             on_state_change=None, user_data=None):
         """
-        Draw a line around original_widget.
+        :param label: markup for check box label
+        :param state: False, True or "mixed"
+        :param has_mixed: True if "mixed" is a state to cycle through
+        :param on_state_change: shorthand for connect_signal()
+                                function call for a single callback
+        :param user_data: user_data for on_state_change
 
-        Use 'title' to set an initial title text with will be centered
-        on top of the box.
+        Signals supported: ``'change'``, ``"postchange"``
 
-        Use `title_align` to align the title to the 'left', 'right', or 'center'.
-        The default is 'center'.
+        Register signal handler with::
 
-        You can also override the widgets used for the lines/corners:
-            tline: top line
-            bline: bottom line
-            lline: left line
-            rline: right line
-            tlcorner: top left corner
-            trcorner: top right corner
-            blcorner: bottom left corner
-            brcorner: bottom right corner
+          urwid.connect_signal(check_box, 'change', callback, user_data)
 
-        If empty string is specified for one of the lines/corners, then no
-        character will be output there.  This allows for seamless use of
-        adjoining LineBoxes.
+        where callback is callback(check_box, new_state [,user_data])
+        Unregister signal handlers with::
+
+          urwid.disconnect_signal(check_box, 'change', callback, user_data)
+
+        >>> CheckBox(u"Confirm")
+        <CheckBox selectable flow widget 'Confirm' state=False>
+        >>> CheckBox(u"Yogourt", "mixed", True)
+        <CheckBox selectable flow widget 'Yogourt' state='mixed'>
+        >>> cb = CheckBox(u"Extra onions", True)
+        >>> cb
+        <CheckBox selectable flow widget 'Extra onions' state=True>
+        >>> cb.render((20,), focus=True).text # ... = b in Python 3
+        [...'[X] Extra onions    ']
         """
+        self.__super.__init__(None) # self.w set by set_state below
+        self._label = Text("")
+        self.has_mixed = has_mixed
+        self._state = None
+        # The old way of listening for a change was to pass the callback
+        # in to the constructor.  Just convert it to the new way:
+        if on_state_change:
+            connect_signal(self, 'change', on_state_change, user_data)
+        self.set_label(label)
+        self.set_state(state)
 
-        if tline:
-            tline = Divider(tline)
-        if bline:
-            bline = Divider(bline)
-        if lline:
-            lline = SolidFill(lline)
-        if rline:
-            rline = SolidFill(rline)
-        tlcorner, trcorner = Text(tlcorner), Text(trcorner)
-        blcorner, brcorner = Text(blcorner), Text(brcorner)
+    def _repr_words(self):
+        return self.__super._repr_words() + [
+            python3_repr(self.label)]
 
-        if not tline and title:
-            raise ValueError('Cannot have a title when tline is empty string')
+    def _repr_attrs(self):
+        return dict(self.__super._repr_attrs(),
+            state=self.state)
 
-        self.title_widget = Text(self.format_title(title))
+    def set_label(self, label):
+        """
+        Change the check box label.
 
-        if tline:
-            if title_align not in ('left', 'center', 'right'):
-                raise ValueError('title_align must be one of "left", "right", or "center"')
-            if title_align == 'left':
-                tline_widgets = [('flow', self.title_widget), tline]
+        label -- markup for label.  See Text widget for description
+        of text markup.
+
+        >>> cb = CheckBox(u"foo")
+        >>> cb
+        <CheckBox selectable flow widget 'foo' state=False>
+        >>> cb.set_label(('bright_attr', u"bar"))
+        >>> cb
+        <CheckBox selectable flow widget 'bar' state=False>
+        """
+        self._label.set_text(label)
+        # no need to call self._invalidate(). WidgetWrap takes care of
+        # that when self.w changes
+
+    def get_label(self):
+        """
+        Return label text.
+
+        >>> cb = CheckBox(u"Seriously")
+        >>> print cb.get_label()
+        Seriously
+        >>> print cb.label
+        Seriously
+        >>> cb.set_label([('bright_attr', u"flashy"), u" normal"])
+        >>> print cb.label  #  only text is returned
+        flashy normal
+        """
+        return self._label.text
+    label = property(get_label)
+
+    def set_state(self, state, do_callback=True):
+        """
+        Set the CheckBox state.
+
+        state -- True, False or "mixed"
+        do_callback -- False to supress signal from this change
+
+        >>> changes = []
+        >>> def callback_a(cb, state, user_data):
+        ...     changes.append("A %r %r" % (state, user_data))
+        >>> def callback_b(cb, state):
+        ...     changes.append("B %r" % state)
+        >>> cb = CheckBox('test', False, False)
+        >>> key1 = connect_signal(cb, 'change', callback_a, "user_a")
+        >>> key2 = connect_signal(cb, 'change', callback_b)
+        >>> cb.set_state(True) # both callbacks will be triggered
+        >>> cb.state
+        True
+        >>> disconnect_signal(cb, 'change', callback_a, "user_a")
+        >>> cb.state = False
+        >>> cb.state
+        False
+        >>> cb.set_state(True)
+        >>> cb.state
+        True
+        >>> cb.set_state(False, False) # don't send signal
+        >>> changes
+        ["A True 'user_a'", 'B True', 'B False', 'B True']
+        """
+        if self._state == state:
+            return
+
+        if state not in self.states:
+            raise CheckBoxError("%s Invalid state: %s" % (
+                repr(self), repr(state)))
+
+        # self._state is None is a special case when the CheckBox
+        # has just been created
+        old_state = self._state
+        if do_callback and old_state is not None:
+            self._emit('change', state)
+        self._state = state
+        # rebuild the display widget with the new state
+        self._w = Columns( [
+            ('fixed', self.reserve_columns, self.states[state] ),
+            self._label ] )
+        self._w.focus_col = 0
+        if do_callback and old_state is not None:
+            self._emit('postchange', old_state)
+
+    def get_state(self):
+        """Return the state of the checkbox."""
+        return self._state
+    state = property(get_state, set_state)
+
+    def keypress(self, size, key):
+        """
+        Toggle state on 'activate' command.
+
+        >>> assert CheckBox._command_map[' '] == 'activate'
+        >>> assert CheckBox._command_map['enter'] == 'activate'
+        >>> size = (10,)
+        >>> cb = CheckBox('press me')
+        >>> cb.state
+        False
+        >>> cb.keypress(size, ' ')
+        >>> cb.state
+        True
+        >>> cb.keypress(size, ' ')
+        >>> cb.state
+        False
+        """
+        if self._command_map[key] != ACTIVATE:
+            return key
+
+        self.toggle_state()
+
+    def toggle_state(self):
+        """
+        Cycle to the next valid state.
+
+        >>> cb = CheckBox("3-state", has_mixed=True)
+        >>> cb.state
+        False
+        >>> cb.toggle_state()
+        >>> cb.state
+        True
+        >>> cb.toggle_state()
+        >>> cb.state
+        'mixed'
+        >>> cb.toggle_state()
+        >>> cb.state
+        False
+        """
+        if self.state == False:
+            self.set_state(True)
+        elif self.state == True:
+            if self.has_mixed:
+                self.set_state('mixed')
             else:
-                tline_widgets = [tline, ('flow', self.title_widget)]
-                if title_align == 'center':
-                    tline_widgets.append(tline)
-            self.tline_widget = Columns(tline_widgets)
-            top = Columns([
-                ('fixed', 1, tlcorner),
-                self.tline_widget,
-                ('fixed', 1, trcorner)
-            ])
+                self.set_state(False)
+        elif self.state == 'mixed':
+            self.set_state(False)
 
-        else:
-            self.tline_widget = None
-            top = None
+    def mouse_event(self, size, event, button, x, y, focus):
+        """
+        Toggle state on button 1 press.
 
-        middle_widgets = []
-        if lline:
-            middle_widgets.append(('fixed', 1, lline))
-        middle_widgets.append(original_widget)
-        focus_col = len(middle_widgets) - 1
-        if rline:
-            middle_widgets.append(('fixed', 1, rline))
-
-        middle = Columns(middle_widgets,
-                box_columns=[0, 2], focus_column=focus_col)
-
-        if bline:
-            bottom = Columns([
-                ('fixed', 1, blcorner), bline, ('fixed', 1, brcorner)
-            ])
-        else:
-            bottom = None
-
-        pile_widgets = []
-        if top:
-            pile_widgets.append(('flow', top))
-        pile_widgets.append(middle)
-        focus_pos = len(pile_widgets) - 1
-        if bottom:
-            pile_widgets.append(('flow', bottom))
-        pile = Pile(pile_widgets, focus_item=focus_pos)
-
-        WidgetDecoration.__init__(self, original_widget)
-        WidgetWrap.__init__(self, pile)
-
-def lb_set_title(self, text):
-    if not self.title_widget:
-        raise ValueError('Cannot set title when tline is unset')
-    self.title_widget.set_text(self.format_title(text))
-    self.tline_widget._invalidate()
+        >>> size = (20,)
+        >>> cb = CheckBox("clickme")
+        >>> cb.state
+        False
+        >>> cb.mouse_event(size, 'mouse press', 1, 2, 0, True)
+        True
+        >>> cb.state
+        True
+        """
+        if button != 1 or not is_mouse_press(event):
+            return False
+        self.toggle_state()
+        return True
 
 
-LineBox.__init__ = lb__init__
-LineBox.set_title = lb_set_title
+class RadioButton(CheckBox):
+    states = {
+        True: SelectableIcon("(X)"),
+        False: SelectableIcon("( )"),
+        'mixed': SelectableIcon("(#)") }
+    reserve_columns = 4
+
+    def __init__(self, group, label, state="first True",
+             on_state_change=None, user_data=None):
+        """
+        :param group: list for radio buttons in same group
+        :param label: markup for radio button label
+        :param state: False, True, "mixed" or "first True"
+        :param on_state_change: shorthand for connect_signal()
+                                function call for a single 'change' callback
+        :param user_data: user_data for on_state_change
+
+        This function will append the new radio button to group.
+        "first True" will set to True if group is empty.
+
+        Signals supported: ``'change'``, ``"postchange"``
+
+        Register signal handler with::
+
+          urwid.connect_signal(radio_button, 'change', callback, user_data)
+
+        where callback is callback(radio_button, new_state [,user_data])
+        Unregister signal handlers with::
+
+          urwid.disconnect_signal(radio_button, 'change', callback, user_data)
+
+        >>> bgroup = [] # button group
+        >>> b1 = RadioButton(bgroup, u"Agree")
+        >>> b2 = RadioButton(bgroup, u"Disagree")
+        >>> len(bgroup)
+        2
+        >>> b1
+        <RadioButton selectable flow widget 'Agree' state=True>
+        >>> b2
+        <RadioButton selectable flow widget 'Disagree' state=False>
+        >>> b2.render((15,), focus=True).text # ... = b in Python 3
+        [...'( ) Disagree   ']
+        """
+        if state=="first True":
+            state = not group
+
+        self.group = group
+        self.__super.__init__(label, state, False, on_state_change,
+            user_data)
+        group.append(self)
+
+
+
+    def set_state(self, state, do_callback=True):
+        """
+        Set the RadioButton state.
+
+        state -- True, False or "mixed"
+
+        do_callback -- False to supress signal from this change
+
+        If state is True all other radio buttons in the same button
+        group will be set to False.
+
+        >>> bgroup = [] # button group
+        >>> b1 = RadioButton(bgroup, u"Agree")
+        >>> b2 = RadioButton(bgroup, u"Disagree")
+        >>> b3 = RadioButton(bgroup, u"Unsure")
+        >>> b1.state, b2.state, b3.state
+        (True, False, False)
+        >>> b2.set_state(True)
+        >>> b1.state, b2.state, b3.state
+        (False, True, False)
+        >>> def relabel_button(radio_button, new_state):
+        ...     radio_button.set_label(u"Think Harder!")
+        >>> key = connect_signal(b3, 'change', relabel_button)
+        >>> b3
+        <RadioButton selectable flow widget 'Unsure' state=False>
+        >>> b3.set_state(True) # this will trigger the callback
+        >>> b3
+        <RadioButton selectable flow widget 'Think Harder!' state=True>
+        """
+        if self._state == state:
+            return
+
+        self.__super.set_state(state, do_callback)
+
+        # if we're clearing the state we don't have to worry about
+        # other buttons in the button group
+        if state is not True:
+            return
+
+        # clear the state of each other radio button
+        for cb in self.group:
+            if cb is self: continue
+            if cb._state:
+                cb.set_state(False)
+
+
+    def toggle_state(self):
+        """
+        Set state to True.
+
+        >>> bgroup = [] # button group
+        >>> b1 = RadioButton(bgroup, "Agree")
+        >>> b2 = RadioButton(bgroup, "Disagree")
+        >>> b1.state, b2.state
+        (True, False)
+        >>> b2.toggle_state()
+        >>> b1.state, b2.state
+        (False, True)
+        >>> b2.toggle_state()
+        >>> b1.state, b2.state
+        (False, True)
+        """
+        self.set_state(True)
