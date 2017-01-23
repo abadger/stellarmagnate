@@ -224,6 +224,8 @@ class MainWindow(urwid.WidgetWrap):
             'Blank': self.blank
             }
 
+        self.DIALOGS = frozenset(n for n in self.display_map if n.endswith('Dialog'))
+
         self.push_display('Blank')
 
         urwid.connect_signal(self.market_display, 'close_market_display', self.pop_display)
@@ -253,6 +255,14 @@ class MainWindow(urwid.WidgetWrap):
             self.display_stack.remove(display_name)
         except ValueError:
             pass
+
+        if self.display_stack and self.display_stack[-1] in self.DIALOGS:
+            # Never go back to dialogs.  So we need to finalize them and
+            # remove them from the stack when we move to a different
+            # display
+            dialog = self.display_map[self.display_stack.pop()]
+            dialog.finalize()
+
         # Add the display at the end
         self.display_stack.append(display_name)
         self.background.original_widget = widget
@@ -271,9 +281,6 @@ class MainWindow(urwid.WidgetWrap):
             else:
                 self.display_stack.pop()
                 widget = self.display_map[self.display_stack[-1]]
-                if widget in (self.game_menu, self.cargo_order_dialog):
-                    # Never go back to the game menu
-                    widget = None
 
         self.background.original_widget = widget
 

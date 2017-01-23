@@ -67,6 +67,11 @@ class GameMenuDialog(urwid.WidgetWrap):
         urwid.connect_signal(self.quit_button, 'click', self.quit_client)
         urwid.connect_signal(self.continue_button, 'click', self.continue_game)
 
+    def finalize(self):
+        # Nothing needs cleaning up in this dialog, so nothing to do in
+        # finalize
+        pass
+
     def save_game(self, *args):
         """Save game state to a file"""
         pass

@@ -37,6 +37,12 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
     This signal is referenced by offset so it's important to keep it as the
     first signal in the list.  Other signals may be added as long as they are
     mentioned afterwards.
+
+    The _sub_ids instance attribute is a dict used to track subscriptions to
+    the event system.  Implementations should add any sub_ids here that are
+    transient in nature (for instance, those that are location based).  The
+    _sub_ids are cleared after a transaction is processed and the dialog is
+    closed.
     """
     signals = []
 
@@ -206,6 +212,19 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
             total_sale = self.order.price * self.max_sell_quantity
             self.sale_info.set_text('Total Sale: ${}'.format(format_number(total_sale)))
 
+    def finalize(self):
+        """
+        This cleans up the event notifications that the dialog is subscribed to.
+
+        This method is appropriate for both internal and external callers to use
+        when they close the dialog.
+
+        Implementations should extend this if they have any cleanup to perform.
+        """
+        for sub_id in self._sub_ids.values():
+            self.pubpen.unsubscribe(sub_id)
+        self._sub_ids.clear()
+
     #
     # Event handlers for processing the transaction
     #
@@ -230,7 +249,7 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
         self.layout_list.set_focus(1)
 
         # Watch out for price changes
-        if 'market_update' in self._sub_ids:
+        if 'market' in self._sub_ids:
             self.pubpen.unsubscribe(self._sub_ids['market'])
         self._sub_ids['market'] = self.pubpen.subscribe('market.{}.update'.format(location),
                                                                   self.handle_market_update)
@@ -243,54 +262,41 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
                 self._sub_ids['user_info'] = self.pubpen.subscribe('user.info', self.handle_user_info)
             self.pubpen.publish('query.user.info')
 
-    #@abstractmethod
     def handle_transaction_finalized(self, *args, **kwargs):
         """
         Clear the transation dialog state when we are told the transaction is finished.
 
         This cleans up the event notifications and closes the dialog.
-
-        Implementations should extend this to cleanup any event listeners that
-        they may have added.
         """
-        for sub_id in self._sub_ids.values():
-            self.pubpen.unsubscribe(sub_id)
-        self._sub_ids.clear()
+        self.finalize()
 
         # Close the dialog
         urwid.emit_signal(self, self.signals[0])
 
     #@abstractmethod
     def handle_place_order(self, *args):
-        """Request to make the transaction"""
+        """
+        Request to make the transaction
+
+        This method assembles a :class:`magnate.order.Order` and sends it to
+        the backend to request that it be finalized.
+
+        Implementors of this method should make the call to the backend as the
+        last thing they do like this::
+            self.pubpen.publish('action.user.order', self.order)
+
+        This base method takes care of listening for the success or failure messages.
+        """
         if self.buy_button.state is True:
             self.order.buy = True
-            if self.hold_box.get_state() is True:
-                ### TODO: place the min() of quantity or hold free space here.
-                # put rest in warehouse
-                self.order.hold_quantity = self.quantity.value()
-            if self.warehouse_box.get_state() is True:
-                ### TODO: implement warehouse
-                pass
-            ### TODO: if there's still more quantity, error?  (or reduce)
             if 'order_purchased' not in self._sub_ids:
                 self._sub_ids['order_purchased'] = self.pubpen.subscribe('market.{}.purchased'.format(self.order.location),
-                                                                                   self.handle_transaction_finalized)
-            self.pubpen.publish('action.user.order', self.order)
+                                                                         self.handle_transaction_finalized)
         elif self.sell_button.state is True:
             self.order.buy = False
-            if self.hold_box.get_state() is True:
-                ### TODO: place the min() of quantity or amount of commodity in hold
-                # take rest from warehouse
-                self.order.hold_quantity = self.quantity.value()
-            if self.warehouse_box.get_state() is True:
-                ### TODO: implement warehouse
-                pass
             if 'order_sold' not in self._sub_ids:
                 self._sub_ids['order_sold'] = self.pubpen.subscribe('market.{}.sold'.format(self.order.location),
-                                                                              self.handle_transaction_finalized)
-            self.pubpen.publish('action.user.order', self.order)
-            pass
+                                                                    self.handle_transaction_finalized)
         else:
             # Error
             assert self.buy_button.state is True or self.sell_button.state is True, 'Neither the buy nor sell button was selected'
@@ -298,7 +304,6 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
     #
     # Pubpen events to gather data
     #
-    #@abstractmethod
     def handle_user_info(self, username, cash, *args):
         """Update the user's cash amount"""
         if 'user_info' in self._sub_ids:
@@ -308,13 +313,11 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
 
         self.validate_quantity()
 
-    #@abstractmethod
     def handle_user_cash_update(self, new_cash, *args):
         """Update the user's cash amount"""
         self.user_cash = new_cash
         self.validate_quantity()
 
-    #@abstractmethod
     def handle_market_update(self, commodity, price):
         """Update the price in the dialog if it's been updated on the backend"""
         if self.order is not None:
@@ -322,7 +325,6 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
                 self.order.price = price
             self.dialog.set_title('{} - ${}'.format(commodity, price))
 
-    #@abstractmethod
     def keypress(self, size, key):
         """Handle all keyboard shortcuts for the transaction dialog"""
         if key == 'esc':
@@ -398,8 +400,8 @@ class CargoOrderDialog(OrderDialog):
         ### TODO: Recalculate warehouse space
         pass
 
-        #self.pubpen.subscribe('warehouse.{}.info', self.handle_warehouse_info)
-        #self.pubpen.subscribe('warehouse.{}.cargo.update', self.handle_cargo_update)
+        #self._sub_ids['warehouse_info'] = self.pubpen.subscribe('warehouse.{}.info', self.handle_warehouse_info)
+        #self._sub_ids['warehouse'] = self.pubpen.subscribe('warehouse.{}.cargo.update', self.handle_cargo_update)
 
     def handle_buy_sell_toggle(self, radio_button, new_state):
         """Change interface slightly depending on whether we're buying or selling"""
@@ -417,15 +419,45 @@ class CargoOrderDialog(OrderDialog):
     def validate_storage_toggle(self, checkbox, old_state):
         """Make sure that at least one of the hold/warehouse checkboxes is always checked"""
         # One of hold_box or warehouse must always be checked
+        allowed = True
         if checkbox == self.hold_box:
             if not self.warehouse_box.state:
+                allowed = False
                 self.hold_box.set_state(True, do_callback=False)
         else:
             if not self.hold_box.state:
+                allowed = False
                 self.warehouse_box.set_state(True, do_callback=False)
 
+        if not allowed:
+            self.pubpen.publish('ui.urwid.message',
+                                'Not allowed to disable both hold and warehouse',
+                                severity=MsgType.error)
         # Recalculate maximums
         self.validate_quantity()
+
+    def handle_place_order(self, *args):
+        """Request to make the transaction"""
+        super().handle_place_order(*args)
+        if self.order.buy:
+            if self.hold_box.get_state() is True:
+                ### TODO: place the min() of quantity or hold free space here.
+                # put rest in warehouse
+                self.order.hold_quantity = self.quantity.value()
+            if self.warehouse_box.get_state() is True:
+                ### TODO: implement warehouse
+                pass
+            ### TODO: if there's still more quantity, error?  (or reduce)
+        else:
+            if self.hold_box.get_state() is True:
+                ### TODO: place the min() of quantity or amount of commodity in hold
+                # take rest from warehouse
+                self.order.hold_quantity = self.quantity.value()
+            if self.warehouse_box.get_state() is True:
+                ### TODO: implement warehouse
+                pass
+
+        self.pubpen.publish('action.user.order', self.order)
 
     #
     # Handlers for backend signals
