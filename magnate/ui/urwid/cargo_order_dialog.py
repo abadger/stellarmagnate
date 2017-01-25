@@ -23,6 +23,7 @@ from .order_dialog import OrderDialog
 from .urwid_fixes import CheckBox
 
 class CargoOrderDialog(OrderDialog):
+    """Form to fill out to purchase or sell cargo at a market"""
     signals = ['close_cargo_order_dialog']
 
     def __init__(self, pubpen):
@@ -151,12 +152,12 @@ class CargoOrderDialog(OrderDialog):
     def handle_ship_info(self, ship_type, free_space, filled_space, manifest):
         """Update the hold space """
         self.free_space = free_space
+
+        commodity = ''
         if self.order is not None:
             commodity = self.order.commodity
             manifest_entry = manifest.get(commodity, None)
             self.commodity_in_hold = manifest_entry.quantity if manifest_entry else 0
-        else:
-            commodity = ''
 
         if self.buy_button.state is True:
             self.hold_box.set_label('Hold: {} Free Space'.format(format_number(self.free_space)))
@@ -171,12 +172,12 @@ class CargoOrderDialog(OrderDialog):
         """Update the hold space whenever we receive a cargo update event"""
         if self.free_space != free_space:
             self.free_space = free_space
+
+            commodity = ''
             if self.order is not None:
                 commodity = self.order.commodity
                 if manifest.commodity == commodity:
                     self.commodity_in_hold = manifest.quantity
-            else:
-                commodity = ''
 
             if self.buy_button.state is True:
                 self.hold_box.set_label('Hold: {} Free Space'.format(format_number(self.free_space)))
@@ -189,12 +190,14 @@ class CargoOrderDialog(OrderDialog):
 
 
 class EquipmentOrderDialog(OrderDialog):
+    """Form to fill out to purchase or sell equipment and property at a market"""
     signals = ['close_eq_order_dialog']
+
     def __init__(self, pubpen):
-        self.current_amount
+        self.current_amount = None
 
         self.current_amount_label = urwid.Text('Current Amount:')
-        super().__init__(pubpen,(self.current_amount_label,))
+        super().__init__(pubpen, (self.current_amount_label,))
         pass
 
     @property

@@ -38,7 +38,7 @@ class MarketDisplay(CommodityCatalog):
 
         super().__init__(pubpen, 'ui.urwid.order_info',
                          primary_title='Commodity', auxiliary_cols=auxiliary_cols,
-                         price_col_idx=0, types_traded=frozenset((CommodityType['cargo'],)))
+                         price_col_idx=0, types_traded=frozenset((CommodityType.cargo,)))
 
         #
         # Event handlers

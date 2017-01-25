@@ -58,8 +58,8 @@ class GameMenuDialog(urwid.WidgetWrap):
                               height=len(self.buttons) + 2)
 
         outer_layout = LineBox(filler, lline=None, blcorner='─',
-                                       tlcorner='─', trcorner='\u252c',
-                                       brcorner='\u2524')
+                               tlcorner='─', trcorner='\u252c',
+                               brcorner='\u2524')
         super().__init__(outer_layout)
 
         urwid.connect_signal(self.save_button, 'click', self.save_game)
@@ -68,6 +68,7 @@ class GameMenuDialog(urwid.WidgetWrap):
         urwid.connect_signal(self.continue_button, 'click', self.continue_game)
 
     def finalize(self):
+        """Cleanup any game menu state when the dialog is hidden"""
         # Nothing needs cleaning up in this dialog, so nothing to do in
         # finalize
         pass

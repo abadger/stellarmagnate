@@ -58,95 +58,95 @@ def lb__init__(self, original_widget, title="", title_align="center",
                tlcorner=u'┌', tline=u'─', lline=u'│',
                trcorner=u'┐', blcorner=u'└', rline=u'│',
                bline=u'─', brcorner=u'┘'):
-        """
-        Draw a line around original_widget.
+    """
+    Draw a line around original_widget.
 
-        Use 'title' to set an initial title text with will be centered
-        on top of the box.
+    Use 'title' to set an initial title text with will be centered
+    on top of the box.
 
-        Use `title_align` to align the title to the 'left', 'right', or 'center'.
-        The default is 'center'.
+    Use `title_align` to align the title to the 'left', 'right', or 'center'.
+    The default is 'center'.
 
-        You can also override the widgets used for the lines/corners:
-            tline: top line
-            bline: bottom line
-            lline: left line
-            rline: right line
-            tlcorner: top left corner
-            trcorner: top right corner
-            blcorner: bottom left corner
-            brcorner: bottom right corner
+    You can also override the widgets used for the lines/corners:
+        tline: top line
+        bline: bottom line
+        lline: left line
+        rline: right line
+        tlcorner: top left corner
+        trcorner: top right corner
+        blcorner: bottom left corner
+        brcorner: bottom right corner
 
-        If empty string is specified for one of the lines/corners, then no
-        character will be output there.  This allows for seamless use of
-        adjoining LineBoxes.
-        """
+    If empty string is specified for one of the lines/corners, then no
+    character will be output there.  This allows for seamless use of
+    adjoining LineBoxes.
+    """
 
-        if tline:
-            tline = Divider(tline)
-        if bline:
-            bline = Divider(bline)
-        if lline:
-            lline = SolidFill(lline)
-        if rline:
-            rline = SolidFill(rline)
-        tlcorner, trcorner = Text(tlcorner), Text(trcorner)
-        blcorner, brcorner = Text(blcorner), Text(brcorner)
+    if tline:
+        tline = Divider(tline)
+    if bline:
+        bline = Divider(bline)
+    if lline:
+        lline = SolidFill(lline)
+    if rline:
+        rline = SolidFill(rline)
+    tlcorner, trcorner = Text(tlcorner), Text(trcorner)
+    blcorner, brcorner = Text(blcorner), Text(brcorner)
 
-        if not tline and title:
-            raise ValueError('Cannot have a title when tline is empty string')
+    if not tline and title:
+        raise ValueError('Cannot have a title when tline is empty string')
 
-        self.title_widget = Text(self.format_title(title))
+    self.title_widget = Text(self.format_title(title))
 
-        if tline:
-            if title_align not in ('left', 'center', 'right'):
-                raise ValueError('title_align must be one of "left", "right", or "center"')
-            if title_align == 'left':
-                tline_widgets = [('flow', self.title_widget), tline]
-            else:
-                tline_widgets = [tline, ('flow', self.title_widget)]
-                if title_align == 'center':
-                    tline_widgets.append(tline)
-            self.tline_widget = Columns(tline_widgets)
-            top = Columns([
-                ('fixed', 1, tlcorner),
-                self.tline_widget,
-                ('fixed', 1, trcorner)
-            ])
-
+    if tline:
+        if title_align not in ('left', 'center', 'right'):
+            raise ValueError('title_align must be one of "left", "right", or "center"')
+        if title_align == 'left':
+            tline_widgets = [('flow', self.title_widget), tline]
         else:
-            self.tline_widget = None
-            top = None
+            tline_widgets = [tline, ('flow', self.title_widget)]
+            if title_align == 'center':
+                tline_widgets.append(tline)
+        self.tline_widget = Columns(tline_widgets)
+        top = Columns([
+            ('fixed', 1, tlcorner),
+            self.tline_widget,
+            ('fixed', 1, trcorner)
+        ])
 
-        middle_widgets = []
-        if lline:
-            middle_widgets.append(('fixed', 1, lline))
-        middle_widgets.append(original_widget)
-        focus_col = len(middle_widgets) - 1
-        if rline:
-            middle_widgets.append(('fixed', 1, rline))
+    else:
+        self.tline_widget = None
+        top = None
 
-        middle = Columns(middle_widgets,
-                box_columns=[0, 2], focus_column=focus_col)
+    middle_widgets = []
+    if lline:
+        middle_widgets.append(('fixed', 1, lline))
+    middle_widgets.append(original_widget)
+    focus_col = len(middle_widgets) - 1
+    if rline:
+        middle_widgets.append(('fixed', 1, rline))
 
-        if bline:
-            bottom = Columns([
-                ('fixed', 1, blcorner), bline, ('fixed', 1, brcorner)
-            ])
-        else:
-            bottom = None
+    middle = Columns(middle_widgets,
+            box_columns=[0, 2], focus_column=focus_col)
 
-        pile_widgets = []
-        if top:
-            pile_widgets.append(('flow', top))
-        pile_widgets.append(middle)
-        focus_pos = len(pile_widgets) - 1
-        if bottom:
-            pile_widgets.append(('flow', bottom))
-        pile = Pile(pile_widgets, focus_item=focus_pos)
+    if bline:
+        bottom = Columns([
+            ('fixed', 1, blcorner), bline, ('fixed', 1, brcorner)
+        ])
+    else:
+        bottom = None
 
-        WidgetDecoration.__init__(self, original_widget)
-        WidgetWrap.__init__(self, pile)
+    pile_widgets = []
+    if top:
+        pile_widgets.append(('flow', top))
+    pile_widgets.append(middle)
+    focus_pos = len(pile_widgets) - 1
+    if bottom:
+        pile_widgets.append(('flow', bottom))
+    pile = Pile(pile_widgets, focus_item=focus_pos)
+
+    WidgetDecoration.__init__(self, original_widget)
+    WidgetWrap.__init__(self, pile)
 
 def lb_set_title(self, text):
     if not self.title_widget:

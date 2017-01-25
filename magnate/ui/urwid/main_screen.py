@@ -132,7 +132,8 @@ class PortDisplay(CommodityCatalog):
 
         super().__init__(pubpen, 'ui.urwid.equip_order_info',
                          primary_title='Equipment', auxiliary_cols=auxiliary_cols,
-                         price_col_idx=0, types_traded=frozenset((CommodityType['equipment'], CommodityType['property'])))
+                         price_col_idx=0, types_traded=frozenset((CommodityType.equipment,
+                                                                  CommodityType.property)))
 
         #
         # Event handlers
@@ -199,8 +200,8 @@ class MainWindow(urwid.WidgetWrap):
         self.pubpen = pubpen
         self.display_stack = []
         self.blank = LineBox(urwid.SolidFill(' '), lline=None,
-                                     blcorner='─', tlcorner='─',
-                                     trcorner='\u252c', brcorner='\u2524')
+                             blcorner='─', tlcorner='─',
+                             trcorner='\u252c', brcorner='\u2524')
         self.background = urwid.WidgetPlaceholder(self.blank)
 
         super().__init__(self.background)
@@ -224,7 +225,7 @@ class MainWindow(urwid.WidgetWrap):
             'Blank': self.blank
             }
 
-        self.DIALOGS = frozenset(n for n in self.display_map if n.endswith('Dialog'))
+        self.dialogs = frozenset(n for n in self.display_map if n.endswith('Dialog'))
 
         self.push_display('Blank')
 
@@ -256,7 +257,7 @@ class MainWindow(urwid.WidgetWrap):
         except ValueError:
             pass
 
-        if self.display_stack and self.display_stack[-1] in self.DIALOGS:
+        if self.display_stack and self.display_stack[-1] in self.dialogs:
             # Never go back to dialogs.  So we need to finalize them and
             # remove them from the stack when we move to a different
             # display

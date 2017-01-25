@@ -26,6 +26,7 @@ from .urwid_fixes import LineBox
 
 MsgType = Enum('MsgType', ('info', 'error'))
 
+
 class MessageWindow(urwid.WidgetWrap):
     """Display system messages"""
     _MAX_MESSAGES = 3
@@ -39,11 +40,11 @@ class MessageWindow(urwid.WidgetWrap):
         self.message_list = urwid.SimpleFocusListWalker([])
         list_box = urwid.ListBox(self.message_list)
         message_win = LineBox(list_box, tline=None, lline=None, bline=None,
-                                      trcorner='│', brcorner='│')
+                              trcorner='│', brcorner='│')
         super().__init__(message_win)
-        self.pubpen.subscribe('user.login_failure', partial(self.add_message, severity=MsgType['error']))
-        self.pubpen.subscribe('user.order_failure', partial(self.add_message, severity=MsgType['error']))
-        self.pubpen.subscribe('ship.movement_failure', partial(self.add_message, severity=MsgType['error']))
+        self.pubpen.subscribe('user.login_failure', partial(self.add_message, severity=MsgType.error))
+        self.pubpen.subscribe('user.order_failure', partial(self.add_message, severity=MsgType.error))
+        self.pubpen.subscribe('ship.movement_failure', partial(self.add_message, severity=MsgType.error))
         self.pubpen.subscribe('market.event', self.handle_market_event)
         self.pubpen.subscribe('ui.urwid.message', self.add_message)
 

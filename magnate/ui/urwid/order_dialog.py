@@ -101,8 +101,8 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
                               height=len(self.layout_list) + 2)
 
         outer_layout = LineBox(filler, lline=None, tlcorner='─',
-                                       blcorner='─', trcorner='\u252c',
-                                       brcorner='\u2524')
+                               blcorner='─', trcorner='\u252c',
+                               brcorner='\u2524')
         super().__init__(outer_layout)
 
         urwid.connect_signal(self.buy_button, 'postchange', self.handle_buy_sell_toggle)
@@ -143,6 +143,16 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
         return 0
 
     def validate_quantity(self, revert_amount=None):
+        """
+        Validate that the specified quantity doesn't violate any constraints
+
+        Checks against the maximum amounts as specified by
+        :meth:`~magnate.ui.urwid.OrderDialog.max_buy_quantity` and
+        :meth:`~magnate.ui.urwid.OrderDialog.max_sell_quantity`.
+
+        Once the quantity is validated, updates form information that depends
+        on the quantity.
+        """
         valid = True
         quantity = self.quantity.value()
 
@@ -252,7 +262,7 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
         if 'market' in self._sub_ids:
             self.pubpen.unsubscribe(self._sub_ids['market'])
         self._sub_ids['market'] = self.pubpen.subscribe('market.{}.update'.format(location),
-                                                                  self.handle_market_update)
+                                                        self.handle_market_update)
 
         # If we haven't acquired information about the user's cash yet, query
         # once for it.  After the initial time, the user.cash.update event

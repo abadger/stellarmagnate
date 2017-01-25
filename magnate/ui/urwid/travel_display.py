@@ -37,8 +37,8 @@ class TravelDisplay(urwid.WidgetWrap):
         self.listwalker = urwid.SimpleFocusListWalker([])
         box = urwid.ListBox(self.listwalker)
         outer_layout = LineBox(box, lline=None, blcorner='─',
-                                       tlcorner='─', trcorner='\u252c',
-                                       brcorner='\u2524')
+                               tlcorner='─', trcorner='\u252c',
+                               brcorner='\u2524')
         super().__init__(outer_layout)
         self.pubpen.subscribe('ship.destinations', self.handle_new_destinations)
 

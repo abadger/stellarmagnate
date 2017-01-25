@@ -70,7 +70,7 @@ class CommodityCatalog(urwid.WidgetWrap, metaclass=ABCWidget):
     @abstractmethod
     def __init__(self, pubpen, order_info_signal, primary_title='Commodity',
                  auxiliary_cols=None, price_col_idx=0,
-                 types_traded=frozenset((CommodityType['cargo'], CommodityType['property'], CommodityType['ship parts']))):
+                 types_traded=frozenset((CommodityType.cargo, CommodityType.property, CommodityType['ship parts']))):
         """
         CommodityCatalogs give the information needed to purchase or sell a commodity
 
@@ -131,21 +131,21 @@ class CommodityCatalog(urwid.WidgetWrap, metaclass=ABCWidget):
 
         ui_columns = []
         ui_columns.append(('weight', 2, LineBox(self.commodity, title_align='left',
-                                                        title=self.commodity_col.title,
-                                                        lline=None, tlcorner='─', trcorner='─',
-                                                        rline=None, blcorner='─', brcorner='─')))
+                                                title=self.commodity_col.title,
+                                                lline=None, tlcorner='─', trcorner='─',
+                                                rline=None, blcorner='─', brcorner='─')))
         if len(self.auxiliary_cols) > 1:
             for cat_col_idx, cat_col in enumerate(self.auxiliary_cols[:-1]):
                 ui_columns.append((cat_col.space,
                                    LineBox(auxiliaries[cat_col_idx], title_align='left',
-                                                   title=cat_col.title,
-                                                   lline=None, tlcorner='\u2500', blcorner='\u2500',
-                                                   rline=None, trcorner='\u2500', brcorner='\u2500')))
+                                           title=cat_col.title,
+                                           lline=None, tlcorner='\u2500', blcorner='\u2500',
+                                           rline=None, trcorner='\u2500', brcorner='\u2500')))
         ui_columns.append((self.auxiliary_cols[-1].space,
                            LineBox(auxiliaries[-1], title_align='left',
-                                           title=self.auxiliary_cols[-1].title,
-                                           lline=None, tlcorner='\u2500', blcorner='\u2500',
-                                           trcorner='\u252c', brcorner='\u2524')))
+                                   title=self.auxiliary_cols[-1].title,
+                                   lline=None, tlcorner='\u2500', blcorner='\u2500',
+                                   trcorner='\u252c', brcorner='\u2524')))
 
         self.market_display = urwid.Columns(ui_columns)
 
@@ -200,7 +200,7 @@ class CommodityCatalog(urwid.WidgetWrap, metaclass=ABCWidget):
         commodities in the same order as the main commodity map
         """
         for column in self.auxiliary_cols:
-            column.widget_list.clear()
+            column.widget_list.clear()  # pylint: disable=no-member
             for commodity, value in column.data_map.items():
                 if isinstance(value, int):
                     formatted_number = format_number(value)
@@ -213,7 +213,7 @@ class CommodityCatalog(urwid.WidgetWrap, metaclass=ABCWidget):
                         value = " "
                     button = IndexedMenuButton(value)
                 urwid.connect_signal(button, 'click', partial(self.handle_commodity_select, commodity))
-                column.widget_list.append(urwid.AttrMap(button, None))
+                column.widget_list.append(urwid.AttrMap(button, None))  # pylint: disable=no-member
 
     def _construct_commodity_list(self, commodities):
         """
@@ -226,7 +226,9 @@ class CommodityCatalog(urwid.WidgetWrap, metaclass=ABCWidget):
                 idx = self.keypress_map.set_next(commodity)
 
                 button = IndexedMenuButton('({}) {}'.format(idx, commodity))
-                self.commodity_col.widget_list.append(urwid.AttrMap(button, None, focus_map='reversed'))
+                self.commodity_col.widget_list.append(urwid.AttrMap(button,  # pylint: disable=no-member
+                                                                    None,
+                                                                    focus_map='reversed'))
                 urwid.connect_signal(button, 'click', partial(self.handle_commodity_select, commodity))
 
                 self.commodity_col.data_map[commodity] = len(self.commodity_col.widget_list) - 1
@@ -265,7 +267,7 @@ class CommodityCatalog(urwid.WidgetWrap, metaclass=ABCWidget):
         """
         self.location = new_location
         self.keypress_map.clear()
-        self.commodity_col.widget_list.clear()
+        self.commodity_col.widget_list.clear()  #pylint: disable=no-member
         self.commodity_col.data_map.clear()
         self.auxiliary_cols[self.price_col_idx].widget_list.clear()
         self.auxiliary_cols[self.price_col_idx].data_map.clear()
