@@ -21,7 +21,7 @@ from .commodity_catalog import CatalogColumn, CommodityCatalog
 
 class MarketDisplay(CommodityCatalog):
     """Display the market information to buy and sell commodities"""
-    signals = ['close_market_display', 'open_order_dialog']
+    signals = ['close_market_display', 'open_cargo_order_dialog']
 
     def __init__(self, pubpen):
         auxiliary_cols = [CatalogColumn('Price', 13, money=True),

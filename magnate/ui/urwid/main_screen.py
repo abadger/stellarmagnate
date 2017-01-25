@@ -28,7 +28,7 @@ from .info_win import InfoWindow
 from .market_display import MarketDisplay
 from .menu_bar_win import MenuBarWindow
 from .message_win import MessageWindow
-from .order_dialog import CargoOrderDialog
+from .cargo_order_dialog import CargoOrderDialog
 from .travel_display import TravelDisplay
 from .urwid_fixes import LineBox
 
@@ -229,7 +229,7 @@ class MainWindow(urwid.WidgetWrap):
         self.push_display('Blank')
 
         urwid.connect_signal(self.market_display, 'close_market_display', self.pop_display)
-        urwid.connect_signal(self.market_display, 'open_order_dialog',
+        urwid.connect_signal(self.market_display, 'open_cargo_order_dialog',
                              partial(self.push_display, 'CargoOrderDialog'))
         urwid.connect_signal(self.cargo_order_dialog, 'close_cargo_order_dialog', self.pop_display)
         urwid.connect_signal(self.travel_menu, 'close_travel_menu', self.pop_display)
