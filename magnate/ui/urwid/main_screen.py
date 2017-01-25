@@ -23,12 +23,13 @@ from functools import partial
 
 import urwid
 
+from .cargo_order_dialog import CargoOrderDialog
 from .gamemenu_dialog import GameMenuDialog
 from .info_win import InfoWindow
 from .market_display import MarketDisplay
 from .menu_bar_win import MenuBarWindow
 from .message_win import MessageWindow
-from .cargo_order_dialog import CargoOrderDialog
+from .port_display import PortDisplay
 from .travel_display import TravelDisplay
 from .urwid_fixes import LineBox
 
@@ -110,69 +111,6 @@ class StatusBar(urwid.Columns):
     def handle_ship_moved(self, new_location, *args):
         """Update the ship's location when the ship moves"""
         self.update_location(new_location)
-
-
-from ...market import CommodityType
-from .commodity_catalog import CatalogColumn, CommodityCatalog
-class PortDisplay(CommodityCatalog):
-    """Display for the user to manage their ship and equipment"""
-
-    signals = ['close_port_display', 'open_equip_order_dialog']
-
-    def __init__(self, pubpen):
-        auxiliary_cols = [CatalogColumn('Price', 13, money=True),
-                          #CatalogColumn('Amount', 20),
-                          CatalogColumn('Currently Owned', 20),
-                         ]
-
-        #
-        # Indexes to special columns
-        #
-        self.owned_col_idx = 1
-
-        super().__init__(pubpen, 'ui.urwid.equip_order_info',
-                         primary_title='Equipment', auxiliary_cols=auxiliary_cols,
-                         price_col_idx=0, types_traded=frozenset((CommodityType.equipment,
-                                                                  CommodityType.property)))
-
-        #
-        # Event handlers
-        #
-        self.pubpen.subscribe('ship.info', self.handle_ship_info)
-        self.pubpen.subscribe('ship.cargo.update', self.handle_cargo_update)
-
-    #
-    # Handle updates to the displayed info
-    #
-    def handle_ship_info(self, ship_type, free_space, filled_space, *args): #pylint: disable=unused-argument
-        """Update the display with total hold space owned"""
-        self.auxiliary_cols[self.owned_col_idx].data_map['Cargo Module (100 units)'] = (free_space + filled_space) // 100
-        self._construct_commodity_list(self.auxiliary_cols[self.owned_col_idx].data_map)
-
-    def handle_cargo_update(self, cargo, free_space, filled_space): #pylint: disable=unused-argument
-        """Update the display with total hold space owned"""
-        self.auxiliary_cols[self.owned_col_idx].data_map['Cargo Module (100 units)'] = (free_space + filled_space) // 100
-        self._construct_commodity_list(self.auxiliary_cols[self.owned_col_idx].data_map)
-
-    def handle_new_warehouse_info(self, warehouse_info):
-        """Update the equipment display with total warehouse space owned"""
-        pass
-
-    def handle_new_location(self, new_location, *args):
-        """
-        Update the market display when the ship moves
-
-        :arg new_location: The location the ship has moved to
-        """
-        super().handle_new_location(new_location, *args)
-
-        # Get holdspace info
-        self.pubpen.publish('query.ship.info')
-        pass
-        ### TODO: events geared towards the equipment, not cargo
-        # Sync up information
-        #self.pubpen.subscribe('warehouse.{}.update'.format(new_location)) => handle new warehouse info
-        #self.pubpen.publish('query.warehouse.{}.info'.format(new_location))
 
 
 class FinancialDisplay(urwid.WidgetWrap):
