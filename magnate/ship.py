@@ -140,7 +140,7 @@ class Ship:
                 price_paid = self.manifest[commodity].price_paid
             else:
                 price_paid = 0
-            return ManifestEnry(commodity, 0, price_paid)
+            return ManifestEntry(commodity, 0, price_paid)
 
         if not commodity in self.manifest or self.manifest[commodity].quantity < amount:
             raise ValueError('We do not have {} of {} in the hold'.format(amount, commodity))
