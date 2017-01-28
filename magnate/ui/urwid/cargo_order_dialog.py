@@ -191,7 +191,7 @@ class CargoOrderDialog(OrderDialog):
 
 class EquipmentOrderDialog(OrderDialog):
     """Form to fill out to purchase or sell equipment and property at a market"""
-    signals = ['close_eq_order_dialog']
+    signals = ['close_equip_order_dialog']
 
     def __init__(self, pubpen):
         self.current_amount = None

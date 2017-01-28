@@ -23,7 +23,7 @@ from functools import partial
 
 import urwid
 
-from .cargo_order_dialog import CargoOrderDialog
+from .cargo_order_dialog import CargoOrderDialog, EquipmentOrderDialog as EquipOrderDialog
 from .gamemenu_dialog import GameMenuDialog
 from .info_win import InfoWindow
 from .market_display import MarketDisplay
@@ -151,12 +151,14 @@ class MainWindow(urwid.WidgetWrap):
         self.travel_menu = TravelDisplay(self.pubpen)
         self.game_menu = GameMenuDialog(self.pubpen)
         self.port_display = PortDisplay(self.pubpen)
+        self.equip_order_dialog = EquipOrderDialog(self.pubpen)
         self.financial_display = FinancialDisplay(self.pubpen)
 
         self.display_map = {
             'MarketDisplay': self.market_display,
             'CargoOrderDialog': self.cargo_order_dialog,
             'PortDisplay': self.port_display,
+            'EquipOrderDialog': self.equip_order_dialog,
             'FinancialDisplay': self.financial_display,
             'TravelDisplay': self.travel_menu,
             'GameMenuDialog': self.game_menu,
@@ -171,6 +173,9 @@ class MainWindow(urwid.WidgetWrap):
         urwid.connect_signal(self.market_display, 'open_cargo_order_dialog',
                              partial(self.push_display, 'CargoOrderDialog'))
         urwid.connect_signal(self.cargo_order_dialog, 'close_cargo_order_dialog', self.pop_display)
+        urwid.connect_signal(self.port_display, 'open_equip_order_dialog',
+                             partial(self.push_display, 'EquipOrderDialog'))
+        urwid.connect_signal(self.equip_order_dialog, 'close_equip_order_dialog', self.pop_display)
         urwid.connect_signal(self.travel_menu, 'close_travel_menu', self.pop_display)
         urwid.connect_signal(self.game_menu, 'close_game_menu', self.pop_display)
 
