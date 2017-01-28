@@ -34,7 +34,8 @@ class CargoOrderDialog(OrderDialog):
 
         self.hold_box = CheckBox('Hold:', state=True)
         self.warehouse_box = CheckBox('Warehouse:', state=True)
-        super().__init__(pubpen, (self.hold_box, self.warehouse_box))
+        super().__init__(pubpen, 'ui.urwid.cargo_order_info',
+                         (self.hold_box, self.warehouse_box))
 
         urwid.connect_signal(self.hold_box, 'postchange', self.validate_storage_toggle)
         urwid.connect_signal(self.warehouse_box, 'postchange', self.validate_storage_toggle)
@@ -90,12 +91,12 @@ class CargoOrderDialog(OrderDialog):
         #self._sub_ids['warehouse_info'] = self.pubpen.subscribe('warehouse.{}.info', self.handle_warehouse_info)
         #self._sub_ids['warehouse'] = self.pubpen.subscribe('warehouse.{}.cargo.update', self.handle_cargo_update)
 
-    def handle_buy_sell_toggle(self, radio_button, new_state):
+    def handle_buy_sell_toggle(self, radio_button, old_state):
         """Change interface slightly depending on whether we're buying or selling"""
-        super().handle_buy_sell_toggle(radio_button, new_state)
+        super().handle_buy_sell_toggle(radio_button, old_state)
 
         ### FIXME: Implement warehouse
-        if (radio_button is self.buy_button and new_state is True) or (radio_button is self.sell_button and new_state is False):
+        if self.buy_button.state:
             self.hold_box.set_label('Hold: {} Free Space'.format(format_number(self.free_space)))
             #self.warehouse_box.set_label('Warehouse: {}'.format(format_number(self.free_warehouse)))
         else:
@@ -189,30 +190,70 @@ class CargoOrderDialog(OrderDialog):
             self.validate_quantity()
 
 
-class EquipmentOrderDialog(OrderDialog):
+class EquipOrderDialog(OrderDialog):
     """Form to fill out to purchase or sell equipment and property at a market"""
     signals = ['close_equip_order_dialog']
 
     def __init__(self, pubpen):
         self.current_amount = None
+        self.free_space = 0
+        self.free_warehouse = 0
 
         self.current_amount_label = urwid.Text('Current Amount:')
-        super().__init__(pubpen, (self.current_amount_label,))
-        pass
+        super().__init__(pubpen, 'ui.urwid.equip_order_info',
+                         extra_widgets=(self.current_amount_label,))
+
+        self.pubpen.subscribe('ship.info', self.handle_ship_info)
+        self.pubpen.subscribe('ship.cargo.update', self.handle_cargo_update)
 
     @property
     def max_buy_quantity(self):
         """Return the maximum amount of a commodity that may be sold and not be invalid"""
-        ### TODO: Each piece of equipment has different constraints on the maximum.
-        # Lasers depend on the amount of weapon mounts in the ships
-        # cargo and warehouse are unconstrained
-        return super().max_buy_quantity
+        if self.order is None:
+            return 0
+
+        if self.order.commodity.lower() in ('cargo module (100 units)', 'warehouse space (1000 units)'):
+            return super().max_buy_quantity
+
+        if self.order.commodity.lower() == 'laser array':
+            ### TODO: Handle lasers
+            # Lasers depend on the amount of weapon mounts in the ships
+            return 0
+
+        assert False, 'Unknown commodity %s' % self.order.commodity
 
     @property
     def max_sell_quantity(self):
         """Return the maximum amount of a commodity that may be sold and not be invalid"""
-        ### TODO: Each piece of equipment has different constraints on the maximum
-        # Cargo is free_space // 100
-        # warehouse is warehouse_free // 1000
-        # lasers is total number of lasers
-        return 0
+        if self.order is None:
+            return 0
+
+        if self.order.commodity.lower() == 'cargo module (100 units)':
+            return min(super().max_sell_quantity, self.free_space // 100)
+
+        if self.order.commodity.lower() == 'warehouse space (1000 units)':
+            return min(super().max_sell_quantity, self.free_warehouse // 1000)
+
+        if self.order.commodity.lower() == 'laser array':
+            ### TODO: Handle lasers
+            # lasers is total number of lasers on the ship
+            return 0
+
+    #
+    # Handlers for backend signals
+    #
+    def handle_ship_info(self, ship_type, free_space, filled_space, manifest):
+        """Update the hold space """
+        if self.free_space != free_space:
+            self.free_space = free_space
+
+            # Recalculate maximums
+            self.validate_quantity()
+
+    def handle_cargo_update(self, manifest, free_space, *args):
+        """Update the hold space whenever we receive a cargo update event"""
+        if self.free_space != free_space:
+            self.free_space = free_space
+
+            # Recalculate maximums
+            self.validate_quantity()

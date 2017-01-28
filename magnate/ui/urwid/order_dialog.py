@@ -46,11 +46,13 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
     """
     signals = []
 
-    def __init__(self, pubpen, extra_widgets=tuple()):
+    def __init__(self, pubpen, new_order_event, extra_widgets=tuple()):
         """
         Order form for purchasing commodities
 
         :arg pubpen: Pubpen for events
+        :arg new_order_event: The pubpen event name telling us to create a new
+            Order and reset the form.
         :kwarg extra_widgets: Sequence of widgets that display some more
             information about the Order.
         """
@@ -111,7 +113,7 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
         urwid.connect_signal(self.cancel_button, 'click', self.handle_transaction_finalized)
         urwid.connect_signal(self.max_button, 'click', self.handle_max_quantity)
 
-        self.pubpen.subscribe('ui.urwid.order_info', self.create_new_transaction)
+        self.pubpen.subscribe(new_order_event, self.create_new_transaction)
         self.pubpen.subscribe('user.cash.update', self.handle_user_cash_update)
 
     #
@@ -194,12 +196,13 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
                                 'Cannot {} more than {} {} at this time'.format(*msg_args),
                                 severity=MsgType.error)
 
-    def handle_buy_sell_toggle(self, radio_button, new_state):
+    def handle_buy_sell_toggle(self, radio_button, old_state):
         """
         Handle the buy sell toggle being changed
 
         :arg radio_button: The button being changes
-        :arg new_state: Whether the button is selected or unselected
+        :arg old_state: Whether the button was previously selected (Use the
+            current button state to determine the new state.
 
         The base handles making sure that the quantity in the order does not
         exceed the maximum that can be bought and sold.  Implementations may

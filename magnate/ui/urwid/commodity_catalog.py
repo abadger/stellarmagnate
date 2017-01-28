@@ -68,14 +68,14 @@ class CommodityCatalog(urwid.WidgetWrap, metaclass=ABCWidget):
     signals = []
 
     @abstractmethod
-    def __init__(self, pubpen, order_info_signal, primary_title='Commodity',
+    def __init__(self, pubpen, order_info_event, primary_title='Commodity',
                  auxiliary_cols=None, price_col_idx=0,
                  types_traded=frozenset((CommodityType.cargo, CommodityType.property, CommodityType['ship parts']))):
         """
         CommodityCatalogs give the information needed to purchase or sell a commodity
 
-        :arg pubpen: PubPen to use to signal events
-        :arg order_info_signal: The signal to publish when the user is ready
+        :arg pubpen: PubPen to use to send an receive backend events
+        :arg order_info_event: The event to publish when the user is ready
             to fill out an order
         :kwarg primary_title: The title of the primary column.  The primary
             column holds the name of the commodity being sold and UI to tell
@@ -91,7 +91,7 @@ class CommodityCatalog(urwid.WidgetWrap, metaclass=ABCWidget):
             different screens.
         """
         self.pubpen = pubpen
-        self.order_info_signal = order_info_signal
+        self.order_info_event = order_info_event
         self.types_traded = types_traded
         self.location = None
         self.keypress_map = IndexedMenuEnumerator()
@@ -291,7 +291,7 @@ class CommodityCatalog(urwid.WidgetWrap, metaclass=ABCWidget):
         self.commodity.set_focus(self.commodity_col.data_map[commodity])
         self._highlight_focused_line()
 
-        self.pubpen.publish('ui.urwid.order_info', commodity,
+        self.pubpen.publish(self.order_info_event, commodity,
                             self.auxiliary_cols[self.price_col_idx].data_map[commodity],
                             self.location)
         urwid.emit_signal(self, self.signals[1])
@@ -301,7 +301,7 @@ class CommodityCatalog(urwid.WidgetWrap, metaclass=ABCWidget):
         if key in self.keypress_map:
             # Open up the order dialog to buy sell this item
             commodity = self.keypress_map[key]
-            self.pubpen.publish(self.order_info_signal, commodity,
+            self.pubpen.publish(self.order_info_event, commodity,
                                 self.auxiliary_cols[self.price_col_idx].data_map[commodity],
                                 self.location)
             urwid.emit_signal(self, self.signals[1])

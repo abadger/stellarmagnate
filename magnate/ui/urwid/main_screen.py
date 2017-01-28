@@ -23,7 +23,7 @@ from functools import partial
 
 import urwid
 
-from .cargo_order_dialog import CargoOrderDialog, EquipmentOrderDialog as EquipOrderDialog
+from .cargo_order_dialog import CargoOrderDialog, EquipOrderDialog
 from .gamemenu_dialog import GameMenuDialog
 from .info_win import InfoWindow
 from .market_display import MarketDisplay

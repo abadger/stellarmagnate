@@ -36,7 +36,7 @@ class MarketDisplay(CommodityCatalog):
         self.hold_col_idx = 1
         self.warehouse_col_idx = 2
 
-        super().__init__(pubpen, 'ui.urwid.order_info',
+        super().__init__(pubpen, 'ui.urwid.cargo_order_info',
                          primary_title='Commodity', auxiliary_cols=auxiliary_cols,
                          price_col_idx=0, types_traded=frozenset((CommodityType.cargo,)))
 
