@@ -126,7 +126,7 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
         Implementations override this to add additional constraints on how
         much can be bought.
         """
-        if self.user_cash and self.order.price:
+        if self.user_cash and self.order is not None and self.order.price:
             return self.user_cash // self.order.price
         else:
             return 0
@@ -173,8 +173,9 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
                     quantity = revert_amount
                 self.quantity.set_edit_text('{}'.format(quantity))
 
-        total_sale = quantity * self.order.price
-        self.sale_info.set_text('Total Sale: ${}'.format(format_number(total_sale)))
+        if self.order is not None:
+            total_sale = quantity * self.order.price
+            self.sale_info.set_text('Total Sale: ${}'.format(format_number(total_sale)))
         return valid
 
     def handle_quantity_change(self, edit_widget, old_text):
