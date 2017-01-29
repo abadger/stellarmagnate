@@ -74,6 +74,7 @@ class Ship:
 
         self.manifest = {}
         self.filled_hold = 0
+        self._additional_hold = 0
 
         self.location = location
 
@@ -157,6 +158,19 @@ class Ship:
         self.pubpen.publish('ship.cargo.update', amount_left, self.holdspace - self.filled_hold, self.filled_hold)
 
         return transfer
+
+    @property
+    def holdspace(self):
+        """Retrieve the ship's holdspace"""
+        return self.ship_data.holdspace + self.additional_hold
+
+    @holdspace.setter
+    def holdspace(self, value):
+        if value < 0:
+            raise ValueError('Cannot set holdspace to less than 0')
+        if value < self.filled_hold:
+            raise ValueError('Cannot set holdspace to less than amount of available cargo')
+        self.additional_hold = value - self.ship_data.holdspace
 
     @property
     def location(self):

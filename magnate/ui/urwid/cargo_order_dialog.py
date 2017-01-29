@@ -257,3 +257,9 @@ class EquipOrderDialog(OrderDialog):
 
             # Recalculate maximums
             self.validate_quantity()
+
+    def handle_place_order(self, *args):
+        super().handle_place_order(*args)
+
+        self.order.hold_quantity = self.quantity.value()
+        self.pubpen.publish('action.user.order', self.order)

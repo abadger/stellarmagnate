@@ -287,7 +287,7 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
         # Close the dialog
         urwid.emit_signal(self, self.signals[0])
 
-    #@abstractmethod
+    @abstractmethod
     def handle_place_order(self, *args):
         """
         Request to make the transaction

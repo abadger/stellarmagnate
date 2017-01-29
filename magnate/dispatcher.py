@@ -18,6 +18,7 @@ Dispatcher manages the communication between the backend and various user
 interfaces.
 """
 
+from .market import CommodityType
 from .ship import ManifestEntry
 
 class Dispatcher:
@@ -56,53 +57,100 @@ class Dispatcher:
         # Check that the user is in the location
         if order.location != self.user.ship.location.name:
             fatal_error = True
-            self.pubpen.publish('user.order_failure', 'Cannot process an order when the player is not at the location')
+            self.pubpen.publish('user.order_failure',
+                                'Cannot process an order when the player is not at the location')
 
         current_price = self.markets[order.location].commodities[order.commodity].price
-        total_sale = current_price * (order.hold_quantity + order.warehouse_quantity)
+        total_quantity = order.hold_quantity + order.warehouse_quantity
+        total_sale = current_price * total_quantity
 
         if order.buy:
             # Check that the price matches or is better
             if order.price < current_price:
                 fatal_error = True
-                self.pubpen.publish('user.order_failure', 'Current market price is higher than on the order.  Refresh prices and try again')
+                self.pubpen.publish('user.order_failure',
+                                    "Current market price is higher than on the order."
+                                    "  Refresh prices and try again")
 
             # Check that the user has enough cash
             if total_sale > self.user.cash:
                 fatal_error = True
-                self.pubpen.publish("user.order_failure", "Total amount of money for this sale exceeds the user's cash")
+                self.pubpen.publish("user.order_failure",
+                                    "Total amount of money for this sale exceeds the user's cash")
+
+            if fatal_error:
+                return
 
             # Purchase the commodity
-            if not fatal_error:
-                new_cash = self.user.cash - total_sale
+            new_cash = self.user.cash - total_sale
+            if CommodityType.cargo in self.markets[order.location].commodities[order.commodity].type:
+                # Buy cargo
+                new_cargo = ManifestEntry(order.commodity, order.hold_quantity, order.price)
                 try:
-                    self.user.ship.add_cargo(ManifestEntry(order.commodity, order.hold_quantity, order.price))
+                    self.user.ship.add_cargo(new_cargo)
                 except ValueError:
-                    self.pubpen.publish("user.order_failure", "Amount ordered, {}, will not fit into the ship's hold".format(order.hold_quantity))
+                    self.pubpen.publish("user.order_failure",
+                                        "Amount ordered, {}, will not fit into the"
+                                        " ship's hold".format(order.hold_quantity))
                     return
                 ### FIXME: add to the user's warehouse space
                 pass
-                self.user.cash = new_cash
-                self.pubpen.publish('market.{}.purchased'.format(order.location), order.commodity, order.hold_quantity + order.warehouse_quantity)
+            else:
+                # Buy Equipment
+                if order.commodity.lower() == 'cargo module (100 units)':
+                    self.user.ship.holdspace += total_quantity * 100
+                else:
+                    ### TODO: handle warheouse and lasers
+                    pass
+                    self.pubpen.publish("user.order_failure",
+                                        "Backend doesn't yet support buying {}".format(order.commodity))
+                    return
+            self.user.cash = new_cash
+            self.pubpen.publish('market.{}.purchased'.format(order.location),
+                                order.commodity, total_quantity)
         else:
             # Check that the price matches or is better
             if order.price > current_price:
                 fatal_error = True
-                self.pubpen.publish('user.order_failure', 'Current market price is lower than on the order.  Refresh prices and try again')
+                self.pubpen.publish('user.order_failure',
+                                    'Current market price is lower than on the order.'
+                                    ' Refresh prices and try again')
 
-            try:
-                self.user.ship.remove_cargo(order.commodity, order.hold_quantity)
-            except ValueError:
-                fatal_error = True
-                self.pubpen.publish('user.order_failure', 'We do not have {} of {} available to sell'.format(order.hold_quantity, order.commodity))
-            ### FIXME: Check that the user has enough commodity in warehouse
-            pass
+            if fatal_error:
+                return
 
-            # Report that the commodities were sold
-            if not fatal_error:
+            # Sell the commodities
+            if CommodityType.cargo in self.markets[order.location].commodities[order.commodity].type:
+                # Sell cargo
+                try:
+                    self.user.ship.remove_cargo(order.commodity, order.hold_quantity)
+                except ValueError:
+                    self.pubpen.publish('user.order_failure',
+                                        'We do not have {} of {} on the ship to'
+                                        ' sell'.format(order.hold_quantity, order.commodity))
+                    return
                 ### FIXME:  Deduct from the user's warehouse space
-                self.user.cash += total_sale
-                self.pubpen.publish('market.{}.sold'.format(order.location), order.commodity, order.hold_quantity + order.warehouse_quantity)
+                pass
+            else:
+                # Sell Equipment
+                if order.commodity.lower() == 'cargo module (100 units)':
+                    try:
+                        self.user.ship.holdspace -= total_quantity * 100
+                    except ValueError:
+                        fatal_error = True
+                        self.pubpen.publish('user.order_failure',
+                                            'We do not have {} of {} to'
+                                            ' sell'.format(total_quantity, order.commodity))
+                        return
+                else:
+                    ### TODO: handle warehouse and lasers
+                    pass
+                    self.pubpen.publish("user.order_failure",
+                                        "Backend doesn't yet support selling {}".format(order.commodity))
+                    return
+
+            self.user.cash += total_sale
+            self.pubpen.publish('market.{}.sold'.format(order.location), order.commodity, total_quantity)
 
     def handle_movement(self, location):
         """Attempt to move the ship to a new location on user request
