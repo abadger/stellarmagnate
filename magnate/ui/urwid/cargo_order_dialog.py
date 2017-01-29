@@ -229,10 +229,10 @@ class EquipOrderDialog(OrderDialog):
             return 0
 
         if self.order.commodity.lower() == 'cargo module (100 units)':
-            return min(super().max_sell_quantity, self.free_space // 100)
+            return self.free_space // 100
 
         if self.order.commodity.lower() == 'warehouse space (1000 units)':
-            return min(super().max_sell_quantity, self.free_warehouse // 1000)
+            return self.free_warehouse // 1000
 
         if self.order.commodity.lower() == 'laser array':
             ### TODO: Handle lasers

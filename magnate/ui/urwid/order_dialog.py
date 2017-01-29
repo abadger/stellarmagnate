@@ -139,10 +139,10 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
         """
         Maximum amount of a commodity that may be sold and not be invalid
 
-        Implementations override this to add additional constraints on how
-        much can be sold.
+        Implementations must implement this to determine what a valid amount
+        to sell is.
         """
-        return 0
+        pass
 
     def validate_quantity(self, revert_amount=None):
         """
