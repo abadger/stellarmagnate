@@ -145,11 +145,13 @@ equipment:
     holdspace: -100
     event:
     - type: sale
-      low_percentage: 0.5
-      high_percentage: 2
       adjustment: 5000
       msg: >-
         The shipyard offers to sell you a few refurbished cargo modules.
+    - type: shortage
+      adjustment: 5000
+      msg: >-
+        SM Starlines buys up available cargo modules for mysterious trade opportunity
   - name: Laser Array
     id: 1
     type: ship parts
@@ -159,12 +161,14 @@ equipment:
     holdspace: 50
     event:
     - type: sale
-      low_percentage: 0.5
-      high_percentage: 2
       adjustment: 5000
       msg: >-
         A local arms dealer has some shipboard laser arrays he's willing to
         sell for cheap.
+    - type: shortage
+      adjustment: 5000
+      msg: >-
+        Increasing pirate threat has shipping lines snapping up available laser arrays
 property:
   - name: Warehouse space (1000 units)
     id: 0
@@ -174,15 +178,11 @@ property:
     storage_space: 1000
     event:
     - type: sale
-      low_percentage: 0.5
-      high_percentage: 2
       adjustment: 50000
       msg: >-
         The local government is auctioning off cheap warehouse space to
         encourage off-world trade.
     - type: shortage
-      low_percentage: 0.5
-      high_percentage: 2
       adjustment: 50000
       msg: >-
         Builders strike has cut down on the availability of new warehouse space.

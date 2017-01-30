@@ -144,14 +144,6 @@
                                     "type": "string",
                                     "enum": ["sale", "shortage"]
                                 },
-                                "low_percentage": {
-                                    "type": "number",
-                                    "minimum": 0
-                                },
-                                "high_percentage": {
-                                    "type": "number",
-                                    "minimum": 0
-                                },
                                 "adjustment": {
                                     "type": "integer",
                                     "minimum": 0
@@ -205,14 +197,6 @@
                                 "type": {
                                     "type": "string",
                                     "enum": ["sale", "shortage"]
-                                },
-                                "low_percentage": {
-                                    "type": "number",
-                                    "minimum": 0
-                                },
-                                "high_percentage": {
-                                    "type": "number",
-                                    "minimum": 0
                                 },
                                 "adjustment": {
                                     "type": "integer",
