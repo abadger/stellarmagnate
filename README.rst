@@ -52,14 +52,19 @@ The large TODO list includes:
 * Finish the basic functionality which is encompassed in the DESIGN.urwid and
   MECHANICS files
 
-  * Ability to buy/sell bigger ships
   * Ability to buy/sell ship components
   * Banking system
+  * Depreciation: Especially for ship equipment; commodities should get less
+    valuable over time.
+    * Necessary for equipment so that users can't sell initial equipment to
+      make a quick buck in the beginning
+    * For commodities, makes buying and holding slightly riskier than it
+      already is.  Users need to pursue larger profit margins to make it
+      worthwhile.
 
 * Save and load of an in progress game
 * When saving, use the username and password to store the file for
   a particular user
-* Events: market high and low prices
 * Encounters: hostile ships, contraband, etc
 * Advance the game play
 
@@ -69,6 +74,9 @@ The large TODO list includes:
   * Organize ships into fleets and automate fleet orders
   * Write a second, graphical UI.  Try to be different than the urwid UI to
     make sure that the UI concepts aren't leaking into the core engine.
+  * Ability to buy/sell ships and manage fleets.  Instead of purchasing cargo
+    modules, purchase different ships to build up a fleet.  Some ships
+    increase cargo capacity; others increase defense against raiders.
 
 * Some things that make it harder to make money
 
@@ -86,3 +94,8 @@ The large TODO list includes:
     * Outer planets take more time
 
       * Orbit data can be used to make this more interesting as well
+
+* Client/Server
+  * Game itself can be client/server easily but need to have ways in which
+    gameplay is affected.  Do people get to attack each other?  An side trades
+    happen?  Trade wars? Blockades?
