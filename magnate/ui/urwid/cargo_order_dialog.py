@@ -220,6 +220,7 @@ class EquipOrderDialog(OrderDialog):
     def __init__(self, pubpen):
         self.current_amount = None
         self.free_space = 0
+        self.filled_space = 0
         self.free_warehouse = 0
 
         self.current_amount_label = urwid.Text('Current Amount:')
@@ -228,6 +229,7 @@ class EquipOrderDialog(OrderDialog):
 
         self.pubpen.subscribe('ship.info', self.handle_ship_info)
         self.pubpen.subscribe('ship.cargo.update', self.handle_cargo_update)
+        self.pubpen.subscribe('ship.equip.update', self.handle_equip_update)
 
     @property
     def max_buy_quantity(self):
@@ -269,12 +271,22 @@ class EquipOrderDialog(OrderDialog):
         """Update the hold space """
         if self.free_space != free_space:
             self.free_space = free_space
+            self.filled_space = filled_space
 
             # Recalculate maximums
             self.validate_quantity()
 
     def handle_cargo_update(self, manifest, free_space, *args):
         """Update the hold space whenever we receive a cargo update event"""
+        if self.free_space != free_space:
+            self.free_space = free_space
+
+            # Recalculate maximums
+            self.validate_quantity()
+
+    def handle_equip_update(self, holdspace):
+        """Update the hold space whenever we receive a cargo update event"""
+        free_space = holdspace - self.filled_space
         if self.free_space != free_space:
             self.free_space = free_space
 

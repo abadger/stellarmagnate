@@ -47,6 +47,7 @@ class PortDisplay(CommodityCatalog):
         #
         self.pubpen.subscribe('ship.info', self.handle_ship_info)
         self.pubpen.subscribe('ship.cargo.update', self.handle_cargo_update)
+        self.pubpen.subscribe('ship.equip.update', self.handle_equip_update)
 
     #
     # Handle updates to the displayed info
@@ -59,6 +60,11 @@ class PortDisplay(CommodityCatalog):
     def handle_cargo_update(self, cargo, free_space, filled_space): #pylint: disable=unused-argument
         """Update the display with total hold space owned"""
         self.auxiliary_cols[self.owned_col_idx].data_map['Cargo Module (100 units)'] = (free_space + filled_space) // 100
+        self._construct_commodity_list(self.auxiliary_cols[self.owned_col_idx].data_map)
+
+    def handle_equip_update(self, holdspace):
+        """Update the display with total hold space owned"""
+        self.auxiliary_cols[self.owned_col_idx].data_map['Cargo Module (100 units)'] = (holdspace) // 100
         self._construct_commodity_list(self.auxiliary_cols[self.owned_col_idx].data_map)
 
     def handle_new_warehouse_info(self, warehouse_info):
