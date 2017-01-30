@@ -99,6 +99,7 @@ class Dispatcher:
                 # Buy Equipment
                 if order.commodity.lower() == 'cargo module (100 units)':
                     self.user.ship.holdspace += total_quantity * 100
+                    self.pubpen.publish('ship.equip.update', self.user.ship.holdspace)
                 else:
                     ### TODO: handle warheouse and lasers
                     pass
@@ -142,6 +143,7 @@ class Dispatcher:
                                             'We do not have {} of {} to'
                                             ' sell'.format(total_quantity, order.commodity))
                         return
+                    self.pubpen.publish('ship.equip.update', self.user.ship.holdspace)
                 else:
                     ### TODO: handle warehouse and lasers
                     pass

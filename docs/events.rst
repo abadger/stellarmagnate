@@ -76,6 +76,12 @@ Ship events return information about ship objects.
     :arg list destinations: A list of strings showing where the ship can
         travel from here.
 
+.. py:function:: ship.equip.update(holdspace: int)
+
+    Emitted when a ship's equipment changes
+
+    :arg cargo_space: The total cargo space in the ship currently has
+
 .. py:function:: ship.info(ship_type: string, free_space: int, filled_space: int, manifest: dict of ManifestEntry)
 
     Emitted in response to a :py:func:`query.ship.info`.  This contains all
@@ -227,14 +233,6 @@ must have a reference to the widget that emits it.  When dealing with a deep
 hierarchy of widgets it can be painful to pass these references around so the
 Urwid interface makes use of our pubmarine event dispatcher for some things.
 
-.. py:function:: ui.urwid.order_info(commodity: string, price: int)
-
-    Emitted to inform the transaction dialog what commodity and price the user
-    is interested in.
-
-    :arg string commodity: Name of the commodity to buy or sell
-    :arg int price: Price of the commodity
-
 .. py:function:: ui.urwid.message(msg: string, severity=MsgType.info: magnate.ui.urwid.message_win.MsgType)
 
     Emitted to have the message window display a new message.
@@ -243,3 +241,11 @@ Urwid interface makes use of our pubmarine event dispatcher for some things.
     :kwarg severity: Optional value that tells whether the message is merely
         informational or informs the error of some error. The message_win will
         display more severe messages with special highlighting.
+
+.. py:function:: ui.urwid.order_info(commodity: string, price: int)
+
+    Emitted to inform the transaction dialog what commodity and price the user
+    is interested in.
+
+    :arg string commodity: Name of the commodity to buy or sell
+    :arg int price: Price of the commodity

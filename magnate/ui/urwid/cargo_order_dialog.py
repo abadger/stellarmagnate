@@ -28,6 +28,7 @@ class CargoOrderDialog(OrderDialog):
 
     def __init__(self, pubpen):
         self.free_space = 0
+        self.filled_space = 0
         self.commodity_in_hold = 0
         self.free_warehouse = 0
         self.commodity_in_warehouse = 0
@@ -42,6 +43,7 @@ class CargoOrderDialog(OrderDialog):
 
         self.pubpen.subscribe('ship.info', self.handle_ship_info)
         self.pubpen.subscribe('ship.cargo.update', self.handle_cargo_update)
+        self.pubpen.subscribe('ship.equip.update', self.handle_equip_update)
 
     @property
     def max_buy_quantity(self):
@@ -153,6 +155,7 @@ class CargoOrderDialog(OrderDialog):
     def handle_ship_info(self, ship_type, free_space, filled_space, manifest):
         """Update the hold space """
         self.free_space = free_space
+        self.filled_space = filled_space
 
         commodity = ''
         if self.order is not None:
@@ -169,16 +172,36 @@ class CargoOrderDialog(OrderDialog):
         # Recalculate maximums
         self.validate_quantity
 
-    def handle_cargo_update(self, manifest, free_space, *args):
+    def handle_cargo_update(self, manifest, free_space, filled_hold):
         """Update the hold space whenever we receive a cargo update event"""
         if self.free_space != free_space:
             self.free_space = free_space
+            self.filled_space = filled_hold
 
             commodity = ''
             if self.order is not None:
                 commodity = self.order.commodity
                 if manifest.commodity == commodity:
                     self.commodity_in_hold = manifest.quantity
+
+            if self.buy_button.state is True:
+                self.hold_box.set_label('Hold: {} Free Space'.format(format_number(self.free_space)))
+            else:
+                self.hold_box.set_label('Hold: {} {}'.format(format_number(self.commodity_in_hold),
+                                                             commodity))
+
+            # Recalculate maximums
+            self.validate_quantity()
+
+    def handle_equip_update(self, holdspace):
+        """Update the hold space whenever we receive a cargo update event"""
+        free_space = holdspace - self.filled_space
+        if self.free_space != free_space:
+            self.free_space = free_space
+
+            commodity = ''
+            if self.order is not None:
+                commodity = self.order.commodity
 
             if self.buy_button.state is True:
                 self.hold_box.set_label('Hold: {} Free Space'.format(format_number(self.free_space)))
