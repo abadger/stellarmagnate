@@ -122,7 +122,10 @@ class FinancialDisplay(urwid.WidgetWrap):
 
         blank = urwid.Text('This test page intentionally left blank')
         container = urwid.Filler(blank)
-        super().__init__(container)
+        outer_layout = LineBox(container, lline=None, blcorner='─',
+                               tlcorner='─', trcorner='\u252c',
+                               brcorner='\u2524')
+        super().__init__(outer_layout)
         pass
 
 
