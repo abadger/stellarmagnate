@@ -31,7 +31,7 @@ class UserInterface(metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def __init__(self, pubpen):
+    def __init__(self, pubpen, args):
         """Initialize the UserInterface
 
         :arg pubpen: A :class:`pubmarine.PubPen` object for communicating
@@ -40,6 +40,7 @@ class UserInterface(metaclass=ABCMeta):
             interface as well as long as you don't publish on an existing channel.
             The pubpen contains a link to the asyncio event loop that may be
             shared by the UserInterface if it supports it.
+        :arg args: List containing command line args  to be parsed by the ui plugin
         """
         self.pubpen = pubpen
 

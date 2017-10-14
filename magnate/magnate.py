@@ -87,6 +87,9 @@ def _parse_args(args=tuple(sys.argv)):
     parser.add_argument('--version', action='version', version=__version__)
     parser.add_argument('--conf-file', dest='cfg_file', action='store', default=None,
                         help='Alternate location for configuration file')
+    parser.add_argument('--ui-args', dest='ui_args', action='append', default=[],
+                        help='Extra arguments for the user interface plugins. Only needed if the'
+                        ' arguments conflict with stellar magnate arguments.  Specify this for each extra arg')
     parser.add_argument('--use-uvloop', dest='uvloop', action='store_true', default=False,
                         help='Enable use of uvloop instead of the default asyncio event loop.')
     parser.add_argument('--_testing-configuration', dest='test_cfg', action='store_true',
@@ -102,7 +105,13 @@ def _parse_args(args=tuple(sys.argv)):
                         help='Specify a user interface plugin to use.'
                              ' Valid plugin names: {}'.format(', '.join(ui_plugin_names)))
 
-    return parser.parse_args(args[1:])
+    args, remainder = parser.parse_known_args(args[1:])
+
+    # Extra arguments for the ui plugins
+    remainder.extend(args.ui_args)
+    args.ui_args = remainder
+
+    return args
 
 
 class Magnate:
@@ -126,7 +135,9 @@ class Magnate:
             self.cfg['use_uvloop'] = True
 
         if args.ui_plugin:
-            self.cfg = args.ui_plugin
+            self.cfg['ui_plugin'] = args.ui_plugin
+
+        self.cfg['ui_args'] = args.ui_args
 
         #
         # Attributes
@@ -278,6 +289,6 @@ class Magnate:
 
         # UIClass is always available because we'd have already returned (via
         # the for-else) if UIClass was not defined
-        user_interface = UIClass(self.pubpen) #pylint: disable=undefined-loop-variable
+        user_interface = UIClass(self.pubpen, self.cfg['ui_args']) #pylint: disable=undefined-loop-variable
 
         return user_interface.run()

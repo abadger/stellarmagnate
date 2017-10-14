@@ -29,8 +29,10 @@ class Interface(UserInterface):
 
     Creates the main widgets and takes care of switching between them.
     """
-    def __init__(self, pubpen):
-        super().__init__(pubpen)
+    def __init__(self, pubpen, cli_args):
+        super().__init__(pubpen, cli_args)
+
+        # Note: We don't have any extra command line args
 
         # Windows
 
