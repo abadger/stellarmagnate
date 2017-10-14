@@ -87,6 +87,8 @@ def _parse_args(args=tuple(sys.argv)):
     parser.add_argument('--version', action='version', version=__version__)
     parser.add_argument('--conf-file', dest='cfg_file', action='store', default=None,
                         help='Alternate location for configuration file')
+    parser.add_argument('--use-uvloop', dest='uvloop', action='store_true', default=False,
+                        help='Enable use of uvloop instead of the default asyncio event loop.')
     parser.add_argument('--_testing-configuration', dest='test_cfg', action='store_true',
                         help='Overrides data file locations for running from a source checkout.'
                              ' For development only')
@@ -120,6 +122,9 @@ class Magnate:
         self.cfg = read_config(conf_args, testing=args.test_cfg)
 
         # Override config options with command line options
+        if args.uvloop:
+            self.cfg['use_uvloop'] = True
+
         if args.ui_plugin:
             self.cfg = args.ui_plugin
 
@@ -254,6 +259,17 @@ class Magnate:
         else:
             print('Unknown user ui: {}'.format(self.cfg['ui_plugin']))
             return 1
+
+        # Try using uvloop instead of the asyncio event loop
+        if self.cfg['use_uvloop']:
+            try:
+                import uvloop
+            except:
+                print('Could not import uvloop.  Falling back on asyncio event loop')
+            try:
+                asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+            except:
+                print('Could not set uvloop to be the event loop.  Falling back on asyncio event loop')
 
         loop = asyncio.get_event_loop()
         self.pubpen = PubPen(loop)

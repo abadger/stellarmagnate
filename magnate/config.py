@@ -43,6 +43,9 @@ save_dir = ~/.stellarmagnate/saves
 
 # name of the User Interface plugin to use
 ui_plugin = urwid
+
+# name of the User Interface plugin to use
+use_uvloop = False
 """.format(data_dir='/usr/share/stellarmagnate',).split('\n')
 
 TESTING_CONFIG = """
@@ -55,6 +58,7 @@ base_data_dir = string(min=1)
 schema_dir = string(min=1)
 save_dir = string(min=1)
 ui_plugin = string(min=1, max=128)
+use_uvloop = boolean()
 """.split('\n')
 
 

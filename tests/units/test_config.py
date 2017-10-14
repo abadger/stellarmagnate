@@ -44,7 +44,7 @@ class Test_FindConfig:
 
 
 class Test_ReadConfig:
-    cfg_keys = frozenset(('base_data_dir', 'schema_dir', 'save_dir', 'ui_plugin'))
+    cfg_keys = frozenset(('base_data_dir', 'schema_dir', 'save_dir', 'ui_plugin', 'use_uvloop'))
 
     ui_and_schema = """
     # This is a sample config file
