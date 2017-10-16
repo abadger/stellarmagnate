@@ -31,5 +31,5 @@ Travel by Brian Winn.
         ],
         packages=['magnate', 'magnate.ui'],
         scripts=['bin/magnate'],
-        install_requires=['ConfigObj', 'PyYaml', 'attrs', 'jsonschema', 'kitchen', 'pubmarine >= 0.3', 'straight.plugin', 'urwid'],
+        install_requires=['PyYaml', 'attrs', 'jsonschema', 'kitchen', 'pubmarine >= 0.3', 'straight.plugin', 'twiggy', 'urwid', 'voluptuous'],
     )

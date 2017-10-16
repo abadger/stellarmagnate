@@ -44,44 +44,44 @@ class Test_FindConfig:
 
 
 class Test_ReadConfig:
-    cfg_keys = frozenset(('base_data_dir', 'schema_dir', 'save_dir', 'ui_plugin', 'use_uvloop'))
+    cfg_keys = frozenset(('base_data_dir', 'logging', 'schema_dir', 'state_dir', 'ui_plugin', 'use_uvloop'))
 
     ui_and_schema = """
     # This is a sample config file
     # that sets ui_plugin and schema directory
-    ui_plugin = the_bestest_widget_set
-    schema_dir = /dev/zero
+    ui_plugin: the_bestest_widget_set
+    schema_dir: /dev/zero
     """
 
     ui_and_schema_cfg = """
     # This is a sample config file
     # that sets ui_plugin and schema directory
-    ui_plugin = the_bestest_widget_set
-    schema_dir = /dev/zero
+    ui_plugin: the_bestest_widget_set
+    schema_dir: /dev/zero
     """
 
     all_cfg = """
     # This is a sample config file
     # that sets ui_plugin and schema directory
-    ui_plugin = the_bestest_widget_set
-    schema_dir = /dev/zero
-    save_dir = /tmp
-    base_data_dir = /tmp
+    ui_plugin: the_bestest_widget_set
+    schema_dir: /dev/zero
+    state_dir: /tmp
+    base_data_dir: /tmp
     """
 
     extra_cfg = """
     # This is a sample config file
     # that sets ui_plugin and schema directory
-    ui_plugin = the_bestest_widget_set
-    schema_dir = /dev/zero
-    schwartzchilde = limit
+    ui_plugin: the_bestest_widget_set
+    schema_dir: /dev/zero
+    schwartzchilde: limit
     """
 
     bad_cfg = """
-    ui_plugin = Make an ultra long string that does not satisfy the needs of the validator for the ui plugin.  Eventually could write a validator that handles other things besides length but.... not yet.
+    ui_plugin: Make an ultra long string that does not satisfy the needs of the validator for the ui plugin.  Eventually could write a validator that handles other things besides length but.... not yet.
     """
 
-    not_ini_cfg = """
+    not_yaml_cfg = """
     ][
     strussel
     5
@@ -94,20 +94,21 @@ class Test_ReadConfig:
         assert self.cfg_keys.symmetric_difference(cfg.keys()) == frozenset()
         assert cfg['base_data_dir'] == '/usr/share/stellarmagnate/base'
         assert cfg['schema_dir'] == '/usr/share/stellarmagnate/schemas'
-        assert cfg['save_dir'] == '~/.stellarmagnate/saves'
+        assert cfg['state_dir'] == os.path.expanduser('~/.stellarmagnate')
         assert cfg['ui_plugin'] == 'urwid'
+        assert cfg['use_uvloop'] is False
 
     def test_paths_given_some_default_override(self, mocker):
         m = mocker.mock_open(read_data=self.ui_and_schema_cfg)
         mocker.patch('builtins.open', m)
         mocker.patch('os.path.isfile', autospec=True, side_effect=lambda path: True)
         cfg = c._read_config(('/fake/path/sm-ui-and-schema.cfg',))
-        cfg_keys = frozenset(('base_data_dir', 'schema_dir', 'save_dir', 'ui_plugin'))
+        cfg_keys = frozenset(('base_data_dir', 'schema_dir', 'state_dir', 'ui_plugin'))
 
         assert self.cfg_keys.symmetric_difference(cfg.keys()) == frozenset()
         assert cfg['base_data_dir'] == '/usr/share/stellarmagnate/base'
         assert cfg['schema_dir'] == '/dev/zero'
-        assert cfg['save_dir'] == '~/.stellarmagnate/saves'
+        assert cfg['state_dir'] == os.path.expanduser('~/.stellarmagnate')
         assert cfg['ui_plugin'] == 'the_bestest_widget_set'
 
     def test_paths_given_all_default_override(self, mocker):
@@ -119,17 +120,17 @@ class Test_ReadConfig:
         assert self.cfg_keys.symmetric_difference(cfg.keys()) == frozenset()
         assert cfg['base_data_dir'] == '/tmp'
         assert cfg['schema_dir'] == '/dev/zero'
-        assert cfg['save_dir'] == '/tmp'
+        assert cfg['state_dir'] == '/tmp'
         assert cfg['ui_plugin'] == 'the_bestest_widget_set'
 
     def test_invalid_config(self, mocker):
-        m = mocker.mock_open(read_data=self.not_ini_cfg)
+        m = mocker.mock_open(read_data=self.not_yaml_cfg)
         mocker.patch('builtins.open', m)
         mocker.patch('os.path.isfile', autospec=True, side_effect=lambda path: True)
 
         with pytest.raises(errors.MagnateConfigError) as e:
-            cfg = c._read_config(('/fake/path/sm-not-ini.cfg',))
-        assert '/fake/path/sm-not-ini.cfg' in e.value.args[0]
+            cfg = c._read_config(('/fake/path/sm-not-yaml.cfg',))
+        assert '/fake/path/sm-not-yaml.cfg' in e.value.args[0]
 
     def test_extra_config(self, mocker):
         m = mocker.mock_open(read_data=self.extra_cfg)
@@ -150,16 +151,16 @@ class Test_ReadConfig:
             cfg = c._read_config(('/fake/path/sm-bad.cfg',))
         assert '/fake/path/sm-bad.cfg' in e.value.args[0]
         assert 'ui_plugin' in e.value.args[0]
-        assert 'VdtValueTooLongError' in e.value.args[0]
+        assert 'value must be at most 128' in e.value.args[0]
 
     def test_pure_testing(self):
         cfg = c._read_config(tuple(), testing=True)
-        cfg_keys = frozenset(('base_data_dir', 'schema_dir', 'save_dir', 'ui_plugin'))
+        cfg_keys = frozenset(('base_data_dir', 'schema_dir', 'state_dir', 'ui_plugin'))
 
         assert self.cfg_keys.symmetric_difference(cfg.keys()) == frozenset()
         assert cfg['base_data_dir'] == os.path.normpath(os.path.join(os.path.dirname(__file__), '../../', 'data'))
         assert cfg['schema_dir'] == os.path.normpath(os.path.join(os.path.dirname(__file__), '../../', 'data'))
-        assert cfg['save_dir'] == '~/.stellarmagnate/saves'
+        assert cfg['state_dir'] == os.path.expanduser('~/.stellarmagnate')
         assert cfg['ui_plugin'] == 'urwid'
 
     def test_paths_and_testing(self, mocker):
@@ -171,7 +172,7 @@ class Test_ReadConfig:
         assert self.cfg_keys.symmetric_difference(cfg.keys()) == frozenset()
         assert cfg['base_data_dir'] == os.path.normpath(os.path.join(os.path.dirname(__file__), '../../', 'data'))
         assert cfg['schema_dir'] == os.path.normpath(os.path.join(os.path.dirname(__file__), '../../', 'data'))
-        assert cfg['save_dir'] == '~/.stellarmagnate/saves'
+        assert cfg['state_dir'] == os.path.expanduser('~/.stellarmagnate')
         assert cfg['ui_plugin'] == 'the_bestest_widget_set'
         pass
 
@@ -197,4 +198,4 @@ class TestWriteDefaultConfig:
         conf_file = tmpdir.join('sm.cfg')
         c.write_default_config(str(conf_file))
 
-        assert c.DEFAULT_CONFIG == open(str(conf_file)).read().split('\n')
+        assert c.DEFAULT_CONFIG == open(str(conf_file)).read()

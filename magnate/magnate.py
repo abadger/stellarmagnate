@@ -21,10 +21,12 @@ import argparse
 import asyncio
 import json
 import os
+import os.path
 import sys
 from collections import OrderedDict
 
 import jsonschema
+import twiggy
 from pubmarine import PubPen
 from straight.plugin import load
 
@@ -33,6 +35,7 @@ try:
 except ImportError:
     from yaml import Loader
 
+from . import twiggy_addon
 from .config import read_config
 from .dispatcher import Dispatcher
 from .market import CommodityData, LocationData, SystemData
@@ -121,6 +124,9 @@ class Magnate:
     This handles initializing and setting up the game client.
     """
     def __init__(self):
+        # Temporarily setup twiggy logging with defaults until we can get real configuration
+        twiggy.quick_setup()
+
         # Parse command line arguments
         args = _parse_args(sys.argv)
 
@@ -263,6 +269,12 @@ class Magnate:
         """
         Run the program.  This is the main entrypoint to the magnate client
         """
+        # Create the statedir if it doesn't exist
+        if not os.path.exists(self.cfg['state_dir']):
+            os.makedirs(self.cfg['state_dir'])
+
+        twiggy_addon.dict_config(self.cfg['logging'])
+
         ui_plugins = load('magnate.ui', subclasses=UserInterface)
         for UIClass in ui_plugins:  #pylint: disable=invalid-name
             if UIClass.__module__.startswith('magnate.ui.{}'.format(self.cfg['ui_plugin'])):

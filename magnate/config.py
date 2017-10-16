@@ -1,5 +1,5 @@
 # Stellar Magnate - A space-themed commodity trading game
-# Copyright (C) 2016, Toshio Kuratomi <toshio@fedoraproject.org>
+# Copyright (C) 2016-2017, Toshio Kuratomi <toshio@fedoraproject.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -19,47 +19,86 @@ Functions to read configuration files
 
 import itertools
 import os.path
+from collections.abc import MutableMapping
 
-from configobj import ConfigObj, ConfigObjError, get_extra_values
+import yaml
 from kitchen.iterutils import iterate
-import validate
+from twiggy import log
+from voluptuous import All, Length, Schema, MultipleInvalid
 
 from .errors import MagnateConfigError
+from .twiggy_addon import TWIGGY_CONFIG_SCHEMA
 
+
+STATE_DIR = os.path.expanduser('~/.stellarmagnate')
+USER_DIR = os.path.expanduser('~/.stellarmagnate')
 
 SYSTEM_CONFIG_FILE = '/etc/stellarmagnate/magnate.cfg'
-USER_CONFIG_FILE = os.path.expanduser('~/.stellarmagnate/magnate.cfg')
+USER_CONFIG_FILE = os.path.join(STATE_DIR, 'magnate.cfg')
+
+LOG_FILE = os.path.join(STATE_DIR, 'magnate.log')
+
 
 DEFAULT_CONFIG = """
 # Directory in which the base data lives.  Commodity names and price ranges,
 # Ship types, Locations, and such.
-base_data_dir = {data_dir}/base
+base_data_dir: {data_dir}/base
 
 # Directory with schema that explains the structure of the data files
-schema_dir = {data_dir}/schemas
+schema_dir: {data_dir}/schemas
 
-# Directory to save games in
-save_dir = ~/.stellarmagnate/saves
+# Game state dir
+# Saves, logs, and other data that changes during operation are saved as subdirs of this
+state_dir: {state_dir}
 
-# name of the User Interface plugin to use
-ui_plugin = urwid
+# Name of the User Interface plugin to use
+ui_plugin: urwid
 
-# name of the User Interface plugin to use
-use_uvloop = False
-""".format(data_dir='/usr/share/stellarmagnate',).split('\n')
+# Whether to use uvloop instead of the stdlib asyncio event loop
+use_uvloop: False
+
+# Configuration of logging output
+logging:
+  version: "1.0"
+  outputs:
+    logfile:
+      output: twiggy.outputs.FileOutput
+      args:
+        - {log_file}
+  emitters:
+    all:
+      level: WARNING
+      output_name: logfile
+      filters:
+""".format(data_dir='/usr/share/stellarmagnate', log_file=LOG_FILE, state_dir=STATE_DIR)
 
 TESTING_CONFIG = """
-base_data_dir = {0}
-schema_dir = {0}
-""".format(os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'data'))).split('\n')
+base_data_dir: {base_dir}
+schema_dir: {base_dir}
+logging:
+  version: "1.0"
+  outputs:
+    logfile:
+      output: twiggy.outputs.FileOutput
+      args:
+        - {log_file}
+  emitters:
+    all:
+      level: DEBUG
+      output_name: logfile
+      filters:
+""".format(base_dir=os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'data')),
+           log_file=LOG_FILE)
 
-CONFIG_SPEC = """
-base_data_dir = string(min=1)
-schema_dir = string(min=1)
-save_dir = string(min=1)
-ui_plugin = string(min=1, max=128)
-use_uvloop = boolean()
-""".split('\n')
+CONFIG_SCHEMA = Schema({
+    'base_data_dir': All(str, Length(min=1)),
+    'schema_dir': All(str, Length(min=1)),
+    'state_dir': All(str, Length(min=1)),
+    'save_dir': All(str, Length(min=1)),
+    'ui_plugin': All(str, Length(min=1, max=128)),
+    'use_uvloop': bool,
+    'logging': TWIGGY_CONFIG_SCHEMA,
+    }, required=False)
 
 
 def _find_config(conf_files=tuple()):
@@ -81,6 +120,35 @@ def _find_config(conf_files=tuple()):
     return config_files
 
 
+def _merge_mapping(merge_to, merge_from, inplace=False):
+    """
+    As opposed to dict.update, this will recurse through a dictionary's values merging new keys with old ones
+
+    This is an in-place merge.
+
+    :arg merge_to: dictionary to merge into
+    :arg merge_from: dictionary to merge from
+    :kwarg inplace: If True, merge_to will be modified directly.  If False, a copy of merge_to will
+        be modified.
+    :returns: the combined dictionary.  If inplace is True, then this is the same as merge_to after
+        calling this function
+    """
+    if inplace:
+        dest = merge_to
+    else:
+        dest = merge_to.copy()
+
+    for key, val in list(merge_from.items()):
+        if key in dest and isinstance(dest[key], MutableMapping) and \
+                isinstance(val, MutableMapping):
+            # Dict value so merge the value
+            _merge_mapping(dest[key], val)
+        else:
+            dest[key] = val
+
+    return dest
+
+
 def _read_config(paths, testing=False):
     """
     Read the config files listed in path and merge them into a dictionary.
@@ -92,38 +160,27 @@ def _read_config(paths, testing=False):
     :rtype: ConfigObj, a dict-like object with helper methods for use as a config store
     :returns: Return the configuration dict
     """
-    validator = validate.Validator()
-    cfg = ConfigObj(DEFAULT_CONFIG, configspec=CONFIG_SPEC)
-
-    validation_results = cfg.validate(validator, preserve_errors=True)
-    # Since we create the DEFAULT_CONFIG, validation hsould always pass
-    assert validation_results is True, "Programmer error: DEFAULT_CONFIG is not valid"
-    unknown_cfg = get_extra_values(cfg)
-    assert not unknown_cfg, "Programmer error: DEFAULT_CONFIG has unknown keys"
+    cfg = yaml.safe_load(DEFAULT_CONFIG)
+    CONFIG_SCHEMA(cfg)
 
     for cfg_file in paths:
         try:
-            new_cfg = ConfigObj(cfg_file, configspec=CONFIG_SPEC)
-        except ConfigObjError as e:
+            with open(cfg_file, 'rb') as f:
+                new_cfg = yaml.safe_load(f)
+        except yaml.MarkedYAMLError as e:
             raise MagnateConfigError('Config error parsing {}:\n{}'.format(cfg_file, e))
-        cfg.merge(new_cfg)
 
-        validation_results = cfg.validate(validator, preserve_errors=True)
-        if validation_results is not True:
-            raise MagnateConfigError('Config error in {}:\n{}'.format(cfg_file, validation_results))
+        _merge_mapping(cfg, new_cfg, inplace=True)
 
-        unknown_cfg = get_extra_values(cfg)
-        if unknown_cfg:
-            raise MagnateConfigError('Config error, unknown keys in {}:\n{}'.format(cfg_file, unknown_cfg))
+        try:
+            CONFIG_SCHEMA(cfg)
+        except MultipleInvalid as e:
+            raise MagnateConfigError('Config error in {}:\n{}'.format(cfg_file, e))
 
     if testing:
-        testing_cfg = ConfigObj(TESTING_CONFIG, configspec=CONFIG_SPEC)
-        cfg.merge(testing_cfg)
-
-        validation_results = cfg.validate(validator, preserve_errors=True)
-        assert validation_results is True, "Programmer error: TESTING_CONFIG is not valid"
-        unknown_cfg = get_extra_values(cfg)
-        assert not unknown_cfg, "Programmer error: TESTING_CONFIG has unknown keys"
+        testing_cfg = yaml.safe_load(TESTING_CONFIG)
+        _merge_mapping(cfg, testing_cfg, inplace=True)
+        CONFIG_SCHEMA(cfg)
 
     return cfg
 
@@ -143,12 +200,12 @@ def read_config(conf_files=tuple(), testing=False):
     cfg_paths = _find_config(conf_files)
     return _read_config(cfg_paths, testing)
 
+
 def write_default_config(filename):
     """
     Write out a default config file appropriate for a user to customize.
 
     :arg filename: The file path to write the config to.
     """
-    cfg = ConfigObj(DEFAULT_CONFIG, configspec=CONFIG_SPEC)
-    cfg.filename = filename
-    cfg.write()
+    with open(filename, 'w') as f:
+        f.write(DEFAULT_CONFIG)
