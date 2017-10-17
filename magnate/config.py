@@ -142,7 +142,7 @@ def _merge_mapping(merge_to, merge_from, inplace=False):
         if key in dest and isinstance(dest[key], MutableMapping) and \
                 isinstance(val, MutableMapping):
             # Dict value so merge the value
-            _merge_mapping(dest[key], val)
+            dest[key] = _merge_mapping(dest[key], val, inplace=inplace)
         else:
             dest[key] = val
 
