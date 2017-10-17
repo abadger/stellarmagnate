@@ -29,6 +29,7 @@ import jsonschema
 import twiggy
 from pubmarine import PubPen
 from straight.plugin import load
+from twiggy import log
 
 try:
     from yaml import CLoader as Loader
@@ -301,6 +302,9 @@ class Magnate:
 
         # UIClass is always available because we'd have already returned (via
         # the for-else) if UIClass was not defined
-        user_interface = UIClass(self.pubpen, self.cfg['ui_args']) #pylint: disable=undefined-loop-variable
-
-        return user_interface.run()
+        try:
+            user_interface = UIClass(self.pubpen, self.cfg['ui_args']) #pylint: disable=undefined-loop-variable
+            return user_interface.run()
+        except Exception as e:
+            log.trace('error').error('Exception raised while running the user interface')
+            raise
