@@ -27,7 +27,6 @@ from twiggy import log
 from voluptuous import All, Length, Schema, MultipleInvalid
 
 from .errors import MagnateConfigError
-from .twiggy_addon import TWIGGY_CONFIG_SCHEMA
 
 
 STATE_DIR = os.path.expanduser('~/.stellarmagnate')
@@ -57,7 +56,7 @@ ui_plugin: urwid
 # Whether to use uvloop instead of the stdlib asyncio event loop
 use_uvloop: False
 
-# Configuration of logging output
+# Configuration of logging output.  This is given directly to twiggy.dict_cnfig()
 logging:
   version: "1.0"
   outputs:
@@ -69,7 +68,7 @@ logging:
     all:
       level: WARNING
       output_name: logfile
-      filters:
+      filters: []
 """.format(data_dir='/usr/share/stellarmagnate', log_file=LOG_FILE, state_dir=STATE_DIR)
 
 TESTING_CONFIG = """
@@ -86,7 +85,6 @@ logging:
     all:
       level: DEBUG
       output_name: logfile
-      filters:
 """.format(base_dir=os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'data')),
            log_file=LOG_FILE)
 
@@ -97,7 +95,8 @@ CONFIG_SCHEMA = Schema({
     'save_dir': All(str, Length(min=1)),
     'ui_plugin': All(str, Length(min=1, max=128)),
     'use_uvloop': bool,
-    'logging': TWIGGY_CONFIG_SCHEMA,
+    # The logging param is passed directly to twiggy.dict_config() which does its own validation
+    'logging': dict,
     }, required=False)
 
 
