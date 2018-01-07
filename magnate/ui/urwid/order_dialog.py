@@ -23,7 +23,7 @@ from ...order import Order
 from .abcwidget import ABCWidget
 from .message_win import MsgType
 from .numbers import format_number
-from .urwid_fixes import LineBox, IntEdit, RadioButton
+
 
 class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
     """Dialog box to buy or sell a commodity"""
@@ -67,13 +67,13 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
         self.sale_info = urwid.Text('Total Sale: $0')
 
         transaction_type_group = []
-        self.buy_button = RadioButton(transaction_type_group, 'Buy')
-        self.sell_button = RadioButton(transaction_type_group, 'Sell')
+        self.buy_button = urwid.RadioButton(transaction_type_group, 'Buy')
+        self.sell_button = urwid.RadioButton(transaction_type_group, 'Sell')
         self.buysell_widget = urwid.Columns([(len('buy') + 5, self.buy_button), (len('Sell') + 5, self.sell_button)])
 
         quantity_label = urwid.Text(' Quantity: ')
         self.max_button = urwid.Button('MAX')
-        self.quantity = IntEdit()
+        self.quantity = urwid.IntEdit()
         quantity_widget = urwid.Columns([(len('MAX') + 4, self.max_button),
                                          (len(' Quantity: '), quantity_label),
                                          self.quantity])
@@ -102,7 +102,7 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
         filler = urwid.Filler(padding, valign='middle',
                               height=len(self.layout_list) + 2)
 
-        outer_layout = LineBox(filler, lline=None, tlcorner='─',
+        outer_layout = urwid.LineBox(filler, lline=None, tlcorner='─',
                                blcorner='─', trcorner='\u252c',
                                brcorner='\u2524')
         super().__init__(outer_layout)

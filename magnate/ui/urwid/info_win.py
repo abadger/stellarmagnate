@@ -20,7 +20,6 @@ The Info Window displays important stastics about hte player and player's ship.
 import urwid
 
 from .numbers import format_number
-from .urwid_fixes import LineBox
 
 
 class InfoWindow(urwid.WidgetWrap):
@@ -65,7 +64,7 @@ class InfoWindow(urwid.WidgetWrap):
                                             header8, self.bank_widget,
                                             header9, self.loan_widget])
         info = urwid.ListBox(info_list)
-        box = LineBox(info, tlcorner='─', trcorner='─', lline=' ', rline=None, bline=None)
+        box = urwid.LineBox(info, tlcorner='─', trcorner='─', lline=' ', rline=None, bline=None)
         super().__init__(box)
 
         # Primary triggers: These are events that tell us we need to refresh

@@ -31,7 +31,6 @@ from .menu_bar_win import MenuBarWindow
 from .message_win import MessageWindow
 from .port_display import PortDisplay
 from .travel_display import TravelDisplay
-from .urwid_fixes import LineBox
 
 # ui elements:
 # [x] Travel Menu
@@ -122,7 +121,7 @@ class FinancialDisplay(urwid.WidgetWrap):
 
         blank = urwid.Text('This test page intentionally left blank')
         container = urwid.Filler(blank)
-        outer_layout = LineBox(container, lline=None, blcorner='─',
+        outer_layout = urwid.LineBox(container, lline=None, blcorner='─',
                                tlcorner='─', trcorner='\u252c',
                                brcorner='\u2524')
         super().__init__(outer_layout)
@@ -140,7 +139,7 @@ class MainWindow(urwid.WidgetWrap):
     def __init__(self, pubpen):
         self.pubpen = pubpen
         self.display_stack = []
-        self.blank = LineBox(urwid.SolidFill(' '), lline=None,
+        self.blank = urwid.LineBox(urwid.SolidFill(' '), lline=None,
                              blcorner='─', tlcorner='─',
                              trcorner='\u252c', brcorner='\u2524')
         self.background = urwid.WidgetPlaceholder(self.blank)

@@ -21,7 +21,6 @@ from functools import partial
 import urwid
 
 from .indexed_menu import IndexedMenuEnumerator, IndexedMenuButton
-from .urwid_fixes import LineBox
 
 
 class TravelDisplay(urwid.WidgetWrap):
@@ -36,7 +35,7 @@ class TravelDisplay(urwid.WidgetWrap):
 
         self.listwalker = urwid.SimpleFocusListWalker([])
         box = urwid.ListBox(self.listwalker)
-        outer_layout = LineBox(box, lline=None, blcorner='─',
+        outer_layout = urwid.LineBox(box, lline=None, blcorner='─',
                                tlcorner='─', trcorner='\u252c',
                                brcorner='\u2524')
         super().__init__(outer_layout)

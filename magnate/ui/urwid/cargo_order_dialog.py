@@ -20,7 +20,7 @@ import urwid
 from .message_win import MsgType
 from .numbers import format_number
 from .order_dialog import OrderDialog
-from .urwid_fixes import CheckBox
+
 
 class CargoOrderDialog(OrderDialog):
     """Form to fill out to purchase or sell cargo at a market"""
@@ -33,8 +33,8 @@ class CargoOrderDialog(OrderDialog):
         self.free_warehouse = 0
         self.commodity_in_warehouse = 0
 
-        self.hold_box = CheckBox('Hold:', state=True)
-        self.warehouse_box = CheckBox('Warehouse:', state=True)
+        self.hold_box = urwid.CheckBox('Hold:', state=True)
+        self.warehouse_box =  urwid.CheckBox('Warehouse:', state=True)
         super().__init__(pubpen, 'ui.urwid.cargo_order_info',
                          (self.hold_box, self.warehouse_box))
 
