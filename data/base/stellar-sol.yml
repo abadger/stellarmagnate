@@ -1,0 +1,37 @@
+---
+# The Solar System
+version: "0.1"
+system:
+  - name: Sol
+    location:
+      - name: Solar Observation Station
+        location_type: orbital
+        celestial_type: star
+      - name: Mercury
+        location_type: dome
+        celestial_type: planet
+      - name: Venus
+        location_type: dome
+        celestial_type: planet
+      - name: Earth
+        locaion_type: surface
+        celestial_type: planet
+      - name: Luna
+        locaion_type: dome
+        celestial_type: planet
+      - name: Earth
+        locaion_type: dome
+        celestial_type: planet
+      - name: Earth
+        locaion_type: dome
+        celestial_type: planet
+      - name: Earth
+        locaion_type: dome
+        celestial_type: planet
+      - name: Earth
+        locaion_type: dome
+        celestial_type: planet
+      - name: Earth
+        locaion_type: dome
+        celestial_type: planet
+

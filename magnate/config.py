@@ -39,12 +39,11 @@ LOG_FILE = os.path.join(STATE_DIR, 'magnate.log')
 
 
 DEFAULT_CONFIG = """
-# Directory in which the base data lives.  Commodity names and price ranges,
-# Ship types, Locations, and such.
-base_data_dir: {data_dir}/base
-
-# Directory with schema that explains the structure of the data files
-schema_dir: {data_dir}/schemas
+# Directory in which the game data lives.  The data is further divided into subdirectories herein:
+# base/   Commodity names and price ranges, ship types, locations, and such.
+# schema/ schema for the data files in base *deprecated*, moving to voluptuous
+# assets/ Images and other binary files
+data_dir: {data_dir}/base
 
 # Game state dir
 # Saves, logs, and other data that changes during operation are saved as subdirs of this
@@ -72,8 +71,7 @@ logging:
 """.format(data_dir='/usr/share/stellarmagnate', log_file=LOG_FILE, state_dir=STATE_DIR)
 
 TESTING_CONFIG = """
-base_data_dir: {base_dir}
-schema_dir: {base_dir}
+data_dir: {base_dir}
 logging:
   version: "1.0"
   outputs:
@@ -89,10 +87,8 @@ logging:
            log_file=LOG_FILE)
 
 CONFIG_SCHEMA = Schema({
-    'base_data_dir': All(str, Length(min=1)),
-    'schema_dir': All(str, Length(min=1)),
+    'data_dir': All(str, Length(min=1)),
     'state_dir': All(str, Length(min=1)),
-    'save_dir': All(str, Length(min=1)),
     'ui_plugin': All(str, Length(min=1, max=128)),
     'use_uvloop': bool,
     # The logging param is passed directly to twiggy.dict_config() which does its own validation
@@ -137,7 +133,7 @@ def _merge_mapping(merge_to, merge_from, inplace=False):
     else:
         dest = merge_to.copy()
 
-    for key, val in list(merge_from.items()):
+    for key, val in merge_from.items():
         if key in dest and isinstance(dest[key], MutableMapping) and \
                 isinstance(val, MutableMapping):
             # Dict value so merge the value

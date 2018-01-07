@@ -166,8 +166,8 @@ class Magnate:
         :arg file yaml_file: Open file object to read the yaml from
         :returns: An array of Markets that the user can travel to.
         """
-        data_file = os.path.join(self.cfg['base_data_dir'], 'stellar.yml')
-        schema_file = os.path.join(self.cfg['schema_dir'], 'stellar-schema.json')
+        data_file = os.path.join(self.cfg['data_dir'], 'base', 'stellar.yml')
+        schema_file = os.path.join(self.cfg['data_dir'], 'schema', 'stellar-schema.json')
 
         loader = Loader(open(data_file).read())
         data = loader.get_single_data()

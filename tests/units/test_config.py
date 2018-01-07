@@ -1,9 +1,38 @@
 import os.path
+from collections.abc import MutableMapping
 
 import pytest
+import twiggy
 
 from magnate import config as c
 from magnate import errors
+
+
+class Test_MergeMapping:
+    data_set = (
+            # Disjoint keys
+            ({'test': 'disjoint'}, {'sets': 'have both'}, {'test': 'disjoint', 'sets': 'have both'}),
+            # Overwrite a single key
+            ({'test': 'old'}, {'test': 'new'}, {'test': 'new'}),
+            # Recursive
+            ({'test': {'one': 1, 'two': 2}}, {'test': {'one': 'hombre', 'three': 3}},
+                {'test': {'one': 'hombre', 'two': 2, 'three': 3}}),
+            )
+
+    @pytest.mark.parametrize('merge_to, merge_from, expect', data_set)
+    def test_new_mapping(self, merge_to, merge_from, expect):
+        returned_mapping = c._merge_mapping(merge_to, merge_from)
+
+        assert returned_mapping is not merge_to
+        assert returned_mapping == expect
+
+    @pytest.mark.parametrize('merge_to, merge_from, expect', data_set)
+    def test_inplace(self, merge_to, merge_from, expect):
+        returned_mapping = c._merge_mapping(merge_to, merge_from, inplace=True)
+
+        assert returned_mapping is merge_to
+        assert merge_to == expect
+
 
 class Test_FindConfig:
     @staticmethod
@@ -44,36 +73,29 @@ class Test_FindConfig:
 
 
 class Test_ReadConfig:
-    cfg_keys = frozenset(('base_data_dir', 'logging', 'schema_dir', 'state_dir', 'ui_plugin', 'use_uvloop'))
+    cfg_keys = frozenset(('data_dir', 'logging', 'state_dir', 'ui_plugin', 'use_uvloop'))
 
-    ui_and_schema = """
+    ui_and_data_cfg = """
     # This is a sample config file
-    # that sets ui_plugin and schema directory
+    # that sets ui_plugin and data directory
     ui_plugin: the_bestest_widget_set
-    schema_dir: /dev/zero
-    """
-
-    ui_and_schema_cfg = """
-    # This is a sample config file
-    # that sets ui_plugin and schema directory
-    ui_plugin: the_bestest_widget_set
-    schema_dir: /dev/zero
+    data_dir: /dev/zero
     """
 
     all_cfg = """
     # This is a sample config file
-    # that sets ui_plugin and schema directory
+    # that sets all configuration options
     ui_plugin: the_bestest_widget_set
-    schema_dir: /dev/zero
+    data_dir: /dev/zero
     state_dir: /tmp
-    base_data_dir: /tmp
+    use_uvloop: True
     """
 
     extra_cfg = """
     # This is a sample config file
-    # that sets ui_plugin and schema directory
+    # that sets ui_plugin and data directory
     ui_plugin: the_bestest_widget_set
-    schema_dir: /dev/zero
+    data_dir: /dev/zero
     schwartzchilde: limit
     """
 
@@ -92,22 +114,22 @@ class Test_ReadConfig:
         cfg = c._read_config(tuple())
 
         assert self.cfg_keys.symmetric_difference(cfg.keys()) == frozenset()
-        assert cfg['base_data_dir'] == '/usr/share/stellarmagnate/base'
-        assert cfg['schema_dir'] == '/usr/share/stellarmagnate/schemas'
+        assert cfg['data_dir'] == '/usr/share/stellarmagnate/base'
         assert cfg['state_dir'] == os.path.expanduser('~/.stellarmagnate')
         assert cfg['ui_plugin'] == 'urwid'
         assert cfg['use_uvloop'] is False
 
+        assert isinstance(cfg['logging'], MutableMapping)
+        # Testing that logging is valid twiggy configuration is done in TestTwiggyConfig
+
     def test_paths_given_some_default_override(self, mocker):
-        m = mocker.mock_open(read_data=self.ui_and_schema_cfg)
+        m = mocker.mock_open(read_data=self.ui_and_data_cfg)
         mocker.patch('builtins.open', m)
         mocker.patch('os.path.isfile', autospec=True, side_effect=lambda path: True)
-        cfg = c._read_config(('/fake/path/sm-ui-and-schema.cfg',))
-        cfg_keys = frozenset(('base_data_dir', 'schema_dir', 'state_dir', 'ui_plugin'))
+        cfg = c._read_config(('/fake/path/sm-ui-and-data.cfg',))
 
         assert self.cfg_keys.symmetric_difference(cfg.keys()) == frozenset()
-        assert cfg['base_data_dir'] == '/usr/share/stellarmagnate/base'
-        assert cfg['schema_dir'] == '/dev/zero'
+        assert cfg['data_dir'] == '/dev/zero'
         assert cfg['state_dir'] == os.path.expanduser('~/.stellarmagnate')
         assert cfg['ui_plugin'] == 'the_bestest_widget_set'
 
@@ -118,8 +140,7 @@ class Test_ReadConfig:
         cfg = c._read_config(('/fake/path/sm-all.cfg',))
 
         assert self.cfg_keys.symmetric_difference(cfg.keys()) == frozenset()
-        assert cfg['base_data_dir'] == '/tmp'
-        assert cfg['schema_dir'] == '/dev/zero'
+        assert cfg['data_dir'] == '/dev/zero'
         assert cfg['state_dir'] == '/tmp'
         assert cfg['ui_plugin'] == 'the_bestest_widget_set'
 
@@ -155,26 +176,32 @@ class Test_ReadConfig:
 
     def test_pure_testing(self):
         cfg = c._read_config(tuple(), testing=True)
-        cfg_keys = frozenset(('base_data_dir', 'schema_dir', 'state_dir', 'ui_plugin'))
 
         assert self.cfg_keys.symmetric_difference(cfg.keys()) == frozenset()
-        assert cfg['base_data_dir'] == os.path.normpath(os.path.join(os.path.dirname(__file__), '../../', 'data'))
-        assert cfg['schema_dir'] == os.path.normpath(os.path.join(os.path.dirname(__file__), '../../', 'data'))
+        assert cfg['data_dir'] == os.path.normpath(os.path.join(os.path.dirname(__file__), '../../', 'data'))
         assert cfg['state_dir'] == os.path.expanduser('~/.stellarmagnate')
         assert cfg['ui_plugin'] == 'urwid'
 
     def test_paths_and_testing(self, mocker):
-        m = mocker.mock_open(read_data=self.ui_and_schema_cfg)
+        m = mocker.mock_open(read_data=self.ui_and_data_cfg)
         mocker.patch('builtins.open', m)
         mocker.patch('os.path.isfile', autospec=True, side_effect=lambda path: True)
-        cfg = c._read_config(('/fake/path/sm-ui-and-schema.cfg',), testing=True)
+        cfg = c._read_config(('/fake/path/sm-ui-and-data.cfg',), testing=True)
 
         assert self.cfg_keys.symmetric_difference(cfg.keys()) == frozenset()
-        assert cfg['base_data_dir'] == os.path.normpath(os.path.join(os.path.dirname(__file__), '../../', 'data'))
-        assert cfg['schema_dir'] == os.path.normpath(os.path.join(os.path.dirname(__file__), '../../', 'data'))
+        assert cfg['data_dir'] == os.path.normpath(os.path.join(os.path.dirname(__file__), '../../', 'data'))
         assert cfg['state_dir'] == os.path.expanduser('~/.stellarmagnate')
         assert cfg['ui_plugin'] == 'the_bestest_widget_set'
-        pass
+
+
+class TestTwiggyConfig:
+    """Test that our configuration of twiggy is valid"""
+    def test_twiggy_smoketest(self, mocker):
+        cfg = c._read_config(tuple())
+        m = mocker.mock_open()
+        mocker.patch('builtins.open', m)
+
+        twiggy.dict_config(cfg['logging'])
 
 
 class TestReadConfig:

@@ -1,0 +1,62 @@
+---
+# This yaml file contains definitions which can only be shipped with the game.
+# Things in here require programming in the backend to go with them.
+
+version: "0.1"
+
+location_type:
+  - surface
+  - underground
+  - underwater
+  - orbital
+  - dome
+
+celestial_type:
+  - star
+  - oceanic
+  - gas giant
+  - rocky
+  - oxygen
+  - methane
+
+commodity_type:
+  - food
+  - metal
+  - fuel
+  - low bulk chemicals
+  - low bulk machinery
+  - high bulk chemicals
+  - high bulk machinery
+
+financial_type:
+  - system
+  - capital
+  - planetary
+  - mafia
+
+order_status_type:
+  - presale
+  - submitter
+  - rejected
+  - finalized
+
+ship:
+  - name: modular cargo ship:
+    mean_price: 1000000000000
+    depreciation_rate: 1
+    hold_space: 0
+    weapon_mount: 0
+
+property:
+  - name: warehouse
+    mean_price: 160000
+    standard_deviation: 16700
+    depreciation_rate: 1
+    storage_space: 1000
+
+ship_parts:
+  - name: cargo module
+    mean_price: 25000
+    standard_deviation: 670
+    depreciation_rate: 1
+  - laser array:
