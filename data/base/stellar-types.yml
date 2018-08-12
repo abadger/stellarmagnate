@@ -1,0 +1,25 @@
+---
+types:
+  CommodityType:
+    - cargo
+    - ship
+    - food
+    - metal
+    - fuel
+    - low bulk chemical
+    - high bulk chemical
+    - low bulk machine
+    - high bulk machine
+    - equipment
+    - ship parts
+    - property
+  LocationType:
+    - star
+    - planet
+    - moon
+    - space station
+  OrderStatusType:
+    - presale
+    - submitted
+    - rejected
+    - finalized
