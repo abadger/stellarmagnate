@@ -10,16 +10,18 @@ from magnate.savegame import base_types
 
 
 INVALID_DATA = (
-        ('''{tpyes: {}}''', VError,
+        ('''{version: "1.0", types: {CommodityType: []}}''', VError,
+            ("not a valid value for dictionary value @ data\\['version']. Got '1.0'",)),
+        ('''{version: "0.1", tpyes: {}}''', VError,
             ("extra keys not allowed @ data\\['tpyes']",
              "required key not provided @ data\\['types']")),
-        ('''{types: []}''', VError,
+        ('''{version: "0.1", types: []}''', VError,
             ("expected a dictionary for dictionary value @ data\\['types']",)),
-        ('''{types: {10: []}}''', VError,
+        ('''{version: "0.1", types: {10: []}}''', VError,
             ("extra keys not allowed @ data\\['types']\\[10]",)),
-        ('''{types: {Commodity: []}}''', VError,
+        ('''{version: "0.1", types: {Commodity: []}}''', VError,
             ("extra keys not allowed @ data\\['types']\\['Commodity']",)),
-        ('''{types: {commodityType: []}}''', VError,
+        ('''{version: "0.1", types: {commodityType: []}}''', VError,
             ("extra keys not allowed @ data\\['types']\\['commodityType']",)),
         )
 
@@ -33,7 +35,10 @@ class TestLoadBaseTypes:
         """
         datadir = os.path.join(os.path.dirname(__file__), 'data')
         data = base_types.load_base_types(datadir)
-        assert data == {'types': {'CommodityType': ['food', 'material'], 'CelestialType': ['asteroid'], 'GovernmentType': ['democracy', 'dictatorship']}}
+        assert data == {'types': {'CommodityType': ['food', 'material'],
+                                  'CelestialType': ['asteroid'],
+                                  'GovernmentType': ['democracy', 'dictatorship']},
+                        'version': '0.1'}
 
     def test_invalid_directory(self):
         """Test that invalid filename raise an exception"""
@@ -56,6 +61,7 @@ def test_init_base_types():
     """Test that base Types are initialized when this is run"""
 
     data = """---
+    version: "0.1"
     types:
       TestType:
         - a test

@@ -1,4 +1,5 @@
 ---
+version: "0.1"
 types:
   CommodityType:
     - cargo
@@ -13,11 +14,24 @@ types:
     - equipment
     - ship parts
     - property
-  LocationType:
+  CelestialType:
     - star
-    - planet
-    - moon
-    - space station
+    - oceanic
+    - gas giant
+    - rocky
+    - oxygen
+    - methane
+  LocationType:
+    - surface
+    - underground
+    - underwater
+    - orbital
+    - dome
+  FinancialType:
+    - system
+    - capital
+    - planetary
+    - mafia
   OrderStatusType:
     - presale
     - submitted

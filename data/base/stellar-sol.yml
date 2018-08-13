@@ -34,4 +34,3 @@ system:
       - name: Earth
         locaion_type: dome
         celestial_type: planet
-

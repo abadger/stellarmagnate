@@ -20,8 +20,8 @@ import enum
 import os
 
 import twiggy
-from voluptuous import Schema, Required
-from voluptuous.humanize import validate_with_humanized_errors
+import voluptuous as v
+from voluptuous.humanize import validate_with_humanized_errors as v_validate
 
 try:  # pragma: no cover
     from yaml import CSafeLoader as Loader
@@ -48,11 +48,9 @@ def type_name(value):
     return value
 
 
-DATA_TYPES_SCHEMA = Schema({
-    Required('types'): {
-        type_name: [str]
-    },
-    })
+DATA_TYPES_SCHEMA = v.Schema({'version': '0.1',
+                              'types': {type_name: [str]},
+                             }, required=True)
 
 
 def load_base_types(datadir):
@@ -79,7 +77,7 @@ def load_base_types(datadir):
         data = loader.get_single_data()
 
     flog.fields(data=data).debug('Validating type data structure')
-    validate_with_humanized_errors(data, DATA_TYPES_SCHEMA)
+    data = v_validate(data, DATA_TYPES_SCHEMA)
 
     flog.debug('Done.  Returning data')
     return data

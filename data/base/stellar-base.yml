@@ -4,42 +4,6 @@
 
 version: "0.1"
 
-location_type:
-  - surface
-  - underground
-  - underwater
-  - orbital
-  - dome
-
-celestial_type:
-  - star
-  - oceanic
-  - gas giant
-  - rocky
-  - oxygen
-  - methane
-
-commodity_type:
-  - food
-  - metal
-  - fuel
-  - low bulk chemicals
-  - low bulk machinery
-  - high bulk chemicals
-  - high bulk machinery
-
-financial_type:
-  - system
-  - capital
-  - planetary
-  - mafia
-
-order_status_type:
-  - presale
-  - submitter
-  - rejected
-  - finalized
-
 ship:
   - name: modular cargo ship:
     mean_price: 1000000000000
@@ -59,4 +23,7 @@ ship_parts:
     mean_price: 25000
     standard_deviation: 670
     depreciation_rate: 1
-  - laser array:
+  - name: laser array
+    mean_price: 10000
+    standard_deviation:670
+    depreciation_rate: 1
