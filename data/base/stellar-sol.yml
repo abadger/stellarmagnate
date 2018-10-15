@@ -1,36 +1,112 @@
 ---
 # The Solar System
 version: "0.1"
-system:
+systems:
   - name: Sol
-    location:
-      - name: Solar Observation Station
-        location_type: orbital
-        celestial_type: star
+    celestials:
+      - name: Sol
+        orbit: 0
+        type: star
       - name: Mercury
-        location_type: dome
-        celestial_type: planet
+        orbit: 1
+        type: rocky
       - name: Venus
-        location_type: dome
-        celestial_type: planet
+        orbit: 2
+        type: methane
       - name: Earth
-        locaion_type: surface
-        celestial_type: planet
+        orbit: 3
+        type: oxygen
       - name: Luna
-        locaion_type: dome
-        celestial_type: planet
+        orbit: 3
+        type: rocky
+      - name: Mars
+        orbit: 4
+        type: rocky
+      - name: Jupiter
+        orbit: 5
+        type: gas giant
+      - name: Saturn
+        orbit: 6
+        type: gas giant
+      - name: Uranus
+        orbit: 7
+        type: gas giant
+      - name: Neptune
+        orbit: 8
+        type: gas giant
+      - name: Pluto
+        orbit: 9
+        type: rocky
+
+    locations:
+      - name: Solar Observation Station
+        type: orbital
+        celestial: Sol
+      - name: Mercury Science Station
+        type: dome
+        celestial: Mercury
+      - name: Venus Science Station
+        type: dome
+        celestial: Venus
       - name: Earth
-        locaion_type: dome
-        celestial_type: planet
-      - name: Earth
-        locaion_type: dome
-        celestial_type: planet
-      - name: Earth
-        locaion_type: dome
-        celestial_type: planet
-      - name: Earth
-        locaion_type: dome
-        celestial_type: planet
-      - name: Earth
-        locaion_type: dome
-        celestial_type: planet
+        type: surface
+        celestial: Earth
+      - name: Lunar Colony
+        type: dome
+        celestial: Luna
+      - name: Mars Colony
+        type: dome
+        celestial: Mars
+      - name: Jupiter Shipyards
+        type: orbital
+        celestial: Jupiter
+      - name: Saturn Fleet Base
+        type: orbital
+        celestial: Saturn
+      - name: Uranus Science Station
+        type: orbital
+        celestial: Uranus
+      - name: Neptune Science Station
+        type: orbital
+        celestial: Neptune
+      - name: Pluto Outpost
+        type: dome
+        celestial: Pluto
+
+    commodities:
+      - name: Grain
+        categories: ['food']
+        mean_price: 25
+        standard_deviation: 10
+        depreciation_rate: 3
+        volume: 1
+      - name:  Iron
+        categories: ['metal']
+        mean_price: 125
+        standard_deviation: 25
+        depreciation_rate: 0
+        volume: 1
+      - name: Liquid Hydrogen
+        categories: ['fuel']
+        mean_price: 1000
+        standard_deviation: 165
+        depreciation_rate: 1
+        volume: 1
+      - name: Medicine
+        categories: ['chemical', 'medical']
+        mean_price: 3150
+        standard_deviation: 615
+        depreciation_rate: 3
+        volume: 1
+      - name: Weapons
+        categories: ['machinery', 'weapons']
+        mean_price: 7750
+        standard_deviation: 585
+        depreciation_rate: 0
+        volume: 1
+      - name: Drugs
+        categories: ['chemical', 'illegal']
+        mean_price: 15000
+        standard_deviation: 1670
+        depreciation_rate: 3
+        volume: 1

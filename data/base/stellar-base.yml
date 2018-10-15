@@ -4,26 +4,91 @@
 
 version: "0.1"
 
-ship:
-  - name: modular cargo ship:
+ships:
+  - name: Modular Cargo Ship
     mean_price: 1000000000000
+    standard_deviation: 1
     depreciation_rate: 1
-    hold_space: 0
-    weapon_mount: 0
+    storage: 0
+    weapon_mounts: 2
 
 property:
   - name: warehouse
     mean_price: 160000
     standard_deviation: 16700
     depreciation_rate: 1
-    storage_space: 1000
+    storage: 1000
 
 ship_parts:
   - name: cargo module
     mean_price: 25000
     standard_deviation: 670
     depreciation_rate: 1
+    storage: 500
   - name: laser array
     mean_price: 10000
-    standard_deviation:670
+    standard_deviation: 670
     depreciation_rate: 1
+    volume: 50
+
+events:
+  - msg: >-
+      This year's harvest reaches unheard of levels!  Surplus drives prices down.
+    adjustment: -5
+    affects:
+      - food
+  - msg: >-
+      Famine drives the price of food through the roof.
+    adjustment: 5
+    affects:
+      - food
+  - msg: >-
+      New mines open.  Ore prices plummet.
+    adjustment: -20
+    affects:
+      - metal
+  - msg: >-
+      New industries demand more metals!
+    adjustment: 200
+    affects:
+      - metal
+  - msg: >-
+      Prospectors find a new source of hi-grade fuel.
+    adjustment: -200
+    affects:
+      - fuel
+  - msg: >-
+      Shortage of energy sends fuel prices skyward!
+    adjustment: 10
+    affects:
+      - fuel
+  - msg: >-
+      New pharmaceutical methods create a surplus of medicine.
+    adjustment: -300
+    affects:
+      - chemical
+  - msg: >-
+      Plague spreads like wildfire!
+    adjustment: 2600
+    affects:
+      - chemical
+  - msg: >-
+      Key arms manufacturer makes bid to undersell competition.
+    adjustment: -1000
+    affects:
+      - [machinery, weapons]
+  - msg: >-
+      Warfare erupts on the planet!
+    adjustment: 3500
+    affects:
+      - [machinery, weapons]
+  - msg: >-
+      Organized crime floods the market with drugs.
+    adjustment: -2000
+    affects:
+      - [illegal, chemical]
+  - msg: >-
+      Addicts are buying drugs at an alarming rate.
+    adjustment: 7000
+    affects:
+      - [illegal, chemical]

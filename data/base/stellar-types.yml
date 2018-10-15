@@ -2,15 +2,15 @@
 version: "0.1"
 types:
   CommodityType:
-    - cargo
     - ship
     - food
     - metal
     - fuel
-    - low bulk chemical
-    - high bulk chemical
-    - low bulk machine
-    - high bulk machine
+    - chemical
+    - medical
+    - machinery
+    - weapons
+    - illegal
     - equipment
     - ship parts
     - property
