@@ -28,7 +28,7 @@ from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy_repr import RepresentableBase
 from twiggy import log
 
-from ..errors import MagnateInvalidSaveGame, MagnateNoSaveGame, MagnateSaveError
+from ..errors import MagnateInvalidSaveGame, MagnateNoSaveGame
 from . import base_types
 from . import data_def
 

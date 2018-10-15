@@ -20,8 +20,8 @@ import enum
 import os
 from functools import partial
 
-import twiggy
 import voluptuous as v
+from twiggy import log
 from voluptuous.humanize import validate_with_humanized_errors as v_validate
 
 try:  # pragma: no cover
@@ -43,6 +43,9 @@ OrderStatusType = None
 
 def type_name(value):
     """Validate that the names of types follow our conventions"""
+    flog = log.name('savegame.base_types.type_name')
+    flog.fields(value=value).debug('validate that type_name follows convention')
+
     if not isinstance(value, str):
         raise ValueError('Type names must be strings')
     if not value.endswith('Type'):
@@ -50,11 +53,16 @@ def type_name(value):
     if not value[0] == value[0].upper():
         raise ValueError('Type names must begin with an uppercase character (following class'
                          ' naming conventions)')
+
+    flog.debug('type_name {0} follows the proper conventions', value)
     return value
 
 
 def _generic_types_validator(type_enum, value):
     """Validate that a string is valid in a :class:`enum.Enum` and transform it into the enum"""
+    flog = log.name(f'savegame.base_types validator for {type_enum}')
+    flog.fields(type_enum=type_enum, value=value).debug('validate and transform into an enum value')
+
     try:
         enum_value = type_enum[value]
     except KeyError:
@@ -64,6 +72,7 @@ def _generic_types_validator(type_enum, value):
             raise ValueError(f'{value} is not a {type_enum.__name__}')
         raise
 
+    flog.fields(enum_value=enum_value).debug('transformed into enum_value to return')
     return enum_value
 
 
@@ -79,8 +88,8 @@ def load_base_types(datadir):
     :arg datadir: The data directory to find the types file
     :returns: A list of types
     """
-    flog = twiggy.log.name('savegame types').fields(function='load_base_types')
-    flog.debug('Entered function')
+    flog = log.name('savegame.types.load_base_types')
+    flog.debug('Entered load_base_types')
 
     data_file = os.path.join(datadir, 'base', 'stellar-types.yml')
 
@@ -98,7 +107,7 @@ def load_base_types(datadir):
     flog.fields(data=data).debug('Validating type data structure')
     data = v_validate(data, DATA_TYPES_SCHEMA)
 
-    flog.debug('Done.  Returning data')
+    flog.debug('Returning type data')
     return data
 
 
@@ -114,10 +123,15 @@ def init_base_types(datadir):
     everything else in savegames so it should be run as one of the first things upon accessing
     a savegame.
     """
+    flog = log.name('savegame.types.init_base_types')
+    flog.debug('Entered init_base_types')
     base_type_data = load_base_types(datadir)
 
     m_globals = globals()
     for name, entries in base_type_data['types'].items():
+        flog.fields(enum=name).debug('Creating enum')
         m_globals[name] = enum.Enum(name, entries, module=__name__)
         # Create a voluptuous validator for this type as well
         m_globals[name].validator = partial(_generic_types_validator, m_globals[name])
+
+    flog.debug('Leaving init_base_types')

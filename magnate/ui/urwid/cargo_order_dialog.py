@@ -34,7 +34,7 @@ class CargoOrderDialog(OrderDialog):
         self.commodity_in_warehouse = 0
 
         self.hold_box = urwid.CheckBox('Hold:', state=True)
-        self.warehouse_box =  urwid.CheckBox('Warehouse:', state=True)
+        self.warehouse_box = urwid.CheckBox('Warehouse:', state=True)
         super().__init__(pubpen, 'ui.urwid.cargo_order_info',
                          (self.hold_box, self.warehouse_box))
 
@@ -170,7 +170,7 @@ class CargoOrderDialog(OrderDialog):
                                                          commodity))
 
         # Recalculate maximums
-        self.validate_quantity
+        self.validate_quantity()
 
     def handle_cargo_update(self, manifest, free_space, filled_hold):
         """Update the hold space whenever we receive a cargo update event"""

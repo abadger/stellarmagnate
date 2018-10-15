@@ -103,8 +103,8 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
                               height=len(self.layout_list) + 2)
 
         outer_layout = urwid.LineBox(filler, lline=None, tlcorner='─',
-                               blcorner='─', trcorner='\u252c',
-                               brcorner='\u2524')
+                                     blcorner='─', trcorner='\u252c',
+                                     brcorner='\u2524')
         super().__init__(outer_layout)
 
         urwid.connect_signal(self.buy_button, 'postchange', self.handle_buy_sell_toggle)
@@ -130,8 +130,7 @@ class OrderDialog(urwid.WidgetWrap, metaclass=ABCWidget):
         """
         if self.user_cash and self.order is not None and self.order.price:
             return self.user_cash // self.order.price
-        else:
-            return 0
+        return 0
 
     @property
     @abstractmethod

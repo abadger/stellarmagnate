@@ -25,10 +25,13 @@ class MagnateConfigError(MagnateError):
     pass
 
 class MagnateSaveError(MagnateError):
+    """Base of all Magnate save game exception hierarchy"""
     pass
 
 class MagnateNoSaveGame(MagnateSaveError):
+    """Raised when a save game file is missing"""
     pass
 
 class MagnateInvalidSaveGame(MagnateSaveError):
+    """Raised when a save game file is invalid"""
     pass

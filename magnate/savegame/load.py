@@ -30,14 +30,20 @@ from . import db
 #
 
 def init_game(savegame, datadir):
-    """Initialize a game from a savegame"""
+    """Initialize a game from a savegame file"""
+    flog = log.name('savegame.load.init_game')
+    flog.fields(savegame=savegame, datadir=datadir).debug('Enter init_game')
     # Finish initializing dynamic parts of the schema
+    flog.debug('Attempt to initialize db schema')
     db.init_schema(datadir)
 
     savegame = os.path.abspath(savegame)
     try:
+        flog.debug('Attempting to load')
         game_state = db.load_savegame(savegame, datadir)
     except MagnateNoSaveGame:
+        flog.debug('Attempting to create')
         game_state = db.create_savegame(savegame, datadir)
 
+    flog.debug('Leaving init_game')
     return game_state
