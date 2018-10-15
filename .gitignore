@@ -1,2 +1,9 @@
 __pycache__
 .*.swp
+.cache
+.coverage
+tmp/
+stellar_magnate.egg-info/
+docs/_build
+docs/objects.inv
+src/
