@@ -1,8 +1,10 @@
 language: python
+sudo: required
+dist: xenial
 python:
-  - "3.5"
   - "3.6"
-  - "3.7-dev"
+  - "3.7"
+  - "3.8-dev"
 install:
   - python -m pip install --upgrade -r requirements.txt
   - python -m pip install --upgrade -r test-requirements.txt
