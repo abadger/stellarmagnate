@@ -151,9 +151,6 @@ class Magnate:
         self.pubpen = None
         self.dispatcher = None
 
-        # Base data attributes
-        self._load_data_definitions()
-
         # Instantiated attributes
         self.user = None
         self.equipment = None
@@ -274,6 +271,9 @@ class Magnate:
             os.makedirs(self.cfg['state_dir'])
 
         twiggy.dict_config(self.cfg['logging'])
+
+        # Base data attributes
+        self._load_data_definitions()
 
         ui_plugins = load('magnate.ui', subclasses=UserInterface)
         for UIClass in ui_plugins:  #pylint: disable=invalid-name

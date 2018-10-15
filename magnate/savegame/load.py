@@ -1,5 +1,5 @@
 # Stellar Magnate - A space-themed commodity trading game
-# Copyright (C) 2017 Toshio Kuratomi <toshio@fedoraproject.org>
+# Copyright (C) 2018 Toshio Kuratomi <toshio@fedoraproject.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,22 +13,31 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""
-All exceptions raised by the core engine
-"""
-class MagnateError(Exception):
-    """Base of the Magnate exception hierarchy"""
-    pass
 
-class MagnateConfigError(MagnateError):
-    """Raised when processing config files"""
-    pass
+import os
 
-class MagnateSaveError(MagnateError):
-    pass
+from twiggy import log
 
-class MagnateNoSaveGame(MagnateSaveError):
-    pass
+from ..errors import MagnateNoSaveGame
+from . import db
 
-class MagnateInvalidSaveGame(MagnateSaveError):
-    pass
+#
+# Upgrading
+#
+
+#
+# Game setup mechanics
+#
+
+def init_game(savegame, datadir):
+    """Initialize a game from a savegame"""
+    # Finish initializing dynamic parts of the schema
+    db.init_schema(datadir)
+
+    savegame = os.path.abspath(savegame)
+    try:
+        game_state = db.load_savegame(savegame, datadir)
+    except MagnateNoSaveGame:
+        game_state = db.create_savegame(savegame, datadir)
+
+    return game_state

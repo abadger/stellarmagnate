@@ -18,6 +18,7 @@ Routines to load base game types from data files
 """
 import enum
 import os
+from functools import partial
 
 import twiggy
 import voluptuous as v
@@ -31,10 +32,14 @@ except ImportError:  # pragma: no cover
 
 # Enums that are created at runtime and then used with the database.  See the
 # data/base/stellar-types.yml file if you suspect this list is out of date
-# * CommodityType
-# * LocationType
-# * OrderStatusType
 
+# pylint: disable=invalid-name
+CommodityType = None
+CelestialType = None
+LocationType = None
+FinancialType = None
+OrderStatusType = None
+# pylint: enable=invalid-name
 
 def type_name(value):
     """Validate that the names of types follow our conventions"""
@@ -46,6 +51,20 @@ def type_name(value):
         raise ValueError('Type names must begin with an uppercase character (following class'
                          ' naming conventions)')
     return value
+
+
+def _generic_types_validator(type_enum, value):
+    """Validate that a string is valid in a :class:`enum.Enum` and transform it into the enum"""
+    try:
+        enum_value = type_enum[value]
+    except KeyError:
+        raise ValueError(f'{value} is not a valid member of {type_enum.__name__}')
+    except Exception:
+        if not isinstance(value, type_enum):
+            raise ValueError(f'{value} is not a {type_enum.__name__}')
+        raise
+
+    return enum_value
 
 
 DATA_TYPES_SCHEMA = v.Schema({'version': '0.1',
@@ -100,3 +119,5 @@ def init_base_types(datadir):
     m_globals = globals()
     for name, entries in base_type_data['types'].items():
         m_globals[name] = enum.Enum(name, entries, module=__name__)
+        # Create a voluptuous validator for this type as well
+        m_globals[name].validator = partial(_generic_types_validator, m_globals[name])
