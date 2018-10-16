@@ -22,9 +22,9 @@ import string
 import voluptuous as v
 from voluptuous.humanize import validate_with_humanized_errors as v_validate
 
-try:
+try:  # pragma: no cover
     from yaml import CSafeLoader as Loader
-except ImportError:
+except ImportError:  # pragma: no cover
     from yaml import SafeLoader as Loader
 
 from . import base_types
@@ -48,19 +48,22 @@ def known_celestial(data):
 def volume_or_storage(data):
     """Ensures that all ship parts either take up room or add storage space"""
     for part in data['ship_parts']:
-        if part['volume'] is None and part['storage'] is None:
+        if ((part['volume'] is None and part['storage'] is None) or
+            (part['volume'] is not None and part['storage'] is not None)):
             raise v.error.Invalid('ship_part {} must either take up room or'
                                   ' add room'.format(part['name']))
     return data
 
 
-def _define_schemas():
+def _define_schemas(datadir):
     """
     Define the data file schemas
 
     We do this in a function instead of at the toplevel because the Types in base_types are dynamic.
     Therefore, base_types.init_base_types has to have run prior to defining the schema.
     """
+
+    base_types.init_base_types(datadir)
 
     global BASE_SCHEMA, SYSTEM_SCHEMA
 
@@ -119,13 +122,14 @@ def _define_schemas():
                                'events': [{
                                    'msg': str,
                                    'adjustment': int,
-                                   'affects': v.Any([base_types.CommodityType.validator],
-                                                    [[base_types.CommodityType.validator]]),
+                                   'affects': [v.Any(base_types.CommodityType.validator,
+                                                     [base_types.CommodityType.validator])],
                                    }],
                               }, required=True)
 
     BASE_SCHEMA = v.Schema(v.All(BASE_STRUCTURE,
                                  volume_or_storage))
+
 
 def load_data_definitions(datadir):
     """
@@ -134,7 +138,7 @@ def load_data_definitions(datadir):
     :arg file yaml_file: Open file object to read the yaml from
     :returns: An array of Markets that the user can travel to.
     """
-    _define_schemas()
+    _define_schemas(datadir)
 
     data_file = os.path.join(datadir, 'base', 'stellar-base.yml')
 
