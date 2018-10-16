@@ -31,7 +31,7 @@ from . import db
 
 def init_game(savegame, datadir):
     """Initialize a game from a savegame file"""
-    flog = log.name('savegame.load.init_game')
+    flog = log.name(f'{__file__}:init_game')
     flog.fields(savegame=savegame, datadir=datadir).debug('Enter init_game')
     # Finish initializing dynamic parts of the schema
     flog.debug('Attempt to initialize db schema')
