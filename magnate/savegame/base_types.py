@@ -43,7 +43,7 @@ OrderStatusType = None
 
 def type_name(value):
     """Validate that the names of types follow our conventions"""
-    flog = log.name('savegame.base_types.type_name')
+    flog = log.name(f'{__file__}:type_name')
     flog.fields(value=value).debug('validate that type_name follows convention')
 
     if not isinstance(value, str):
@@ -60,7 +60,7 @@ def type_name(value):
 
 def _generic_types_validator(type_enum, value):
     """Validate that a string is valid in a :class:`enum.Enum` and transform it into the enum"""
-    flog = log.name(f'savegame.base_types validator for {type_enum}')
+    flog = log.name(f'{__file__}:_generic_types_validator for {type_enum}')
     flog.fields(type_enum=type_enum, value=value).debug('validate and transform into an enum value')
 
     try:
@@ -88,7 +88,7 @@ def load_base_types(datadir):
     :arg datadir: The data directory to find the types file
     :returns: A list of types
     """
-    flog = log.name('savegame.types.load_base_types')
+    flog = log.name(f'{__file__}:load_base_types')
     flog.debug('Entered load_base_types')
 
     data_file = os.path.join(datadir, 'base', 'stellar-types.yml')
@@ -123,11 +123,21 @@ def init_base_types(datadir):
     everything else in savegames so it should be run as one of the first things upon accessing
     a savegame.
     """
-    flog = log.name('savegame.types.init_base_types')
+    flog = log.name('{__file__}:init_base_types')
     flog.debug('Entered init_base_types')
-    base_type_data = load_base_types(datadir)
 
     m_globals = globals()
+
+    for name in m_globals:
+        if name.endswith('Type'):
+            if m_globals[name] is None:
+                break
+    else:
+        flog.debug('Enums already created.  Exiting init_base_types early')
+        return
+
+    base_type_data = load_base_types(datadir)
+
     for name, entries in base_type_data['types'].items():
         flog.fields(enum=name).debug('Creating enum')
         m_globals[name] = enum.Enum(name, entries, module=__name__)
