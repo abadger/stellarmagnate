@@ -1,0 +1,25 @@
+---
+# The Solar System
+version: "0.1"
+systems:
+  - name: Test
+    celestials:
+      - name: Primary
+        orbit: 0
+        type: star
+      - name: Friesland
+        orbit: 1
+        type: oxygen
+
+    locations:
+      - name: Solar Observation Station
+        type: orbital
+        celestial: Primary
+
+    commodities:
+      - name: Drugs
+        categories: ['chemical', 'illegal']
+        mean_price: 1
+        standard_deviation: 2
+        depreciation_rate: 3
+        volume: 4

@@ -10,6 +10,9 @@ from voluptuous.error import Error as VError
 from magnate.savegame import base_types
 
 
+pytestmark = pytest.mark.usefixtures('clean_context')
+
+
 INVALID_DATA = (
         ('''{version: "1.0", types: {CommodityType: []}}''', VError,
             ("not a valid value for dictionary value @ data\\['version']. Got '1.0'",)),
@@ -28,7 +31,7 @@ INVALID_DATA = (
 
 
 @pytest.fixture
-def test_type():
+def test_type(clean_context):
     data = """---
     version: "0.1"
     types:
@@ -41,6 +44,18 @@ def test_type():
         base_types.init_base_types("123")
 
     return base_types.TestType
+
+
+@pytest.fixture
+def broken_test_type(test_type):
+    def _fake_getitem(self, value):
+        raise OSError('getitem raised an unexpected exception')
+
+    old_getitem = test_type.__class__.__getitem__
+    test_type.__class__.__getitem__ = _fake_getitem
+    yield test_type
+
+    test_type.__class__.__getitem__ = old_getitem
 
 
 class TestLoadBaseTypes:
@@ -108,23 +123,15 @@ def test_base_types_enum_validator_bad_key(test_type):
     assert excinfo.value.args[0] == 'test_bad is not a valid member of TestType'
 
 
-def test_base_types_enum_validator_exception_with_nonmember(test_type):
-    def _fake_getitem(self, value):
-        raise OSError('getitem raised an unexpected exception')
-
-    test_type.__class__.__getitem__ = _fake_getitem
+def test_base_types_enum_validator_exception_with_nonmember(broken_test_type):
     with pytest.raises(ValueError) as excinfo:
-        test_type.validator('test_bad')
+        broken_test_type.validator('test_bad')
 
     assert excinfo.value.args[0] == 'test_bad is not a TestType'
 
 
-def test_base_types_enum_validator_exception_with_member(test_type):
-    def _fake_getitem(self, value):
-        raise OSError('getitem raised an unexpected exception')
-
-    test_type.__class__.__getitem__ = _fake_getitem
+def test_base_types_enum_validator_exception_with_member(broken_test_type):
     with pytest.raises(OSError) as excinfo:
-        test_type.validator(test_type.test_one)
+        broken_test_type.validator(broken_test_type.test_one)
 
     assert excinfo.value.args[0] == 'getitem raised an unexpected exception'

@@ -1,0 +1,46 @@
+---
+# This yaml file contains definitions which can only be shipped with the game.
+# Things in here require programming in the backend to go with them.
+
+version: "0.1"
+
+ships:
+  - name: ship
+    mean_price: 10
+    standard_deviation: 1
+    depreciation_rate: 1
+    storage: 0
+    weapon_mounts: 1
+
+property:
+  - name: property
+    mean_price: 1
+    standard_deviation: 2
+    depreciation_rate: 3
+    storage: 4
+
+ship_parts:
+  - name: add storage
+    mean_price: 10
+    standard_deviation: 11
+    depreciation_rate: 12
+    storage: 13
+  - name: take up space
+    mean_price: 20
+    standard_deviation: 21
+    depreciation_rate: 22
+    volume: 23
+
+events:
+  - msg: >-
+      price lower
+    adjustment: -5
+    affects:
+      - food
+      - [illegal, chemical]
+  - msg: >-
+      price higher
+    adjustment: 5
+    affects:
+      - [illegal, chemical]
+      - food

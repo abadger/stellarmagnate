@@ -1,0 +1,39 @@
+---
+version: "0.1"
+types:
+  CommodityType:
+    - ship
+    - food
+    - metal
+    - fuel
+    - chemical
+    - medical
+    - machinery
+    - weapons
+    - illegal
+    - equipment
+    - ship parts
+    - property
+  CelestialType:
+    - star
+    - oceanic
+    - gas giant
+    - rocky
+    - oxygen
+    - methane
+  LocationType:
+    - surface
+    - underground
+    - underwater
+    - orbital
+    - dome
+  FinancialType:
+    - system
+    - capital
+    - planetary
+    - mafia
+  OrderStatusType:
+    - presale
+    - submitted
+    - rejected
+    - finalized
