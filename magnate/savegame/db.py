@@ -74,7 +74,7 @@ class Commodity(Base):
     id = Column(Integer, primary_key=True)
     info_id = Column(Integer, ForeignKey('commodity_data.id'))
     info = relationship('CommodityData', backref='commodities')
-    location_id = Column(Integer, ForeignKey('location.id'))
+    location_id = Column(Integer, ForeignKey('location_data.id'))
     location = relationship('LocationData', back_populates='commodities')
     price = Column(Integer, nullable=False)
     last_update = Column(Integer, nullable=False)
@@ -99,8 +99,8 @@ class Ship(Base):
     condition = Column(Integer, nullable=False)
     owner_id = Column(Integer, ForeignKey('character.id'), nullable=False)
     owner = relationship('Character', backref='ships')
-    location_id = Column(Integer, ForeignKey('location.id'), nullable=False)
-    location = relationship('Location', backref='ships')
+    location_id = Column(Integer, ForeignKey('location_data.id'), nullable=False)
+    location = relationship('LocationData', backref='ships')
 
 
 class ShipData(Base):
@@ -120,6 +120,7 @@ class Cargo(Base):
     ship_id = Column(Integer, ForeignKey('ship.id'))
     ship = relationship('Ship', backref='cargo')
     commodity_id = Column(Integer, ForeignKey('commodity_data.id'))
+    commodity = relationship('CommodityData')
     quantity = Column(Integer, nullable=False)
     purchase_price = Column(Integer, nullable=False)
     purchase_date = Column(Integer, nullable=False)
@@ -151,8 +152,8 @@ class ShipPart(Base):
     info_id = Column(Integer, ForeignKey('ship_part_data.id'))
     info = relationship('ShipPartData', backref='ship_parts')
     condition = Column(Integer, nullable=False)
-    owner_id = Column(Integer, ForeignKey('character.id'), nullable=False)
-    owner = relationship('Character', backref='properties')
+    ship_id = Column(Integer, ForeignKey('ship.id'))
+    ship = relationship('Ship', backref='ship_parts')
 
 
 class ShipPartData(Base):
@@ -172,13 +173,11 @@ class EventData(Base):
     adjustment = Column(Integer, nullable=False)
 
 
-class _EventCondition(Base):
+class EventCondition(Base):
     __tablename__ = 'event_condition'
-    event_id = Column(ForeignKey('event_data.id'), primary_key=True)
+    id = Column(Integer, primary_key=True)
+    event_id = Column(ForeignKey('event_data.id'))
     event = relationship('EventData', backref='affects')
-    condition_category_id = Column(ForeignKey('condition_category.id'), primary_key=True)
-    condition_category = relationship('ConditionCategory', backref='affects')
-    __table_args__ = (UniqueConstraint('event_id', 'condition_category_id', name='event_condition_unique'),)
 
 
 class Character(Base):
@@ -195,6 +194,16 @@ class World(Base):
 
 
 def init_schema(datadir):
+    flog = log.name(f'{__file__}:init_schema')
+    dynamic_schema = frozenset(('CelestialData', 'LocationData', 'CommodityCategory', 'ConditionCategory'))
+    m_globals = globals()
+    for schema in dynamic_schema:
+        if m_globals[schema] is None:
+            break
+    else:
+        flog.debug('Schema already created.  Exiting early')
+        return
+
     # We always initialize the base game types first to avoid chicken and egg problems attempting to
     # validate loading of other data and setting up the save game schema
     base_types.init_base_types(datadir)
@@ -202,48 +211,45 @@ def init_schema(datadir):
     # Some of the schema depends on the base_types so create the remaining schema elements now that
     # base_types have been loaded
 
-    global CelestialData
-    class _CelestialData(Base):
-        __tablename__ = 'celestial'
+    class CelestialData(Base):
+        __tablename__ = 'celestial_data'
         id = Column(Integer, primary_key=True)
         name = Column(String, unique=True, nullable=False)
         orbit = Column(Integer, nullable=False)
         type = Column(Enum(base_types.CelestialType), nullable=False)
         system_id = Column(Integer, ForeignKey('system.id'), nullable=False)
         system = relationship('SystemData', back_populates='celestials')
-    CelestialData = _CelestialData
 
-    global LocationData
-    class _LocationData(Base):
-        __tablename__ = 'location'
+    class LocationData(Base):
+        __tablename__ = 'location_data'
         id = Column(Integer, primary_key=True)
         name = Column(String, unique=True, nullable=False)
         type = Column(Enum(base_types.LocationType), nullable=False)
-        celestial_id = Column(Integer, ForeignKey('celestial.id'), nullable=False)
-        celestial = relationship('SystemData', backref='locations')
-        commodities = relationship('Commodity', back_populates='location', order_by='commodity.price')
-    LocationData = _LocationData
+        celestial_id = Column(Integer, ForeignKey('celestial_data.id'), nullable=False)
+        celestial = relationship('CelestialData', backref='locations')
+        commodities = relationship('Commodity', back_populates='location', order_by='commodity.c.price')
 
-    global CommodityCategory
-    class _CommodityCategory(Base):
+    class CommodityCategory(Base):
         __tablename__ = 'commodity_category'
-        commodity_id = Column(ForeignKey('commodity.id'), primary_key=True)
-        commodity = relationship('CommodityData', backref='types')
+        commodity_id = Column(ForeignKey('commodity_data.id'), primary_key=True)
+        commodity = relationship('CommodityData', backref='categories')
         category = Column(Enum(base_types.CommodityType), primary_key=True)
         __table_args__ = (UniqueConstraint('commodity_id', 'category', name='commodity_category_unique'),)
-    CommodityCategory = _CommodityCategory
 
     # Events are a 2 dimensional array
     # An Event affects anything that satisfies a condition
     # Each condition contains a set of categories that all need to apply to the commodity
-    global ConditionCategory
-    class _ConditionCategory(Base):
+    class ConditionCategory(Base):
         __tablename__ = 'condition_category'
-        condition_id = Column(ForeignKey('event_conditon.id'), primary_key=True)
-        condition = relationship('EventCondtion', backref='categories')
-        category = Column(Enum(base_types.CommodityType), primary_key=True)
+        id = Column(Integer, primary_key=True)
+        condition_id = Column(ForeignKey('event_condition.id'))
+        condition = relationship('EventCondition', backref='categories')
+        category = Column(Enum(base_types.CommodityType))
         __table_args__ = (UniqueConstraint('condition_id', 'category', name='condition_category_unique'),)
-    ConditionCategory = _ConditionCategory
+
+    f_locals = locals()
+    for schema in dynamic_schema:
+        m_globals[schema] = f_locals[schema]
 
 
 def init_savegame(engine, game_data):
@@ -260,6 +266,7 @@ def init_savegame(engine, game_data):
             celestial_rec = CelestialData(name=celestial['name'],
                                           orbit=celestial['orbit'],
                                           type=celestial['type'],
+                                          system=system_rec,
                                          )
             session.add(celestial_rec)
             celestials_added[celestial['name']] = celestial_rec
@@ -273,14 +280,16 @@ def init_savegame(engine, game_data):
 
         for commodity in system['commodities']:
             commodity_rec = CommodityData(name=commodity['name'],
-                                          categories=commodity['categories'],
                                           mean_price=commodity['mean_price'],
                                           standard_deviation=commodity['standard_deviation'],
                                           depreciation_rate=commodity['depreciation_rate'],
                                           volume=commodity['volume'],
                                          )
             session.add(commodity_rec)
-
+            for category in commodity['categories']:
+                commodity_cat = CommodityCategory(category=category,
+                                                  commodity=commodity_rec)
+                session.add(commodity_cat)
         for ship in game_data['ships']:
             ship_rec = ShipData(name=ship['name'],
                                 mean_price=ship['mean_price'],
@@ -301,6 +310,9 @@ def init_savegame(engine, game_data):
             session.add(property_rec)
 
         for parts in game_data['ship_parts']:
+            if 'storage' not in parts:
+                parts['storage'] = -parts['volume']
+
             parts_rec = ShipPartData(name=parts['name'],
                                      mean_price=parts['mean_price'],
                                      standard_deviation=parts['standard_deviation'],
@@ -312,9 +324,41 @@ def init_savegame(engine, game_data):
         for event in game_data['events']:
             event_rec = EventData(msg=event['msg'],
                                   adjustment=event['adjustment'],
-                                  affects=event['affects'],
                                  )
             session.add(event_rec)
+
+            for condition in event['affects']:
+                condition_rec = EventCondition(event=event_rec)
+                session.add(condition_rec)
+                if isinstance(condition, list):
+                    for condition_cat in condition:
+                        condition_cat_rec = ConditionCategory(category=condition_cat,
+                                                              condition=condition_rec)
+                        session.add(condition_cat_rec)
+                else:
+                    condition_cat_rec = ConditionCategory(category=condition,
+                                                          condition=condition_rec)
+                    session.add(condition_cat_rec)
+
+                session.commit()
+
+
+def create_savegame(savegame, datadir):
+    """Create a new savegame file"""
+
+    global engine
+
+    savegame_uri = f'sqlite:///{savegame}'
+    try:
+        engine = create_engine(savegame_uri)
+    except Exception as e:
+        log.trace('error').name('GameSetup').fields(savegame=savegame_uri).error('Savegame uri was invalid')
+        raise MagnateInvalidSaveGame(f'"{savegame_uri}" was malformed')
+
+    game_data = data_def.load_data_definitions(datadir)
+    init_savegame(engine, game_data)
+
+    return engine
 
 
 def load_savegame(savegame, datadir):
@@ -340,23 +384,5 @@ def load_savegame(savegame, datadir):
         log.trace('error').name('GameSetup').fields(savegame=savegame).error('Savegame file was invalid')
         raise MagnateInvalidSaveGame(f'{savegame} is not a valid save file')
     '''
-
-    return engine
-
-
-def create_savegame(savegame, datadir):
-    """Create a new savegame file"""
-
-    global engine
-
-    savegame_uri = f'sqlite:///{savegame}'
-    try:
-        engine = create_engine(savegame_uri)
-    except Exception as e:
-        log.trace('error').name('GameSetup').fields(savegame=savegame_uri).error('Savegame uri was invalid')
-        raise MagnateInvalidSaveGame(f'"{savegame_uri}" was malformed')
-
-    game_data = data_def.load_data_definitions(datadir)
-    init_savegame(engine, game_data)
 
     return engine
