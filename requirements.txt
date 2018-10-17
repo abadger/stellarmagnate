@@ -2,7 +2,8 @@ PyYaml
 attrs
 SQlAlchemy
 sqlalchemy_repr
-#jsonschema
+alembic
+jsonschema
 voluptuous
 kitchen
 pubmarine >= 0.3
