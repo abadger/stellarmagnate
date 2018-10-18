@@ -287,11 +287,11 @@ class Magnate:
         if self.cfg['use_uvloop']:
             try:
                 import uvloop
-            except:
+            except Exception:
                 print('Could not import uvloop.  Falling back on asyncio event loop')
             try:
                 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-            except:
+            except Exception:
                 print('Could not set uvloop to be the event loop.  Falling back on asyncio event loop')
 
         loop = asyncio.get_event_loop()

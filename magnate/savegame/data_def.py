@@ -17,7 +17,8 @@
 Routines to load base game data from yaml files
 """
 import os
-import string
+# string is not deprecated, only some methods within it. pylint is wrong
+import string  # pylint: disable=deprecated-module
 
 import voluptuous as v
 from voluptuous.humanize import validate_with_humanized_errors as v_validate
@@ -49,7 +50,7 @@ def volume_or_storage(data):
     """Ensures that all ship parts either take up room or add storage space"""
     for part in data['ship_parts']:
         if ((part['volume'] is None and part['storage'] is None) or
-            (part['volume'] is not None and part['storage'] is not None)):
+                (part['volume'] is not None and part['storage'] is not None)):
             raise v.error.Invalid('ship_part {} must either take up room or'
                                   ' add room'.format(part['name']))
     return data
@@ -67,7 +68,7 @@ def _define_schemas(datadir):
 
     global BASE_SCHEMA, SYSTEM_SCHEMA
 
-    SYSTEM_STRUCTURE = v.Schema({'version': '0.1',
+    system_structure = v.Schema({'version': '0.1',
                                  'systems': [{
                                      'name': v.All(str, string.capwords),
                                      'celestials': [{
@@ -89,13 +90,13 @@ def _define_schemas(datadir):
                                          'depreciation_rate': int,
                                          'volume': int,
                                          }],
-                                     }],
-                                }, required=True)
+                                     }], },
+                                required=True)
 
-    SYSTEM_SCHEMA = v.Schema(v.All(SYSTEM_STRUCTURE,
+    SYSTEM_SCHEMA = v.Schema(v.All(system_structure,
                                    known_celestial))
 
-    BASE_STRUCTURE = v.Schema({'version': '0.1',
+    base_structure = v.Schema({'version': '0.1',
                                'ships': [{
                                    'name': v.All(str, string.capwords),
                                    'mean_price': int,
@@ -124,10 +125,10 @@ def _define_schemas(datadir):
                                    'adjustment': int,
                                    'affects': [v.Any(base_types.CommodityType.validator,
                                                      [base_types.CommodityType.validator])],
-                                   }],
-                              }, required=True)
+                                   }], },
+                              required=True)
 
-    BASE_SCHEMA = v.Schema(v.All(BASE_STRUCTURE,
+    BASE_SCHEMA = v.Schema(v.All(base_structure,
                                  volume_or_storage))
 
 

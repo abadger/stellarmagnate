@@ -13,6 +13,10 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+Set a savegame file for the program to use.
+"""
+
 
 import os
 
@@ -24,6 +28,7 @@ from . import db
 #
 # Upgrading
 #
+
 
 #
 # Game setup mechanics

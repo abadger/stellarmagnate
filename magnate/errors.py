@@ -16,21 +16,27 @@
 """
 All exceptions raised by the core engine
 """
+
+
 class MagnateError(Exception):
     """Base of the Magnate exception hierarchy"""
     pass
+
 
 class MagnateConfigError(MagnateError):
     """Raised when processing config files"""
     pass
 
+
 class MagnateSaveError(MagnateError):
     """Base of all Magnate save game exception hierarchy"""
     pass
 
+
 class MagnateNoSaveGame(MagnateSaveError):
     """Raised when a save game file is missing"""
     pass
+
 
 class MagnateInvalidSaveGame(MagnateSaveError):
     """Raised when a save game file is invalid"""

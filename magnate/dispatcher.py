@@ -21,6 +21,7 @@ interfaces.
 from .market import CommodityType
 from .ship import ManifestEntry
 
+
 class Dispatcher:
     """Manage the communication between the backend and frontends"""
 

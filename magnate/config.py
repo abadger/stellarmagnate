@@ -105,7 +105,8 @@ def _find_config(conf_files=tuple()):
         list should override the first ones.
     """
     paths = itertools.chain((SYSTEM_CONFIG_FILE, USER_CONFIG_FILE),
-                            (os.path.expanduser(os.path.expandvars(p)) for p in iterate(conf_files)))
+                            (os.path.expanduser(os.path.expandvars(p)) for
+                                p in iterate(conf_files)))
 
     config_files = []
     for conf_path in paths:
@@ -117,7 +118,7 @@ def _find_config(conf_files=tuple()):
 
 def _merge_mapping(merge_to, merge_from, inplace=False):
     """
-    As opposed to dict.update, this will recurse through a dictionary's values merging new keys with old ones
+    Recurse through a dictionary's values merging new keys with old ones
 
     This is an in-place merge.
 

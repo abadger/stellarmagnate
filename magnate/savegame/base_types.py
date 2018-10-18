@@ -20,8 +20,8 @@ import enum
 import os
 from functools import partial
 
-import voluptuous as v
 from twiggy import log
+import voluptuous as v
 from voluptuous.humanize import validate_with_humanized_errors as v_validate
 
 try:  # pragma: no cover
@@ -40,6 +40,7 @@ LocationType = None
 FinancialType = None
 OrderStatusType = None
 # pylint: enable=invalid-name
+
 
 def type_name(value):
     """Validate that the names of types follow our conventions"""
@@ -77,8 +78,8 @@ def _generic_types_validator(type_enum, value):
 
 
 DATA_TYPES_SCHEMA = v.Schema({'version': '0.1',
-                              'types': {type_name: [str]},
-                             }, required=True)
+                              'types': {type_name: [str]}, },
+                             required=True)
 
 
 def load_base_types(datadir):
