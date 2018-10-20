@@ -17,6 +17,7 @@
 Holds metadata about this release of the Stellar Magnate software
 """
 __version__ = '0.1'
+__version_info__ = ('0', '1')
 
 AUTHOR = 'Toshio Kuratomi'
 MAINTAINER = 'Toshio Kuratomi'
