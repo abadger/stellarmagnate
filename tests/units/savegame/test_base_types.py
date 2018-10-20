@@ -59,17 +59,21 @@ def broken_test_type(test_type):
 
 
 class TestLoadBaseTypes:
-    def test_valid_types(self):
+    def test_valid_types(self, fake_datadir):
         """
         Test that valid types are loaded from a data file.
 
         This also tests that the function works with real data.
         """
-        datadir = os.path.join(os.path.dirname(__file__), 'data')
-        data = base_types.load_base_types(datadir)
-        assert data == {'types': {'CommodityType': ['food', 'material'],
-                                  'CelestialType': ['asteroid'],
-                                  'GovernmentType': ['democracy', 'dictatorship']},
+        data = base_types.load_base_types(fake_datadir)
+        assert data == {'types': {'CommodityType': ['ship', 'food', 'metal', 'fuel', 'chemical',
+                                        'medical', 'machinery', 'weapons', 'illegal', 'equipment',
+                                        'ship parts', 'property'],
+                                  'CelestialType': ['star', 'oceanic', 'gas giant', 'rocky',
+                                        'oxygen', 'methane'],
+                                  'FinancialType': ['system', 'capital', 'planetary', 'mafia'],
+                                  'LocationType': ['surface', 'underground', 'underwater', 'orbital', 'dome'],
+                                  'OrderStatusType': ['presale', 'submitted', 'rejected', 'finalized']},
                         'version': '0.1'}
 
     def test_invalid_directory(self):

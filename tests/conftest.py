@@ -33,3 +33,9 @@ def clean_context():
 def datadir():
     datadir = os.path.join(os.path.dirname(__file__), '../data')
     return datadir
+
+
+@pytest.fixture
+def fake_datadir():
+    fake_datadir = os.path.join(os.path.dirname(__file__), 'data')
+    return fake_datadir

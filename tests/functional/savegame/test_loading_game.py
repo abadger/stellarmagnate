@@ -60,25 +60,24 @@ LOADED_DATA = {
      }
 
 
-def test_load_data_definitions():
-    fake_datadir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
+def test_load_data_definitions(fake_datadir):
     base_data = data_def.load_data_definitions(fake_datadir)
 
     print(base_data)
     assert base_data == LOADED_DATA
 
 
-def test_init_game(tmpdir):
+def test_init_game(tmpdir, fake_datadir):
     """Test that init_game can create and load games"""
 
     savegame = os.path.join(tmpdir, 'test_game.sqlite')
-    game_state = load.init_game(savegame, './data')
+    game_state = load.init_game(savegame, fake_datadir)
 
     assert game_state
     assert db.engine is game_state
 
     # Test that loading a second game loads the same file but creates a new engine
-    game_state2 = load.init_game(savegame, './data')
+    game_state2 = load.init_game(savegame, fake_datadir)
 
     assert game_state2
     assert db.engine is game_state2

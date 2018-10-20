@@ -1,9 +1,0 @@
----
-version: "0.1"
-types:
-  CommodityType:
-    - food
-    - material
-  CelestialType:
-    - asteroid
-  GovernmentType: ['democracy', 'dictatorship']
