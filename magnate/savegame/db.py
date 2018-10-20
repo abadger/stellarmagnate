@@ -20,6 +20,7 @@ import os
 
 from alembic.config import Config
 from alembic import command
+import sqlalchemy.exc
 from sqlalchemy import create_engine
 from sqlalchemy import Column, Enum, ForeignKey, Integer, String
 from sqlalchemy import UniqueConstraint
@@ -609,10 +610,10 @@ def load_savegame(savegame, datadir):
 
     global engine
 
-    savegame_uri = f'sqlite://{savegame}'
+    savegame_uri = f'sqlite:///{savegame}'
     try:
         engine = create_engine(savegame_uri)
-    except Exception:
+    except sqlalchemy.exc.ArgumentError:
         flog.trace('error').fields(savegame=savegame_uri).error('Savegame uri was invalid')
         raise MagnateInvalidSaveGame(f'"{savegame_uri}" was malformed')
 
