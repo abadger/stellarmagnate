@@ -25,6 +25,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import Column, Enum, ForeignKey, Integer, String
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy_repr import RepresentableBase
 from twiggy import log
@@ -291,8 +292,9 @@ class EventCondition(Base):
     id = Column(Integer, primary_key=True)
     event_id = Column(ForeignKey('event_data.id'))
     event = relationship('EventData', backref='affects')
-    categories = relationship('ConditionCategory', back_populates='condition',
+    _categories = relationship('ConditionCategory', back_populates='condition',
                               collection_class=set)
+    categories = association_proxy('_categories', 'category')
 
 
 class Player(Base):
@@ -336,97 +338,94 @@ def init_schema(datadir):
     :datadir: Directory for Stellar Magnate's data so that base_type data can be loaded.
     """
     flog = log.name(f'{__file__}:init_schema')
-    dynamic_schema = frozenset(('CelestialData', 'LocationData',
-                                'CommodityCategory', 'ConditionCategory'))
-    m_globals = globals()
-    for schema in dynamic_schema:
-        if m_globals[schema] is None:
-            break
-    else:
-        flog.debug('Schema already created.  Exiting early')
-        return
 
     # We always initialize the base game types first to avoid chicken and egg problems attempting to
     # validate loading of other data and setting up the save game schema
     base_types.init_base_types(datadir)
 
     # Some of the schema depends on the base_types so create the remaining schema elements now that
-    # base_types have been loaded
+    # base_types have been loaded.
+    # Only create them if they haven't already been created
 
+    m_globals = globals()
     # pylint: disable=too-few-public-methods
-    class CelestialData(Base):  # pylint: disable=unused-variable
-        """
-        Data about Celestial Bodies
-        :name: Name of the body
-        :orbit: Position from the system's primary
-        :type: Type of the celestial body
-        :system: System in which this celestial body lives
-        :locations: Locations which exist on this Celestial body
-        """
-        __tablename__ = 'celestial_data'
-        id = Column(Integer, primary_key=True)
-        name = Column(String, unique=True, nullable=False)
-        orbit = Column(Integer, nullable=False)
-        type = Column(Enum(base_types.CelestialType), nullable=False)
-        system_id = Column(Integer, ForeignKey('system.id'), nullable=False)
-        system = relationship('SystemData', back_populates='celestials')
+    if 'CelestialData' not in Base._decl_class_registry:
+        class CelestialData(Base):  # pylint: disable=unused-variable
+            """
+            Data about Celestial Bodies
+            :name: Name of the body
+            :orbit: Position from the system's primary
+            :type: Type of the celestial body
+            :system: System in which this celestial body lives
+            :locations: Locations which exist on this Celestial body
+            """
+            __tablename__ = 'celestial_data'
+            id = Column(Integer, primary_key=True)
+            name = Column(String, unique=True, nullable=False)
+            orbit = Column(Integer, nullable=False)
+            type = Column(Enum(base_types.CelestialType), nullable=False)
+            system_id = Column(Integer, ForeignKey('system.id'), nullable=False)
+            system = relationship('SystemData', back_populates='celestials')
+    m_globals['CelestialData'] = Base._decl_class_registry['CelestialData']
 
-    class LocationData(Base):  # pylint: disable=unused-variable
-        """
-        Data about Locations that a Ship can land on
+    if 'LocationData' not in Base._decl_class_registry:
+        class LocationData(Base):  # pylint: disable=unused-variable
+            """
+            Data about Locations that a Ship can land on
 
-        :name: Name of the Location
-        :type: LocationType of the location
-        :celestial: Celestial body that the Location is associated with
-        :commodities: Commodities available for sale at the Location
-        :ships: Ships currently present at this Location
-        """
-        __tablename__ = 'location_data'
-        id = Column(Integer, primary_key=True)
-        name = Column(String, unique=True, nullable=False)
-        type = Column(Enum(base_types.LocationType), nullable=False)
-        celestial_id = Column(Integer, ForeignKey('celestial_data.id'), nullable=False)
-        celestial = relationship('CelestialData', backref='locations')
-        commodities = relationship('Commodity', back_populates='location',
-                                   order_by='commodity.c.price')
+            :name: Name of the Location
+            :type: LocationType of the location
+            :celestial: Celestial body that the Location is associated with
+            :commodities: Commodities available for sale at the Location
+            :ships: Ships currently present at this Location
+            """
+            __tablename__ = 'location_data'
+            id = Column(Integer, primary_key=True)
+            name = Column(String, unique=True, nullable=False)
+            type = Column(Enum(base_types.LocationType), nullable=False)
+            celestial_id = Column(Integer, ForeignKey('celestial_data.id'), nullable=False)
+            celestial = relationship('CelestialData', backref='locations')
+            commodities = relationship('Commodity', back_populates='location',
+                                       order_by='commodity.c.price')
+    m_globals['LocationData'] = Base._decl_class_registry['LocationData']
 
-    class CommodityCategory(Base):  # pylint: disable=unused-variable
-        """
-        CommodityType that a Commodity belongs to
+    if 'CommodityCategory' not in Base._decl_class_registry:
+        class CommodityCategory(Base):  # pylint: disable=unused-variable
+            """
+            CommodityType that a Commodity belongs to
 
-        :commodity: Commodity which has this as a category
-        :category: CommodityType for the Commodity
-        """
-        __tablename__ = 'commodity_category'
-        commodity_id = Column(ForeignKey('commodity_data.id'), primary_key=True)
-        commodity = relationship('CommodityData', back_populates='categories')
-        category = Column(Enum(base_types.CommodityType), primary_key=True)
-        __table_args__ = (UniqueConstraint('commodity_id', 'category',
-                                           name='commodity_category_unique'),)
+            :commodity: Commodity which has this as a category
+            :category: CommodityType for the Commodity
+            """
+            __tablename__ = 'commodity_category'
+            commodity_id = Column(ForeignKey('commodity_data.id'), primary_key=True)
+            commodity = relationship('CommodityData', back_populates='categories')
+            category = Column(Enum(base_types.CommodityType), primary_key=True)
+            __table_args__ = (UniqueConstraint('commodity_id', 'category',
+                                               name='commodity_category_unique'),)
+    m_globals['CommodityCategory'] = Base._decl_class_registry['CommodityCategory']
 
-    class ConditionCategory(Base):  # pylint: disable=unused-variable
-        """
-        A CommodityType to match for Events
+    if 'ConditionCategory' not in Base._decl_class_registry:
+        class ConditionCategory(Base):  # pylint: disable=unused-variable
+            """
+            A CommodityType to match for Events
 
-        Events apply to any satisfied EventConditions.  An individual EventCondition is satisfied
-        when all of the CommodityTypes it references match.  ConditionCategory holds those
-        CommodityTypes.
+            Events apply to any satisfied EventConditions.  An individual EventCondition is satisfied
+            when all of the CommodityTypes it references match.  ConditionCategory holds those
+            CommodityTypes.
 
-        :condition: The EventCondition to which this Category belongs
-        :category: The ConmmodityType that this references.
-        """
-        __tablename__ = 'condition_category'
-        id = Column(Integer, primary_key=True)
-        condition_id = Column(ForeignKey('event_condition.id'))
-        condition = relationship('EventCondition', back_populates='categories')
-        category = Column(Enum(base_types.CommodityType))
-        __table_args__ = (UniqueConstraint('condition_id', 'category',
-                                           name='condition_category_unique'),)
+            :condition: The EventCondition to which this Category belongs
+            :category: The ConmmodityType that this references.
+            """
+            __tablename__ = 'condition_category'
+            id = Column(Integer, primary_key=True)
+            condition_id = Column(ForeignKey('event_condition.id'))
+            condition = relationship('EventCondition', back_populates='_categories')
+            category = Column(Enum(base_types.CommodityType))
+            __table_args__ = (UniqueConstraint('condition_id', 'category',
+                                               name='condition_category_unique'),)
+    m_globals['ConditionCategory'] = Base._decl_class_registry['ConditionCategory']
     # pylint: enable=too-few-public-methods
-
-    f_locals = locals()
-    for schema in dynamic_schema:
-        m_globals[schema] = f_locals[schema]
 
 
 def _init_systems(session, systems):
