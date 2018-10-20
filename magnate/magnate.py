@@ -302,7 +302,7 @@ class Magnate:
         # UIClass is always available because we'd have already returned (via
         # the for-else) if UIClass was not defined
         try:
-            user_interface = UIClass(self.pubpen, self.cfg['ui_args']) #pylint: disable=undefined-loop-variable
+            user_interface = UIClass(self.pubpen, self.cfg['ui_args'])  # pylint: disable=undefined-loop-variable
             return user_interface.run()
         except Exception as e:
             log.trace('error').error('Exception raised while running the user interface')
