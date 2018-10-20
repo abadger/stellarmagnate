@@ -303,11 +303,13 @@ class Player(Base):
     :password: Password of the player
     :properties: Properties owned by the Player
     :ships: Ships owned by the Player
+    :cash: Amount of cash the Player has on their person
     """
     __tablename__ = 'player'
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
+    cash = Column(Integer, nullable=False)
 
 
 class World(Base):
