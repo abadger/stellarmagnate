@@ -9,6 +9,7 @@ install:
   - python -m pip install --upgrade -r requirements.txt
   - python -m pip install --upgrade -r test-requirements.txt
 script:
-  python -m pip install --upgrade -e . && python -m pytest --cov=magnate tests -v
+  - python -m pip install --upgrade -e . && python -m pytest --cov=magnate tests -v
 after_success:
-  coveralls
+  - coveralls
+  - codecov

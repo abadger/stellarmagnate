@@ -1,3 +1,4 @@
+codecov
 coveralls
 pytest
 pytest-asyncio
