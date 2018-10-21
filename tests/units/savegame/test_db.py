@@ -1,9 +1,11 @@
 import os.path
+import shutil
 
 import pytest
 import sqlalchemy
 from unittest.mock import MagicMock
 
+from magnate.errors import MagnateNoSaveGame
 from magnate.savegame import base_types
 from magnate.savegame import data_def
 from magnate.savegame import db
@@ -74,12 +76,7 @@ def test_init_schema_partial(datadir):
         assert db.__dict__[name] is value
 
 
-def test_init_savegame(fake_datadir):
-    engine = sqlalchemy.create_engine('sqlite://')
-    game_data = data_def.load_data_definitions(fake_datadir)
-
-    db.init_savegame(engine, game_data)
-
+def _check_fake_data_load(engine):
     Session = sqlalchemy.orm.sessionmaker(bind=engine)
     session = Session()
 
@@ -115,9 +112,40 @@ def test_init_savegame(fake_datadir):
     assert events[0].affects[1].categories == {base_types.CommodityType.illegal, base_types.CommodityType.chemical}
 
 
-def test_create_savegame():
-    pass
+def test_init_savegame(fake_datadir):
+    engine = sqlalchemy.create_engine('sqlite://')
+    game_data = data_def.load_data_definitions(fake_datadir)
+
+    db.init_savegame(engine, game_data)
+
+    _check_fake_data_load(engine)
 
 
-def test_load_savegame_invalid():
-    pass
+def test_create_savegame(tmpdir, fake_datadir):
+    savefile = os.path.join(tmpdir, 'test_game.sqlite')
+
+    engine = db.create_savegame(savefile, fake_datadir)
+
+    _check_fake_data_load(engine)
+
+
+def test_load_savegame(tmpdir, fake_datadir):
+    savefile = os.path.join(tmpdir, 'test_game.sqlite')
+    savefile2 = os.path.join(tmpdir, 'test_game2.sqlite')
+
+    engine1 = db.create_savegame(savefile, fake_datadir)
+    shutil.copy2(savefile, savefile2)
+
+    engine2 = db.load_savegame(savefile, fake_datadir)
+
+    assert engine1 != engine2
+    _check_fake_data_load(engine2)
+
+
+def test_load_savegame_invalid(tmpdir, fake_datadir):
+    savefile = os.path.join(tmpdir, 'test_game.sqlite')
+
+    with pytest.raises(MagnateNoSaveGame) as excinfo:
+        engine = db.load_savegame(savefile, fake_datadir)
+
+    assert excinfo.value.args[0] == f'{savefile} does not point to a file'
