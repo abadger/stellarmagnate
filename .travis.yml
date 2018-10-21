@@ -13,3 +13,4 @@ script:
 after_success:
   - coveralls
   - codecov
+  - coverage xml && python-codacy-coverage -r coverage.xml

@@ -1,5 +1,6 @@
 codecov
 coveralls
+codacy-coverage
 pytest
 pytest-asyncio
 pytest-cov
