@@ -25,7 +25,6 @@ def test_init_schema(datadir):
 
     # Assert that all schema values have been filled
     for name in undefined_schema:
-        print(name)
         assert db.__dict__[name] is not None
 
 
@@ -55,7 +54,7 @@ def test_init_schema_partial(datadir):
     db_items = len(db.__dict__)
     undefined_schema = []
     for name, value in db.__dict__.items():
-        if value is None and name not in ('engine',):
+        if value is None and name not in ('engine', 'Base'):
             undefined_schema.append(name)
 
     db.init_schema(datadir)
@@ -71,9 +70,9 @@ def test_init_schema_partial(datadir):
     # Assert nothing was added
     assert len(db.__dict__) == db_items
 
-    # Assert that none of the schema values have changed
-    for name, value in first_schema.items():
-        assert db.__dict__[name] is value
+    # Assert that all of the schema values have changed
+    for name in undefined_schema:
+        assert db.__dict__[name] is not first_schema[name]
 
 
 def _check_fake_data_load(engine):

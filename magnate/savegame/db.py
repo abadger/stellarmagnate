@@ -44,288 +44,24 @@ from . import data_def
 # Schema
 #
 
-Base = declarative_base(cls=RepresentableBase)  # pylint: disable=invalid-name
+Base = None  # pylint: disable=invalid-name
 engine = None
 
 # Convention: *Data classes contain static data loaded from this version of Stellar Magnate
 # Many of these data classes have dynamic data associated with them.  These are stored in classes
 # without the Data suffix.
 
-# These are loaded by init_schema because they reference base_types that are loaded dynamically
-# pylint: disable=invalid-name
-CelestialData = None
-LocationData = None
-CommodityCategory = None
-ConditionCategory = None
-# pylint: enable=invalid-name
+# All Schemas are loaded dynamically so we can also clear and reload them
+SCHEMA_NAMES = ('SystemData', 'CelestialData', 'LocationData', 'Commodity', 'CommodityData',
+                'CommodityCategory', 'Ship', 'ShipData', 'Cargo', 'Property', 'PropertyData',
+                'ShipPart', 'ShipPartData', 'EventData', 'EventCondition', 'ConditionCategory',
+                'Player', 'World',)
 
 
-# TODO: take advantage of the following where it makes sense:
-# association_proxy() => instead of having a list of records, have a list of strings
-# relationship collection_class=set... have a set instead of a list
-# relationship collection_class=attribute_mapped_collection... have a dict instead of a list
-
-
-# pylint: disable=too-few-public-methods
-class SystemData(Base):
-    """
-    Static data about a stellar system
-
-    :name: Name of the Stellar System
-    :celestials: The celestial bodies that exist in this system
-    """
-    __tablename__ = 'system'
-    id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True, nullable=False)
-    celestials = relationship('CelestialData', back_populates='system',
-                              order_by='CelestialData.orbit')
-
-
-class Commodity(Base):
-    """
-    Data about an item that is presently for sale in a market
-
-    :info: Contains the fundamental data about this Commodity
-    :location: The location at which this Commodity is for sale
-    :price: Current price of the Commodity at this location
-    :last_update: Last time the price of this Commodity was updated
-    """
-    __tablename__ = 'commodity'
-    id = Column(Integer, primary_key=True)
-    info_id = Column(Integer, ForeignKey('commodity_data.id'))
-    info = relationship('CommodityData', backref='commodities')
-    location_id = Column(Integer, ForeignKey('location_data.id'))
-    location = relationship('LocationData', back_populates='commodities')
-    price = Column(Integer, nullable=False)
-    last_update = Column(Integer, nullable=False)
-    __table_args__ = (UniqueConstraint('info_id', 'location_id', name='commodity_unique'),)
-
-
-class CommodityData(Base):
-    """
-    Fundamental market data about a commodity
-
-    :name: Name of the commodity
-    :mean_price: The average price of this commodity
-    :standard_deviation: One standard deviation of the price data
-    :depreciation_rate: Rate at which the Commodity depreciates in value.
-    :volume: How much space one unit of the item takes up
-    :categories: Set of categories that the commodity belongs to
-    :commodities: List of the actual instances of this commodity for sale
-    """
-    __tablename__ = 'commodity_data'
-    id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True, nullable=False)
-    mean_price = Column(Integer, nullable=False)
-    standard_deviation = Column(Integer, nullable=False)
-    depreciation_rate = Column(Integer, nullable=False)
-    volume = Column(Integer, nullable=False)
-    categories = relationship('CommodityCategory', back_populates='commodity',
-                              collection_class=set)
-
-
-class Ship(Base):
-    """
-    Data about a specific instance of a Ship
-
-    :info: Links to the fundamental data about the Ship
-    :condition: How damaged the Ship is
-    :owner: The owner of the Ship
-    :location: Where the Ship is currently located
-    :ship_parts: List of ship_parts that are installed onto this Ship
-    :cargo: List of all Commodities currently stored on the Ship
-    """
-    __tablename__ = 'ship'
-    id = Column(Integer, primary_key=True)
-    info_id = Column(Integer, ForeignKey('ship_data.id'))
-    info = relationship('ShipData', backref='ships')
-    condition = Column(Integer, nullable=False)
-    owner_id = Column(Integer, ForeignKey('player.id'), nullable=False)
-    owner = relationship('Player', backref='ships')
-    location_id = Column(Integer, ForeignKey('location_data.id'), nullable=False)
-    location = relationship('LocationData', backref='ships')
-
-
-class ShipData(Base):
-    """
-    Fundamental data about all Ships of a class
-
-    :name: Name of the ship type
-    :ships: List of all ships of this type in existence
-    :mean_price: The average price of this Ship
-    :standard_deviation: One standard deviation of the price data
-    :depreciation_rate: Rate at which the Ship depreciates in value.
-    :storage: How much cargo volume exists on this ship
-    :weapon_mounts: How many weapons this ship can accept
-    """
-    __tablename__ = 'ship_data'
-    id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True, nullable=False)
-    mean_price = Column(Integer, nullable=False)
-    standard_deviation = Column(Integer, nullable=False)
-    depreciation_rate = Column(Integer, nullable=False)
-    storage = Column(Integer, nullable=False)
-    weapon_mounts = Column(Integer, nullable=False)
-
-
-class Cargo(Base):
-    """
-    Commodities that are owned by a Player
-
-    :ship: Ship that this cargo is presently stored in
-    :commodity: Commodity that is being stored
-    :quantity: Amount of the Cargo that is being stored
-    :purchase_price: Amount that the Player purchased the Cargo for
-    :purchase_date: Timestamp when the Cargo was purchased
-    """
-    __tablename__ = 'cargo'
-    id = Column(Integer, primary_key=True)
-    ship_id = Column(Integer, ForeignKey('ship.id'))
-    ship = relationship('Ship', backref='cargo')
-    commodity_id = Column(Integer, ForeignKey('commodity_data.id'))
-    commodity = relationship('CommodityData')
-    quantity = Column(Integer, nullable=False)
-    purchase_price = Column(Integer, nullable=False)
-    purchase_date = Column(Integer, nullable=False)
-
-
-class Property(Base):
-    """
-    Instance of an owned Property
-
-    :info: Link to the generic data about any property of this type
-    :condition: Any degradation of the Property
-    :owner: Link to the Player who owns the Property
-    """
-    __tablename__ = 'property'
-    id = Column(Integer, primary_key=True)
-    info_id = Column(Integer, ForeignKey('property_data.id'))
-    info = relationship('PropertyData', backref='properties')
-    condition = Column(Integer, nullable=False)
-    owner_id = Column(Integer, ForeignKey('player.id'), nullable=False)
-    owner = relationship('Player', backref='properties')
-
-
-class PropertyData(Base):
-    """
-    Data about all Properties of a certain type
-
-    :name: The name of this property
-    :mean_price: Average price of the part
-    :standard_deviation: One standard deviation of the price data
-    :depreciation_rate: Rate at which the Commodity depreciates in value.
-    :storage: How much storage this Property has.
-    :properties: List of properties that are of this type
-    """
-    __tablename__ = 'property_data'
-    id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True, nullable=False)
-    mean_price = Column(Integer, nullable=False)
-    standard_deviation = Column(Integer, nullable=False)
-    depreciation_rate = Column(Integer, nullable=False)
-    storage = Column(Integer, nullable=False)
-
-
-class ShipPart(Base):
-    """
-    Instance of ShipPart which is installed in a Ship
-
-    :info: Information about the base ShipPart
-    :condition: Amount of damage this part has suffered
-    :ship: Ship that this part is installed into
-    """
-    __tablename__ = 'ship_part'
-    id = Column(Integer, primary_key=True)
-    info_id = Column(Integer, ForeignKey('ship_part_data.id'))
-    info = relationship('ShipPartData', backref='ship_parts')
-    condition = Column(Integer, nullable=False)
-    ship_id = Column(Integer, ForeignKey('ship.id'))
-    ship = relationship('Ship', backref='ship_parts')
-
-
-class ShipPartData(Base):
-    """
-    Part that can be installed on a Ship
-
-    :name: Name of the ship type
-    :mean_price: Average price of the part
-    :standard_deviation: One standard deviation of the price data
-    :depreciation_rate: Rate at which the Commodity depreciates in value.
-    :storage: How much space this part adds to the ship.  Negative values subtract storage from the
-        Ship.
-    :categories: Set of categories that the commodity belongs to
-    :ship_parts: List of this ship parts which are installed into ships
-    """
-    __tablename__ = 'ship_part_data'
-    id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True, nullable=False)
-    mean_price = Column(Integer, nullable=False)
-    standard_deviation = Column(Integer, nullable=False)
-    depreciation_rate = Column(Integer, nullable=False)
-    storage = Column(Integer, nullable=False)
-
-
-class EventData(Base):
-    """
-    An Event that affects the price of Commodities
-
-    :msg: Event description to tell the user what has happened
-    :adjustment: The amount a price will rise or fall in response to the Event
-    :affects: The EventConditions that a Commodity must meet for its price to be affected by this
-        Event
-    """
-    __tablename__ = 'event_data'
-    id = Column(Integer, primary_key=True)
-    msg = Column(String, nullable=False)
-    adjustment = Column(Integer, nullable=False)
-
-
-class EventCondition(Base):
-    """
-    Condition for the event
-
-    :event: The Event for which this is a condition
-    :categories: Records in the ConditionCategory table which relate the CommodityTypes that are
-        affected by the Event
-    """
-    __tablename__ = 'event_condition'
-    id = Column(Integer, primary_key=True)
-    event_id = Column(ForeignKey('event_data.id'))
-    event = relationship('EventData', backref='affects')
-    _categories = relationship('ConditionCategory', back_populates='condition',
-                              collection_class=set)
-    categories = association_proxy('_categories', 'category')
-
-
-class Player(Base):
-    """
-    Player data
-
-    :name: Name of the player
-    :password: Password of the player
-    :properties: Properties owned by the Player
-    :ships: Ships owned by the Player
-    :cash: Amount of cash the Player has on their person
-    """
-    __tablename__ = 'player'
-    id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True, nullable=False)
-    password = Column(String, nullable=False)
-    cash = Column(Integer, nullable=False)
-
-
-class World(Base):
-    """
-    Global information about the world
-
-    :time: Number of ticks since the world started
-    """
-    __tablename__ = 'world'
-    id = Column(Integer, primary_key=True)
-    time = Column(Integer, unique=True, nullable=False)
-
-
-# pylint: enable=too-few-public-methods
+# Give the Schemas an initial value of None
+m_globals = globals()
+for name in SCHEMA_NAMES:
+    m_globals[name] = None
 
 
 def init_schema(datadir):
@@ -346,86 +82,341 @@ def init_schema(datadir):
     # Some of the schema depends on the base_types so create the remaining schema elements now that
     # base_types have been loaded.
     # Only create them if they haven't already been created
+    # TODO: take advantage of the following where it makes sense:
+    # association_proxy() => instead of having a list of records, have a list of strings
+    # relationship collection_class=set... have a set instead of a list
+    # relationship collection_class=attribute_mapped_collection... have a dict instead of a list
 
     m_globals = globals()
     # pylint: disable=too-few-public-methods
-    if 'CelestialData' not in Base._decl_class_registry:
-        class CelestialData(Base):  # pylint: disable=unused-variable
-            """
-            Data about Celestial Bodies
-            :name: Name of the body
-            :orbit: Position from the system's primary
-            :type: Type of the celestial body
-            :system: System in which this celestial body lives
-            :locations: Locations which exist on this Celestial body
-            """
-            __tablename__ = 'celestial_data'
-            id = Column(Integer, primary_key=True)
-            name = Column(String, unique=True, nullable=False)
-            orbit = Column(Integer, nullable=False)
-            type = Column(Enum(base_types.CelestialType), nullable=False)
-            system_id = Column(Integer, ForeignKey('system.id'), nullable=False)
-            system = relationship('SystemData', back_populates='celestials')
-    m_globals['CelestialData'] = Base._decl_class_registry['CelestialData']
+    for name in SCHEMA_NAMES:
+        if m_globals[name] is None:
+            break
+    else:
+        flog.debug('Schema already loaded, returning without changes')
+        return
 
-    if 'LocationData' not in Base._decl_class_registry:
-        class LocationData(Base):  # pylint: disable=unused-variable
-            """
-            Data about Locations that a Ship can land on
+    global Base
+    Base = declarative_base(cls=RepresentableBase)
 
-            :name: Name of the Location
-            :type: LocationType of the location
-            :celestial: Celestial body that the Location is associated with
-            :commodities: Commodities available for sale at the Location
-            :ships: Ships currently present at this Location
-            """
-            __tablename__ = 'location_data'
-            id = Column(Integer, primary_key=True)
-            name = Column(String, unique=True, nullable=False)
-            type = Column(Enum(base_types.LocationType), nullable=False)
-            celestial_id = Column(Integer, ForeignKey('celestial_data.id'), nullable=False)
-            celestial = relationship('CelestialData', backref='locations')
-            commodities = relationship('Commodity', back_populates='location',
-                                       order_by='commodity.c.price')
-    m_globals['LocationData'] = Base._decl_class_registry['LocationData']
+    class SystemData(Base):  # pylint: disable=unused-variable
+        """
+        Static data about a stellar system
 
-    if 'CommodityCategory' not in Base._decl_class_registry:
-        class CommodityCategory(Base):  # pylint: disable=unused-variable
-            """
-            CommodityType that a Commodity belongs to
+        :name: Name of the Stellar System
+        :celestials: The celestial bodies that exist in this system
+        """
+        __tablename__ = 'system'
+        id = Column(Integer, primary_key=True)
+        name = Column(String, unique=True, nullable=False)
+        celestials = relationship('CelestialData', back_populates='system',
+                                  order_by='CelestialData.orbit')
 
-            :commodity: Commodity which has this as a category
-            :category: CommodityType for the Commodity
-            """
-            __tablename__ = 'commodity_category'
-            commodity_id = Column(ForeignKey('commodity_data.id'), primary_key=True)
-            commodity = relationship('CommodityData', back_populates='categories')
-            category = Column(Enum(base_types.CommodityType), primary_key=True)
-            __table_args__ = (UniqueConstraint('commodity_id', 'category',
-                                               name='commodity_category_unique'),)
-    m_globals['CommodityCategory'] = Base._decl_class_registry['CommodityCategory']
+    class CelestialData(Base):  # pylint: disable=unused-variable
+        """
+        Data about Celestial Bodies
+        :name: Name of the body
+        :orbit: Position from the system's primary
+        :type: Type of the celestial body
+        :system: System in which this celestial body lives
+        :locations: Locations which exist on this Celestial body
+        """
+        __tablename__ = 'celestial_data'
+        id = Column(Integer, primary_key=True)
+        name = Column(String, unique=True, nullable=False)
+        orbit = Column(Integer, nullable=False)
+        type = Column(Enum(base_types.CelestialType), nullable=False)
+        system_id = Column(Integer, ForeignKey('system.id'), nullable=False)
+        system = relationship('SystemData', back_populates='celestials')
 
-    if 'ConditionCategory' not in Base._decl_class_registry:
-        class ConditionCategory(Base):  # pylint: disable=unused-variable
-            """
-            A CommodityType to match for Events
+    class LocationData(Base):  # pylint: disable=unused-variable
+        """
+        Data about Locations that a Ship can land on
 
-            Events apply to any satisfied EventConditions.  An individual EventCondition is satisfied
-            when all of the CommodityTypes it references match.  ConditionCategory holds those
-            CommodityTypes.
+        :name: Name of the Location
+        :type: LocationType of the location
+        :celestial: Celestial body that the Location is associated with
+        :commodities: Commodities available for sale at the Location
+        :ships: Ships currently present at this Location
+        """
+        __tablename__ = 'location_data'
+        id = Column(Integer, primary_key=True)
+        name = Column(String, unique=True, nullable=False)
+        type = Column(Enum(base_types.LocationType), nullable=False)
+        celestial_id = Column(Integer, ForeignKey('celestial_data.id'), nullable=False)
+        celestial = relationship('CelestialData', backref='locations')
+        commodities = relationship('Commodity', back_populates='location',
+                                   order_by='commodity.c.price')
 
-            :condition: The EventCondition to which this Category belongs
-            :category: The ConmmodityType that this references.
-            """
-            __tablename__ = 'condition_category'
-            id = Column(Integer, primary_key=True)
-            condition_id = Column(ForeignKey('event_condition.id'))
-            condition = relationship('EventCondition', back_populates='_categories')
-            category = Column(Enum(base_types.CommodityType))
-            __table_args__ = (UniqueConstraint('condition_id', 'category',
-                                               name='condition_category_unique'),)
-    m_globals['ConditionCategory'] = Base._decl_class_registry['ConditionCategory']
+    class Commodity(Base):  # pylint: disable=unused-variable
+        """
+        Data about an item that is presently for sale in a market
+
+        :info: Contains the fundamental data about this Commodity
+        :location: The location at which this Commodity is for sale
+        :price: Current price of the Commodity at this location
+        :last_update: Last time the price of this Commodity was updated
+        """
+        __tablename__ = 'commodity'
+        id = Column(Integer, primary_key=True)
+        info_id = Column(Integer, ForeignKey('commodity_data.id'))
+        info = relationship('CommodityData', backref='commodities')
+        location_id = Column(Integer, ForeignKey('location_data.id'))
+        location = relationship('LocationData', back_populates='commodities')
+        price = Column(Integer, nullable=False)
+        last_update = Column(Integer, nullable=False)
+        __table_args__ = (UniqueConstraint('info_id', 'location_id', name='commodity_unique'),)
+
+    class CommodityData(Base):  # pylint: disable=unused-variable
+        """
+        Fundamental market data about a commodity
+
+        :name: Name of the commodity
+        :mean_price: The average price of this commodity
+        :standard_deviation: One standard deviation of the price data
+        :depreciation_rate: Rate at which the Commodity depreciates in value.
+        :volume: How much space one unit of the item takes up
+        :categories: Set of categories that the commodity belongs to
+        :commodities: List of the actual instances of this commodity for sale
+        """
+        __tablename__ = 'commodity_data'
+        id = Column(Integer, primary_key=True)
+        name = Column(String, unique=True, nullable=False)
+        mean_price = Column(Integer, nullable=False)
+        standard_deviation = Column(Integer, nullable=False)
+        depreciation_rate = Column(Integer, nullable=False)
+        volume = Column(Integer, nullable=False)
+        categories = relationship('CommodityCategory', back_populates='commodity',
+                                  collection_class=set)
+
+    class CommodityCategory(Base):  # pylint: disable=unused-variable
+        """
+        CommodityType that a Commodity belongs to
+
+        :commodity: Commodity which has this as a category
+        :category: CommodityType for the Commodity
+        """
+        __tablename__ = 'commodity_category'
+        commodity_id = Column(ForeignKey('commodity_data.id'), primary_key=True)
+        commodity = relationship('CommodityData', back_populates='categories')
+        category = Column(Enum(base_types.CommodityType), primary_key=True)
+        __table_args__ = (UniqueConstraint('commodity_id', 'category',
+                                           name='commodity_category_unique'),)
+
+    class Ship(Base):  # pylint: disable=unused-variable
+        """
+        Data about a specific instance of a Ship
+
+        :info: Links to the fundamental data about the Ship
+        :condition: How damaged the Ship is
+        :owner: The owner of the Ship
+        :location: Where the Ship is currently located
+        :ship_parts: List of ship_parts that are installed onto this Ship
+        :cargo: List of all Commodities currently stored on the Ship
+        """
+        __tablename__ = 'ship'
+        id = Column(Integer, primary_key=True)
+        info_id = Column(Integer, ForeignKey('ship_data.id'))
+        info = relationship('ShipData', backref='ships')
+        condition = Column(Integer, nullable=False)
+        owner_id = Column(Integer, ForeignKey('player.id'), nullable=False)
+        owner = relationship('Player', backref='ships')
+        location_id = Column(Integer, ForeignKey('location_data.id'), nullable=False)
+        location = relationship('LocationData', backref='ships')
+
+    class ShipData(Base):  # pylint: disable=unused-variable
+        """
+        Fundamental data about all Ships of a class
+
+        :name: Name of the ship type
+        :ships: List of all ships of this type in existence
+        :mean_price: The average price of this Ship
+        :standard_deviation: One standard deviation of the price data
+        :depreciation_rate: Rate at which the Ship depreciates in value.
+        :storage: How much cargo volume exists on this ship
+        :weapon_mounts: How many weapons this ship can accept
+        """
+        __tablename__ = 'ship_data'
+        id = Column(Integer, primary_key=True)
+        name = Column(String, unique=True, nullable=False)
+        mean_price = Column(Integer, nullable=False)
+        standard_deviation = Column(Integer, nullable=False)
+        depreciation_rate = Column(Integer, nullable=False)
+        storage = Column(Integer, nullable=False)
+        weapon_mounts = Column(Integer, nullable=False)
+
+    class Cargo(Base):  # pylint: disable=unused-variable
+        """
+        Commodities that are owned by a Player
+
+        :ship: Ship that this cargo is presently stored in
+        :commodity: Commodity that is being stored
+        :quantity: Amount of the Cargo that is being stored
+        :purchase_price: Amount that the Player purchased the Cargo for
+        :purchase_date: Timestamp when the Cargo was purchased
+        """
+        __tablename__ = 'cargo'
+        id = Column(Integer, primary_key=True)
+        ship_id = Column(Integer, ForeignKey('ship.id'))
+        ship = relationship('Ship', backref='cargo')
+        commodity_id = Column(Integer, ForeignKey('commodity_data.id'))
+        commodity = relationship('CommodityData')
+        quantity = Column(Integer, nullable=False)
+        purchase_price = Column(Integer, nullable=False)
+        purchase_date = Column(Integer, nullable=False)
+
+    class Property(Base):  # pylint: disable=unused-variable
+        """
+        Instance of an owned Property
+
+        :info: Link to the generic data about any property of this type
+        :condition: Any degradation of the Property
+        :owner: Link to the Player who owns the Property
+        """
+        __tablename__ = 'property'
+        id = Column(Integer, primary_key=True)
+        info_id = Column(Integer, ForeignKey('property_data.id'))
+        info = relationship('PropertyData', backref='properties')
+        condition = Column(Integer, nullable=False)
+        owner_id = Column(Integer, ForeignKey('player.id'), nullable=False)
+        owner = relationship('Player', backref='properties')
+
+    class PropertyData(Base):  # pylint: disable=unused-variable
+        """
+        Data about all Properties of a certain type
+
+        :name: The name of this property
+        :mean_price: Average price of the part
+        :standard_deviation: One standard deviation of the price data
+        :depreciation_rate: Rate at which the Commodity depreciates in value.
+        :storage: How much storage this Property has.
+        :properties: List of properties that are of this type
+        """
+        __tablename__ = 'property_data'
+        id = Column(Integer, primary_key=True)
+        name = Column(String, unique=True, nullable=False)
+        mean_price = Column(Integer, nullable=False)
+        standard_deviation = Column(Integer, nullable=False)
+        depreciation_rate = Column(Integer, nullable=False)
+        storage = Column(Integer, nullable=False)
+
+    class ShipPart(Base):  # pylint: disable=unused-variable
+        """
+        Instance of ShipPart which is installed in a Ship
+
+        :info: Information about the base ShipPart
+        :condition: Amount of damage this part has suffered
+        :ship: Ship that this part is installed into
+        """
+        __tablename__ = 'ship_part'
+        id = Column(Integer, primary_key=True)
+        info_id = Column(Integer, ForeignKey('ship_part_data.id'))
+        info = relationship('ShipPartData', backref='ship_parts')
+        condition = Column(Integer, nullable=False)
+        ship_id = Column(Integer, ForeignKey('ship.id'))
+        ship = relationship('Ship', backref='ship_parts')
+
+    class ShipPartData(Base):  # pylint: disable=unused-variable
+        """
+        Part that can be installed on a Ship
+
+        :name: Name of the ship type
+        :mean_price: Average price of the part
+        :standard_deviation: One standard deviation of the price data
+        :depreciation_rate: Rate at which the Commodity depreciates in value.
+        :storage: How much space this part adds to the ship.  Negative values subtract storage from the
+            Ship.
+        :categories: Set of categories that the commodity belongs to
+        :ship_parts: List of this ship parts which are installed into ships
+        """
+        __tablename__ = 'ship_part_data'
+        id = Column(Integer, primary_key=True)
+        name = Column(String, unique=True, nullable=False)
+        mean_price = Column(Integer, nullable=False)
+        standard_deviation = Column(Integer, nullable=False)
+        depreciation_rate = Column(Integer, nullable=False)
+        storage = Column(Integer, nullable=False)
+
+    class EventData(Base):  # pylint: disable=unused-variable
+        """
+        An Event that affects the price of Commodities
+
+        :msg: Event description to tell the user what has happened
+        :adjustment: The amount a price will rise or fall in response to the Event
+        :affects: The EventConditions that a Commodity must meet for its price to be affected by this
+            Event
+        """
+        __tablename__ = 'event_data'
+        id = Column(Integer, primary_key=True)
+        msg = Column(String, nullable=False)
+        adjustment = Column(Integer, nullable=False)
+
+    class EventCondition(Base):  # pylint: disable=unused-variable
+        """
+        Condition for the event
+
+        :event: The Event for which this is a condition
+        :categories: Records in the ConditionCategory table which relate the CommodityTypes that are
+            affected by the Event
+        """
+        __tablename__ = 'event_condition'
+        id = Column(Integer, primary_key=True)
+        event_id = Column(ForeignKey('event_data.id'))
+        event = relationship('EventData', backref='affects')
+        _categories = relationship('ConditionCategory', back_populates='condition',
+                                  collection_class=set)
+        categories = association_proxy('_categories', 'category')
+
+    class ConditionCategory(Base):  # pylint: disable=unused-variable
+        """
+        A CommodityType to match for Events
+
+        Events apply to any satisfied EventConditions.  An individual EventCondition is satisfied
+        when all of the CommodityTypes it references match.  ConditionCategory holds those
+        CommodityTypes.
+
+        :condition: The EventCondition to which this Category belongs
+        :category: The ConmmodityType that this references.
+        """
+        __tablename__ = 'condition_category'
+        id = Column(Integer, primary_key=True)
+        condition_id = Column(ForeignKey('event_condition.id'))
+        condition = relationship('EventCondition', back_populates='_categories')
+        category = Column(Enum(base_types.CommodityType))
+        __table_args__ = (UniqueConstraint('condition_id', 'category',
+                                           name='condition_category_unique'),)
+
+    class Player(Base):  # pylint: disable=unused-variable
+        """
+        Player data
+
+        :name: Name of the player
+        :password: Password of the player
+        :properties: Properties owned by the Player
+        :ships: Ships owned by the Player
+        :cash: Amount of cash the Player has on their person
+        """
+        __tablename__ = 'player'
+        id = Column(Integer, primary_key=True)
+        name = Column(String, unique=True, nullable=False)
+        password = Column(String, nullable=False)
+        cash = Column(Integer, nullable=False)
+
+    class World(Base):  # pylint: disable=unused-variable
+        """
+        Global information about the world
+
+        :time: Number of ticks since the world started
+        """
+        __tablename__ = 'world'
+        id = Column(Integer, primary_key=True)
+        time = Column(Integer, unique=True, nullable=False)
+
     # pylint: enable=too-few-public-methods
+
+    f_locals = locals()
+    for name in SCHEMA_NAMES:
+        m_globals[name] = f_locals[name]
 
 
 def _init_systems(session, systems):
