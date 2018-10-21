@@ -21,40 +21,6 @@ def setup_base_types(datadir, clean_context):
 
 # Tests for voluptuous validators
 class TestValidators:
-    def test_known_celestial(self):
-        data = {'systems': [
-                   {'celestials': [
-                        {'name': 'Mercury'},
-                        {'name': 'Venus'},
-                    ],
-                    'locations': [
-                        {'celestial': 'Mercury'},
-                        {'celestial': 'Mercury'},
-                        {'celestial': 'Venus'},
-                    ],
-                },
-               ]}
-        assert data_def.known_celestial(data) == data
-
-    def test_known_celestial_failure(self):
-        data = {'systems': [
-                   {'celestials': [
-                        {'name': 'Mercury'},
-                        {'name': 'Venus'},
-                    ],
-                    'locations': [
-                        {'celestial': 'Mercury'},
-                        {'celestial': 'Venus'},
-                        {'celestial': 'Earth'},
-                    ],
-                },
-               ]}
-
-        with pytest.raises(voluptuous.error.Invalid) as excinfo:
-            validated_output = data_def.known_celestial(data)
-
-        assert excinfo.value.args[0] == 'locations must belong to a known celestial, not Earth'
-
     @pytest.mark.parametrize("locations", [{'celestial': 'Venus'},
                                            # Fine to have two locations on the same celestial
                                            {'celestial': 'Mercury'},
