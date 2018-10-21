@@ -51,6 +51,16 @@ engine = None
 # Many of these data classes have dynamic data associated with them.  These are stored in classes
 # without the Data suffix.
 
+class PricedItem:
+    """
+    Mixin for any Schema class which can be bought and sold
+    """
+    name = Column(String, unique=True, nullable=False)
+    mean_price = Column(Integer, nullable=False)
+    standard_deviation = Column(Integer, nullable=False)
+    depreciation_rate = Column(Integer, nullable=False)
+
+
 # All Schemas are loaded dynamically so we can also clear and reload them
 SCHEMA_NAMES = ('SystemData', 'CelestialData', 'LocationData', 'Commodity', 'CommodityData',
                 'CommodityCategory', 'Ship', 'ShipData', 'Cargo', 'Property', 'PropertyData',
@@ -167,7 +177,7 @@ def init_schema(datadir):
         last_update = Column(Integer, nullable=False)
         __table_args__ = (UniqueConstraint('info_id', 'location_id', name='commodity_unique'),)
 
-    class CommodityData(Base):  # pylint: disable=unused-variable
+    class CommodityData(PricedItem, Base):  # pylint: disable=unused-variable
         """
         Fundamental market data about a commodity
 
@@ -181,10 +191,6 @@ def init_schema(datadir):
         """
         __tablename__ = 'commodity_data'
         id = Column(Integer, primary_key=True)
-        name = Column(String, unique=True, nullable=False)
-        mean_price = Column(Integer, nullable=False)
-        standard_deviation = Column(Integer, nullable=False)
-        depreciation_rate = Column(Integer, nullable=False)
         volume = Column(Integer, nullable=False)
         categories = relationship('CommodityCategory', back_populates='commodity',
                                   collection_class=set)
@@ -224,7 +230,7 @@ def init_schema(datadir):
         location_id = Column(Integer, ForeignKey('location_data.id'), nullable=False)
         location = relationship('LocationData', backref='ships')
 
-    class ShipData(Base):  # pylint: disable=unused-variable
+    class ShipData(PricedItem, Base):  # pylint: disable=unused-variable
         """
         Fundamental data about all Ships of a class
 
@@ -238,10 +244,6 @@ def init_schema(datadir):
         """
         __tablename__ = 'ship_data'
         id = Column(Integer, primary_key=True)
-        name = Column(String, unique=True, nullable=False)
-        mean_price = Column(Integer, nullable=False)
-        standard_deviation = Column(Integer, nullable=False)
-        depreciation_rate = Column(Integer, nullable=False)
         storage = Column(Integer, nullable=False)
         weapon_mounts = Column(Integer, nullable=False)
 
@@ -281,7 +283,7 @@ def init_schema(datadir):
         owner_id = Column(Integer, ForeignKey('player.id'), nullable=False)
         owner = relationship('Player', backref='properties')
 
-    class PropertyData(Base):  # pylint: disable=unused-variable
+    class PropertyData(PricedItem, Base):  # pylint: disable=unused-variable
         """
         Data about all Properties of a certain type
 
@@ -294,10 +296,6 @@ def init_schema(datadir):
         """
         __tablename__ = 'property_data'
         id = Column(Integer, primary_key=True)
-        name = Column(String, unique=True, nullable=False)
-        mean_price = Column(Integer, nullable=False)
-        standard_deviation = Column(Integer, nullable=False)
-        depreciation_rate = Column(Integer, nullable=False)
         storage = Column(Integer, nullable=False)
 
     class ShipPart(Base):  # pylint: disable=unused-variable
@@ -316,7 +314,7 @@ def init_schema(datadir):
         ship_id = Column(Integer, ForeignKey('ship.id'))
         ship = relationship('Ship', backref='ship_parts')
 
-    class ShipPartData(Base):  # pylint: disable=unused-variable
+    class ShipPartData(PricedItem, Base):  # pylint: disable=unused-variable
         """
         Part that can be installed on a Ship
 
@@ -331,10 +329,6 @@ def init_schema(datadir):
         """
         __tablename__ = 'ship_part_data'
         id = Column(Integer, primary_key=True)
-        name = Column(String, unique=True, nullable=False)
-        mean_price = Column(Integer, nullable=False)
-        standard_deviation = Column(Integer, nullable=False)
-        depreciation_rate = Column(Integer, nullable=False)
         storage = Column(Integer, nullable=False)
 
     class EventData(Base):  # pylint: disable=unused-variable
