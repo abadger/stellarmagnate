@@ -579,11 +579,7 @@ def create_savegame(savegame, datadir):
     global engine
 
     savegame_uri = f'sqlite:///{savegame}'
-    try:
-        engine = create_engine(savegame_uri)
-    except sqlalchemy.exc.ArgumentError as e:
-        flog.trace('error').fields(savegame=savegame_uri).error('Savegame uri was invalid')
-        raise MagnateInvalidSaveGame(f'"{savegame_uri}" was malformed {e}')
+    engine = create_engine(savegame_uri)
 
     game_data = data_def.load_data_definitions(datadir)
     init_savegame(engine, game_data)
@@ -612,11 +608,7 @@ def load_savegame(savegame, datadir):
     global engine
 
     savegame_uri = f'sqlite:///{savegame}'
-    try:
-        engine = create_engine(savegame_uri)
-    except sqlalchemy.exc.ArgumentError as e:
-        flog.trace('error').fields(savegame=savegame_uri).error('Savegame uri was invalid')
-        raise MagnateInvalidSaveGame(f'"{savegame_uri}" was malformed {e}')
+    engine = create_engine(savegame_uri)
 
     # All save games get upgraded to the latest version on load
     '''
