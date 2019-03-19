@@ -23,11 +23,13 @@ from collections.abc import MutableMapping
 
 import yaml
 from kitchen.iterutils import iterate
-from twiggy import log
 from voluptuous import All, Length, Schema, MultipleInvalid
 
 from .errors import MagnateConfigError
+from .logging import log
 
+
+mlog = log.fields(mod=__name__)
 
 STATE_DIR = os.path.expanduser('~/.stellarmagnate')
 USER_DIR = os.path.expanduser('~/.stellarmagnate')
@@ -104,15 +106,18 @@ def _find_config(conf_files=tuple()):
     :returns: a list of config_files.  Configuration in the last files in the
         list should override the first ones.
     """
+    mlog.debug('Entered _find_config()')
+
     paths = itertools.chain((SYSTEM_CONFIG_FILE, USER_CONFIG_FILE),
                             (os.path.expanduser(os.path.expandvars(p)) for
-                                p in iterate(conf_files)))
+                             p in iterate(conf_files)))
 
     config_files = []
     for conf_path in paths:
         if os.path.exists(conf_path):
             config_files.append(conf_path)
 
+    mlog.fields(cfg_files=config_files).debug('Leaving _find_config()')
     return config_files
 
 
@@ -129,6 +134,8 @@ def _merge_mapping(merge_to, merge_from, inplace=False):
     :returns: the combined dictionary.  If inplace is True, then this is the same as merge_to after
         calling this function
     """
+    mlog.debug('Entered _merge_mapping()')
+
     if inplace:
         dest = merge_to
     else:
@@ -142,6 +149,7 @@ def _merge_mapping(merge_to, merge_from, inplace=False):
         else:
             dest[key] = val
 
+    mlog.debug('Leaving _merge_mapping()')
     return dest
 
 
@@ -156,6 +164,8 @@ def _read_config(paths, testing=False):
     :rtype: ConfigObj, a dict-like object with helper methods for use as a config store
     :returns: Return the configuration dict
     """
+    mlog.debug('Entered _read_config()')
+
     cfg = yaml.safe_load(DEFAULT_CONFIG)
     CONFIG_SCHEMA(cfg)
 
@@ -178,6 +188,7 @@ def _read_config(paths, testing=False):
         _merge_mapping(cfg, testing_cfg, inplace=True)
         CONFIG_SCHEMA(cfg)
 
+    mlog.debug('leaving _read_config()')
     return cfg
 
 
@@ -193,6 +204,7 @@ def read_config(conf_files=tuple(), testing=False):
     :rtype: ConfigObj, a dict-like object with helper methods for use as a config store
     :returns: Return the configuration dict
     """
+    mlog.debug('Entered read_config()')
     cfg_paths = _find_config(conf_files)
     return _read_config(cfg_paths, testing)
 
@@ -203,5 +215,7 @@ def write_default_config(filename):
 
     :arg filename: The file path to write the config to.
     """
+    mlog.debug('Entered write_default_config()')
     with open(filename, 'w') as f:
         f.write(DEFAULT_CONFIG)
+    mlog.debug('config written')

@@ -20,10 +20,14 @@ Set a savegame file for the program to use.
 
 import os
 
-from twiggy import log
 
 from ..errors import MagnateNoSaveGame
+from ..logging import log
 from . import db
+
+
+mlog = log.fields(mod=__name__)
+
 
 #
 # Upgrading
@@ -36,10 +40,10 @@ from . import db
 
 def init_game(savegame, datadir):
     """Initialize a game from a savegame file"""
-    flog = log.name(f'{__file__}:init_game')
+    flog = mlog.name(func='init_game')
     flog.fields(savegame=savegame, datadir=datadir).debug('Enter init_game')
+
     # Finish initializing dynamic parts of the schema
-    flog.debug('Attempt to initialize db schema')
     db.init_schema(datadir)
 
     savegame = os.path.abspath(savegame)

@@ -28,11 +28,14 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy_repr import RepresentableBase
-from twiggy import log
 
 from ..errors import MagnateInvalidSaveGame, MagnateNoSaveGame
+from ..logging import log
 from . import base_types
 from . import data_def
+
+
+mlog = log.fields(mod=__name__)
 
 # Stellar Magnate ships with certain static data in yaml files
 # This data is loaded into a database whose schema is defined below
@@ -83,7 +86,8 @@ def init_schema(datadir):
 
     :datadir: Directory for Stellar Magnate's data so that base_type data can be loaded.
     """
-    flog = log.name(f'{__file__}:init_schema')
+    flog = mlog.fields(func='init_schema')
+    flog.fields(datadir=datadir).debug('Entered init_schema')
 
     # We always initialize the base game types first to avoid chicken and egg problems attempting to
     # validate loading of other data and setting up the save game schema
@@ -106,6 +110,7 @@ def init_schema(datadir):
         flog.debug('Schema already loaded, returning without changes')
         return
 
+    flog.debug('Defining Schema')
     global Base
     Base = declarative_base(cls=RepresentableBase)
 
@@ -408,6 +413,7 @@ def init_schema(datadir):
 
     # pylint: enable=too-few-public-methods
 
+    flog.debug('Saving dynamic Schema to the global level')
     f_locals = locals()
     for name in SCHEMA_NAMES:
         m_globals[name] = f_locals[name]
@@ -559,16 +565,19 @@ def init_savegame(engine, game_data):
 
 def create_savegame(savegame, datadir):
     """Create a new savegame file"""
-    flog = log.name('{__file__}:create_savegame')
+    flog = mlog.fields(func='create_savegame')
+    flog.fields(savegame=savegame, datadir=datadir).debug('Entering create_savegame')
 
     global engine
 
     savegame_uri = f'sqlite:///{savegame}'
+    flog.debug('Associating savegame with global `engine` var')
     engine = create_engine(savegame_uri)
 
     game_data = data_def.load_data_definitions(datadir)
     init_savegame(engine, game_data)
 
+    flog.debug('Returning engine')
     return engine
 
 
@@ -585,7 +594,8 @@ def load_savegame(savegame, datadir):
     :raises MagnateInvalidSaveGame: If the savegame exists but cannot be processed.
     :returns: The SQLAlchemy engine referencing the file
     """
-    flog = log.name(f'{__file__}:load_savegame')
+    flog = log.fields(func='load_savegame')
+    flog.debug(savegame=savegame, datadir=datadir).debug('Entering load_savegame')
 
     if not os.path.exists(savegame):
         raise MagnateNoSaveGame(f'{savegame} does not point to a file')
@@ -593,6 +603,7 @@ def load_savegame(savegame, datadir):
     global engine
 
     savegame_uri = f'sqlite:///{savegame}'
+    flog.debug('Associating savegame with global `engine` var')
     engine = create_engine(savegame_uri)
 
     # All save games get upgraded to the latest version on load
@@ -606,4 +617,5 @@ def load_savegame(savegame, datadir):
         raise MagnateInvalidSaveGame(f'{savegame} is not a valid save file')
     '''
 
+    flog.debug('Returning engine')
     return engine

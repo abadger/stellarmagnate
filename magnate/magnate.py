@@ -1,5 +1,5 @@
 # Stellar Magnate - A space-themed commodity trading game
-# Copyright (C) 2016-2017 Toshio Kuratomi <toshio@fedoraproject.org>
+# Copyright (C) 2016-2019 Toshio Kuratomi <toshio@fedoraproject.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -29,7 +29,6 @@ import jsonschema
 import twiggy
 from pubmarine import PubPen
 from straight.plugin import load
-from twiggy import log
 
 try:
     from yaml import CLoader as Loader
@@ -38,12 +37,16 @@ except ImportError:
 
 from .config import read_config
 from .dispatcher import Dispatcher
+from .logging import log
 from .market import CommodityData, LocationData, SystemData
 from .market import Commodity, Market
 from .release import __version__
 from .ship import ShipData, Ship
 from .ui.api import UserInterface
 #from .user import User
+
+
+mlog = log.fields(mod=__name__)
 
 
 class User:
@@ -124,9 +127,6 @@ class Magnate:
     This handles initializing and setting up the game client.
     """
     def __init__(self):
-        # Temporarily setup twiggy logging with defaults until we can get real configuration
-        twiggy.quick_setup()
-
         # Parse command line arguments
         args = _parse_args(sys.argv)
 
@@ -305,5 +305,5 @@ class Magnate:
             user_interface = UIClass(self.pubpen, self.cfg['ui_args'])  # pylint: disable=undefined-loop-variable
             return user_interface.run()
         except Exception as e:
-            log.trace('error').error('Exception raised while running the user interface')
+            mlog.trace('error').error('Exception raised while running the user interface')
             raise

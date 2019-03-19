@@ -20,7 +20,6 @@ import enum
 import os
 from functools import partial
 
-from twiggy import log
 import voluptuous as v
 from voluptuous.humanize import validate_with_humanized_errors as v_validate
 
@@ -29,6 +28,10 @@ try:  # pragma: no cover
 except ImportError:  # pragma: no cover
     from yaml import SafeLoader as Loader
 
+from ..logging import log
+
+
+mlog = log.fields(mod=__name__)
 
 # Enums that are created at runtime and then used with the database.  See the
 # data/base/stellar-types.yml file if you suspect this list is out of date
@@ -44,7 +47,7 @@ OrderStatusType = None
 
 def type_name(value):
     """Validate that the names of types follow our conventions"""
-    flog = log.name(f'{__file__}:type_name')
+    flog = mlog.fields(func='type_name')
     flog.fields(value=value).debug('validate that type_name follows convention')
 
     if not isinstance(value, str):
@@ -61,7 +64,7 @@ def type_name(value):
 
 def _generic_types_validator(type_enum, value):
     """Validate that a string is valid in a :class:`enum.Enum` and transform it into the enum"""
-    flog = log.name(f'{__file__}:_generic_types_validator for {type_enum}')
+    flog = mlog.fields(func=f'_generic_types_validator', type_enum=type_enum)
     flog.fields(type_enum=type_enum, value=value).debug('validate and transform into an enum value')
 
     try:
@@ -89,19 +92,19 @@ def load_base_types(datadir):
     :arg datadir: The data directory to find the types file
     :returns: A list of types
     """
-    flog = log.name(f'{__file__}:load_base_types')
-    flog.debug('Entered load_base_types')
+    flog = mlog.fields(func='load_base_types')
+    flog.fields(datadir=datadir).debug('Entered load_base_types')
 
     data_file = os.path.join(datadir, 'base', 'stellar-types.yml')
 
-    flog = flog.fields(filename=data_file)
-    flog.debug('data_file path constructed')
+    with_file_log = flog.fields(filename=data_file)
+    with_file_log.debug('constructed data_file path {data_file}', data_file=data_file)
 
-    flog.debug('Opening data_file')
+    with_file_log.debug('Opening data_file')
     with open(data_file, 'r') as data_fh:
-        flog.debug('reading data_file')
+        with_file_log.debug('reading data_file')
         yaml_data = data_fh.read()
-        flog.fields(yaml=yaml_data).debug('parsing yaml string')
+        with_file_log.fields(yaml=yaml_data).debug('parsing yaml string')
         loader = Loader(yaml_data)
         data = loader.get_single_data()
 
@@ -121,11 +124,11 @@ def init_base_types(datadir):
     **Side effects**: This function initializes the global Type variables which are Python Enums for
     various data types (Types of Commodities, Types of Locations, etc).  Since it modifies module
     globals it needs to be run early, before any threading.  The Type variables are used by
-    everything else in savegames so it should be run as one of the first things upon accessing
-    a savegame.
+    everything else in savegames so it should be run as one of the first things upon accessing a
+    savegame.
     """
-    flog = log.name('{__file__}:init_base_types')
-    flog.debug('Entered init_base_types')
+    flog = mlog.fields(func='init_base_types')
+    flog.fields(datadir=datadir).debug('Entered init_base_types')
 
     m_globals = globals()
 
@@ -134,7 +137,7 @@ def init_base_types(datadir):
             if m_globals[name] is None:
                 break
     else:
-        flog.debug('Enums already created.  Exiting init_base_types early')
+        flog.debug('base_types Enums already created.  Exiting init_base_types early')
         return
 
     base_type_data = load_base_types(datadir)
