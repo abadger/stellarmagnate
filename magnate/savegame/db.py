@@ -595,7 +595,7 @@ def load_savegame(savegame, datadir):
     :returns: The SQLAlchemy engine referencing the file
     """
     flog = log.fields(func='load_savegame')
-    flog.debug(savegame=savegame, datadir=datadir).debug('Entering load_savegame')
+    flog.fields(savegame=savegame, datadir=datadir).debug('Entering load_savegame')
 
     if not os.path.exists(savegame):
         raise MagnateNoSaveGame(f'{savegame} does not point to a file')

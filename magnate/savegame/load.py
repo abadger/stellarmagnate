@@ -40,7 +40,7 @@ mlog = log.fields(mod=__name__)
 
 def init_game(savegame, datadir):
     """Initialize a game from a savegame file"""
-    flog = mlog.name(func='init_game')
+    flog = mlog.fields(func='init_game')
     flog.fields(savegame=savegame, datadir=datadir).debug('Enter init_game')
 
     # Finish initializing dynamic parts of the schema
