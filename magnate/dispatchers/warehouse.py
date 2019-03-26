@@ -14,18 +14,20 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Dispatchers handle all of the core-side callbacks that respond to events.
+*** Change so that location is a parameter
+.. py:function:: query.warehouse.{location}.info()
 
-These are light wrappers that call the objcets which do the real work.  This way all the callbacks
-are here for ease of discovery but the work is performed by objects which also interact with the data.
+    Emitted to retrieve a complete record of the cargoes being held in
+    a location's warehouse.
 """
-import straight.plugin
 
 from __main__ import magnate
 
 
-def register_event_handlers():
+def get_warehouse_data(location):
+    pass
+
+
+def register_event_handlers(pubpen):
     """Register event handlers"""
-    dispatchers = straight.plugin.load('magnate.dispatchers')
-    for module in dispatchers:
-        module.register_event_handlers(magnate.pubpen)
+    pubpen.subscribe('query.warehouse.info', get_warehouse_data)
