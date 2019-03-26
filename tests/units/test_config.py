@@ -4,6 +4,7 @@
 import os.path
 from collections.abc import MutableMapping
 
+import passlib.context
 import pytest
 import twiggy
 
@@ -76,7 +77,7 @@ class Test_FindConfig:
 
 
 class Test_ReadConfig:
-    cfg_keys = frozenset(('data_dir', 'logging', 'state_dir', 'ui_plugin', 'use_uvloop'))
+    cfg_keys = frozenset(('authentication', 'data_dir', 'logging', 'state_dir', 'ui_plugin', 'use_uvloop'))
 
     ui_and_data_cfg = """
     # This is a sample config file
@@ -205,6 +206,13 @@ class TestTwiggyConfig:
         mocker.patch('builtins.open', m)
 
         twiggy.dict_config(cfg['logging'])
+
+
+class TestPasslibConfig:
+    """Test that our configuration of twiggy is valid"""
+    def test_passlib_smoketest(self, mocker):
+        cfg = c._read_config(tuple())
+        passlib.context.CryptContext(**cfg['authentication']['passlib'])
 
 
 class TestReadConfig:

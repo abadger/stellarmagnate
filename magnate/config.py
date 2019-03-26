@@ -71,12 +71,13 @@ logging:
       output_name: logfile
       filters: []
 
-# Configuration of authentication.  This is given directly to passlib
-# See the passlib documentation for details:
-# https://passlib.readthedocs.io/en/stable/narr/context-tutorial.html#loading-saving-a-cryptcontext
 authentication:
-    schemes: ["pbkdf2_sha512", "sha512_crypt", "bcrypt", "argon2"]
-    deprecated: []
+    # Configuration of authentication.  This is given directly to passlib
+    # See the passlib documentation for details:
+    # https://passlib.readthedocs.io/en/stable/narr/context-tutorial.html#loading-saving-a-cryptcontext
+    passlib:
+        schemes: ["pbkdf2_sha512", "sha512_crypt", "bcrypt", "argon2"]
+        deprecated: []
 
 """.format(data_dir='/usr/share/stellarmagnate', log_file=LOG_FILE, state_dir=STATE_DIR)
 
@@ -234,8 +235,8 @@ def write_default_config(filename):
 
     :arg filename: The file path to write the config to.
     """
-    flog = mlog.fields(func='Entering write_default_config()')
-    flog.fields(filename=filename).info('Entered write_default_config()')
+    flog = mlog.fields(func='write_default_config')
+    flog.fields(filename=filename).info('Entering write_default_config()')
 
     with open(filename, 'w') as f:
         f.write(DEFAULT_CONFIG)

@@ -38,15 +38,27 @@
 
 from __main__ import magnate
 
-from .errors import MagnateAuthError
+from ..errors import MagnateAuthError
+from ..logging import log
+
+
+mlog = log.fields(mod=__name__)
 
 
 def login(username, password):
+    flog = mlog.fields(func='login')
+    flog.fields(username=username, password='*OMITTED*').debug('Entered login')
+
     try:
         magnate.login(username, password)
-        magnate.pubpen.publish('user.login_succes', username)
     except MagnateAuthError as e:
+        flog.info(f'Faled to authenticate {username}')
         magnate.pubpen.publish('user.login_failure', username, reason=str(e))
+    else:
+        flog.info(f'Authenticated as {username}')
+        magnate.pubpen.publish('user.login_succes', username)
+
+    flog.debug('Leaving login')
 
 
 def create_user(username, password):

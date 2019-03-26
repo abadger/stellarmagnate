@@ -19,13 +19,12 @@
 
 import argparse
 import asyncio
-import json
+import glob
 import os
 import os.path
 import sys
 from collections import OrderedDict
 
-import jsonschema
 import twiggy
 from pubmarine import PubPen
 from straight.plugin import load
@@ -35,56 +34,18 @@ try:
 except ImportError:
     from yaml import Loader
 
+from .auth import AccountDB
 from .config import read_config
-from .dispatcher import Dispatcher
+from .errors import MagnateAuthError
 from .logging import log
-from .market import CommodityData, LocationData, SystemData
-from .market import Commodity, Market
+from .market import Commodity, CommodityData, LocationData, Market, SystemData
+from .player import Player
 from .release import __version__
 from .ship import ShipData, Ship
 from .ui.api import UserInterface
-#from .user import User
 
 
 mlog = log.fields(mod=__name__)
-
-
-class User:
-    """A logged in user"""
-    def __init__(self, pubpen, username):
-        self.pubpen = pubpen
-        self.username = username
-        self._cash = 500
-        self.ship = None
-
-        self.pubpen.subscribe('query.user.info', self.handle_user_info)
-
-    def handle_user_info(self):
-        """Return all information about a user
-
-        :event user.info: All the information about the user
-        """
-        self.pubpen.publish('user.info', self.username, self.cash,
-                            self.ship.location.name)
-
-    @property
-    def cash(self):
-        """Property for retrieving user's cash"""
-        return self._cash
-
-    @cash.setter
-    def cash(self, new_cash):
-        """
-        Prevent user's cash from going below zero
-
-        :event user.cash.update: Publish when the user's cash changes.
-        """
-        if not isinstance(new_cash, int) or new_cash < 0:
-            raise ValueError('Invalid value of cash: {}'.format(new_cash))
-
-        old_cash = self._cash
-        self._cash = new_cash
-        self.pubpen.publish('user.cash.update', new_cash, old_cash)
 
 
 def _parse_args(args=tuple(sys.argv)):
@@ -149,87 +110,100 @@ class Magnate:
         # Attributes
         #
         self.pubpen = None
-        self.dispatcher = None
 
         # Instantiated attributes
+        self.accounts_db = None
         self.user = None
-        self.equipment = None
-        self.markets = None
-
-    def _load_data_definitions(self):
-        """
-        Parse the yaml file of base yaml objects and return the information
-
-        :arg file yaml_file: Open file object to read the yaml from
-        :returns: An array of Markets that the user can travel to.
-        """
-        data_file = os.path.join(self.cfg['data_dir'], 'base', 'stellar.yml')
-        schema_file = os.path.join(self.cfg['data_dir'], 'schema', 'stellar-schema.json')
-
-        loader = Loader(open(data_file).read())
-        data = loader.get_single_data()
-
-        schema = json.loads(open(schema_file).read())
-        jsonschema.validate(data, schema)
-
-        self.system_data = OrderedDict()
-        for system in data['system']:
-            self.system_data[system['name']] = SystemData(system['name'], None)
-
-            locations = OrderedDict()
-            for loc in system['location']:
-                locations[loc['name']] = LocationData(loc['name'], loc['type'], self.system_data[system['name']])
-            self.system_data[system['name']].locations = locations
-
-        # Commodities are anything that may be bought or sold at a particular
-        # location.  The UI may separate these out into separate pieces.
-        commodities = OrderedDict()
-        for commodity in data['cargo']:
-            commodities[commodity['name']] = CommodityData(commodity['name'],
-                                                           frozenset((commodity['type'], 'cargo')),
-                                                           commodity['mean_price'],
-                                                           commodity['standard_deviation'],
-                                                           commodity['depreciation_rate'],
-                                                           1,
-                                                           commodity['event'],
-                                                          )
-
-        for commodity in data['equipment']:
-            commodities[commodity['name']] = CommodityData(commodity['name'],
-                                                           frozenset((commodity['type'], 'equipment')),
-                                                           commodity['mean_price'],
-                                                           commodity['standard_deviation'],
-                                                           commodity['depreciation_rate'],
-                                                           commodity['holdspace'],
-                                                           commodity['event'],
-                                                          )
-
-        for commodity in data['property']:
-            commodities[commodity['name']] = CommodityData(commodity['name'],
-                                                           frozenset(('property',)),
-                                                           commodity['mean_price'],
-                                                           commodity['standard_deviation'],
-                                                           commodity['depreciation_rate'],
-                                                           0,
-                                                           commodity['event'],
-                                                          )
-        self.commodity_data = commodities
-
-        ### FIXME: Put ships into commodities too.
-        ships = OrderedDict()
-        for ship in data['ship']:
-            ships[ship['name']] = ShipData(ship['name'], ship['mean_price'],
-                                           ship['standard_deviation'],
-                                           ship['depreciation_rate'],
-                                           ship['holdspace'],
-                                           ship['weaponmount'])
-        self.ship_data = ships
 
     def _load_save(self):
         """Load a save file"""
         ### FIXME: Need to load game from save file
         pass
 
+    def login(self, username, password):
+        """
+        Log a user into the game
+
+        :raises MagnateAuthError: if the username or password are incorrect
+        """
+        if self.accounts_db.authenticate(username, password):
+            self.user = username
+        else:
+            raise MagnateAuthError(f'Incorrect credentials for {username}')
+
+    def create_user(self, username, password):
+        """Create a new user account"""
+        self.accounts_db.create_account(username, password)
+
+    def run(self):
+        """
+        Run the program.  This is the main entrypoint to the magnate client
+        """
+        flog = mlog.fields(func='Magnate.run')
+
+        # Create the statedir if it doesn't exist
+        if not os.path.exists(self.cfg['state_dir']):
+            os.makedirs(self.cfg['state_dir'])
+
+        # Reconfigure logging now that we have a state_dir where any log files will land in the
+        # default config
+        twiggy.dict_config(self.cfg['logging'])
+
+        auth_dir = os.path.join(self.cfg['state_dir'], 'auth')
+        if not os.path.exists(auth_dir):
+            os.makedirs(auth_dir)
+        self.accounts_db = AccountDB(os.path.join(auth_dir, 'authn.dbm'),
+                                     self.cfg['authentication']['passlib'])
+
+        ui_plugins = load('magnate.ui', subclasses=UserInterface)
+        for UIClass in ui_plugins:  # pylint: disable=invalid-name
+            if UIClass.__module__.startswith('magnate.ui.{}'.format(self.cfg['ui_plugin'])):
+                break
+        else:
+            flog.error('Unknown user ui: {}', self.cfg['ui_plugin'])
+            return 1
+
+        # Try using uvloop instead of the asyncio event loop
+        if self.cfg['use_uvloop']:
+            try:
+                import uvloop
+            except Exception as e:
+                flog.warning('Could not import uvloop.  Falling back on asyncio event'
+                             ' loop: {}', str(e))
+            else:
+                try:
+                    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+                except Exception as e:
+                    flog.warning('Could not set uvloop to be the event loop.  Falling back on'
+                                 ' asyncio event loop: {}', str(e))
+
+        loop = asyncio.get_event_loop()
+        self.pubpen = PubPen(loop)
+
+        #
+        # Callbacks
+        #
+
+        # Import of dispatcher has to be done after __init__() because it references
+        # __main__.magnate
+        from . import dispatcher
+
+        # Have dispatchers register to handle events
+        dispatcher.register_event_handlers()
+
+        self.pubpen.subscribe('query.game.list_save_games', self.handle_list_save_games)
+
+        # UIClass is always available because we'd have already returned (via
+        # the for-else) if UIClass was not defined
+        try:
+            user_interface = UIClass(self.pubpen, self.cfg['ui_args'])  # pylint: disable=undefined-loop-variable
+            flog.info('Starting user interface {}', self.cfg['ui_plugin'])
+            return user_interface.run()
+        except Exception as e:
+            flog.trace('error').error(f'Exception raised while running the user interface: {e}')
+            raise
+
+    ### FIXME: These go away.  Either moved or replaced by the savegame
     def _setup_markets(self):
         """Setup the stateful bits of markets"""
         self.markets = OrderedDict()
@@ -248,62 +222,9 @@ class Magnate:
         """
         return Ship(self, self.ship_data[ship_type], self.markets[location])
 
-    def login(self, username, password):
-        """Log a user into the game"""
-
-        if 'toshio' in username.lower():
-            # Game can begin in earnest now
-            self.user = User(self.pubpen, username)
-            self.user.ship = self.create_ship('Passenger', 'Earth')
-
-            self.pubpen.publish('user.login_success', username)
-            return self.user
-        else:
-            self.pubpen.publish('user.login_failure',
-                                'Unknown account: {}'.format(username))
-
-    def run(self):
-        """
-        Run the program.  This is the main entrypoint to the magnate client
-        """
-        # Create the statedir if it doesn't exist
-        if not os.path.exists(self.cfg['state_dir']):
-            os.makedirs(self.cfg['state_dir'])
-
-        twiggy.dict_config(self.cfg['logging'])
-
-        # Base data attributes
-        self._load_data_definitions()
-
-        ui_plugins = load('magnate.ui', subclasses=UserInterface)
-        for UIClass in ui_plugins:  #pylint: disable=invalid-name
-            if UIClass.__module__.startswith('magnate.ui.{}'.format(self.cfg['ui_plugin'])):
-                break
-        else:
-            print('Unknown user ui: {}'.format(self.cfg['ui_plugin']))
-            return 1
-
-        # Try using uvloop instead of the asyncio event loop
-        if self.cfg['use_uvloop']:
-            try:
-                import uvloop
-            except Exception:
-                print('Could not import uvloop.  Falling back on asyncio event loop')
-            try:
-                asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-            except Exception:
-                print('Could not set uvloop to be the event loop.  Falling back on asyncio event loop')
-
-        loop = asyncio.get_event_loop()
-        self.pubpen = PubPen(loop)
-        self._setup_markets()
-        self.dispatcher = Dispatcher(self, self.markets)
-
-        # UIClass is always available because we'd have already returned (via
-        # the for-else) if UIClass was not defined
-        try:
-            user_interface = UIClass(self.pubpen, self.cfg['ui_args'])  # pylint: disable=undefined-loop-variable
-            return user_interface.run()
-        except Exception as e:
-            mlog.trace('error').error('Exception raised while running the user interface')
-            raise
+    def handle_list_save_games(self):
+        """List the save games"""
+        savegames = []
+        for filename in glob.glob(os.path.join(self.cfg['state_dir'], '*.smg')):
+            savegames.append(savegame.load.savegame_info(filename))
+        self.pubpen.publish('game.')

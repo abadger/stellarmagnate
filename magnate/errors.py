@@ -23,6 +23,11 @@ class MagnateError(Exception):
     pass
 
 
+class MagnateAuthError(MagnateError):
+    """Error related to authentication"""
+    pass
+
+
 class MagnateConfigError(MagnateError):
     """Raised when processing config files"""
     pass
