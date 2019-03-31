@@ -3,7 +3,6 @@ import shutil
 
 import pytest
 import sqlalchemy
-from unittest.mock import MagicMock
 
 from magnate.errors import MagnateNoSaveGame
 from magnate.savegame import base_types

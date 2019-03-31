@@ -1,6 +1,7 @@
-import builtins
+# The idiom for unittests is to use classes for organization
+# pylint: disable=no-self-use
+
 import enum
-import os.path
 import re
 from unittest.mock import mock_open, patch
 

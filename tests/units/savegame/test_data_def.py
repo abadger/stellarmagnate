@@ -1,3 +1,6 @@
+# The idiom for unittests is to use classes for organization
+# pylint: disable=no-self-use
+
 import copy
 import os
 
