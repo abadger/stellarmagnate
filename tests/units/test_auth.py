@@ -1,8 +1,10 @@
+# The idiom for unittests is to use classes for organization
+# pylint: disable=no-self-use
+
 import dbm
 import os
 import os.path
 import stat
-from collections.abc import MutableMapping
 
 import pytest
 from passlib.hash import pbkdf2_sha512

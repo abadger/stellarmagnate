@@ -47,7 +47,8 @@ mlog = log.fields(mod=__name__)
 
 def login(username, password):
     flog = mlog.fields(func='login')
-    flog.fields(username=username, password='*OMITTED*').debug('Entered login')
+    # Bandit thinks that *OMITTED* is the password instead of non-logging of the password
+    flog.fields(username=username, password='*OMITTED*').debug('Entered login')  # nosec
 
     try:
         magnate.login(username, password)
