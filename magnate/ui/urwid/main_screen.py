@@ -122,8 +122,8 @@ class FinancialDisplay(urwid.WidgetWrap):
         blank = urwid.Text('This test page intentionally left blank')
         container = urwid.Filler(blank)
         outer_layout = urwid.LineBox(container, lline=None, blcorner='─',
-                               tlcorner='─', trcorner='\u252c',
-                               brcorner='\u2524')
+                                     tlcorner='─', trcorner='\u252c',
+                                     brcorner='\u2524')
         super().__init__(outer_layout)
         pass
 
@@ -140,8 +140,8 @@ class MainWindow(urwid.WidgetWrap):
         self.pubpen = pubpen
         self.display_stack = []
         self.blank = urwid.LineBox(urwid.SolidFill(' '), lline=None,
-                             blcorner='─', tlcorner='─',
-                             trcorner='\u252c', brcorner='\u2524')
+                                   blcorner='─', tlcorner='─',
+                                   trcorner='\u252c', brcorner='\u2524')
         self.background = urwid.WidgetPlaceholder(self.blank)
 
         super().__init__(self.background)
@@ -251,7 +251,6 @@ class MainWindow(urwid.WidgetWrap):
             self.push_display('GameMenuDialog')
         else:
             super().keypress(size, key)  # pylint: disable=not-callable
-        return
 
 
 class MainScreen(urwid.LineBox):

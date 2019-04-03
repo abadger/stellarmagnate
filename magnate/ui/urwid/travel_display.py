@@ -36,8 +36,8 @@ class TravelDisplay(urwid.WidgetWrap):
         self.listwalker = urwid.SimpleFocusListWalker([])
         box = urwid.ListBox(self.listwalker)
         outer_layout = urwid.LineBox(box, lline=None, blcorner='─',
-                               tlcorner='─', trcorner='\u252c',
-                               brcorner='\u2524')
+                                     tlcorner='─', trcorner='\u252c',
+                                     brcorner='\u2524')
         super().__init__(outer_layout)
         self.pubpen.subscribe('ship.destinations', self.handle_new_destinations)
 
@@ -73,8 +73,9 @@ class TravelDisplay(urwid.WidgetWrap):
         if key in self.keypress_map:
             destination = self.keypress_map[key]
             if self._ship_moved_sub_id is None:
-                self._ship_moved_sub_id = self.pubpen.subscribe('ship.moved', self.handle_new_location)
+                self._ship_moved_sub_id = self.pubpen.subscribe('ship.moved',
+                                                                self.handle_new_location)
             self.pubpen.publish('action.ship.movement_attempt', destination)
-            return
+            return None
         super().keypress(size, key)  #pylint: disable=not-callable
         return key

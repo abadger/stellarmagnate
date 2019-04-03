@@ -54,17 +54,20 @@ class PortDisplay(CommodityCatalog):
     #
     def handle_ship_info(self, ship_type, free_space, filled_space, *args): #pylint: disable=unused-argument
         """Update the display with total hold space owned"""
-        self.auxiliary_cols[self.owned_col_idx].data_map['Cargo Module (100 units)'] = (free_space + filled_space) // 100
+        self.auxiliary_cols[self.owned_col_idx]\
+            .data_map['Cargo Module (100 units)'] = (free_space + filled_space) // 100
         self._construct_commodity_list(self.auxiliary_cols[self.owned_col_idx].data_map)
 
     def handle_cargo_update(self, cargo, free_space, filled_space): #pylint: disable=unused-argument
         """Update the display with total hold space owned"""
-        self.auxiliary_cols[self.owned_col_idx].data_map['Cargo Module (100 units)'] = (free_space + filled_space) // 100
+        self.auxiliary_cols[self.owned_col_idx]\
+            .data_map['Cargo Module (100 units)'] = (free_space + filled_space) // 100
         self._construct_commodity_list(self.auxiliary_cols[self.owned_col_idx].data_map)
 
     def handle_equip_update(self, holdspace):
         """Update the display with total hold space owned"""
-        self.auxiliary_cols[self.owned_col_idx].data_map['Cargo Module (100 units)'] = (holdspace) // 100
+        self.auxiliary_cols[self.owned_col_idx]\
+            .data_map['Cargo Module (100 units)'] = (holdspace) // 100
         self._construct_commodity_list(self.auxiliary_cols[self.owned_col_idx].data_map)
 
     def handle_new_warehouse_info(self, warehouse_info):

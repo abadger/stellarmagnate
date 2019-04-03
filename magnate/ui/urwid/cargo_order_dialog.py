@@ -90,8 +90,10 @@ class CargoOrderDialog(OrderDialog):
         ### TODO: Recalculate warehouse space
         pass
 
-        #self._sub_ids['warehouse_info'] = self.pubpen.subscribe('warehouse.{}.info', self.handle_warehouse_info)
-        #self._sub_ids['warehouse'] = self.pubpen.subscribe('warehouse.{}.cargo.update', self.handle_cargo_update)
+        #self._sub_ids['warehouse_info'] = self.pubpen.subscribe('warehouse.{}.info',
+        #                                                        self.handle_warehouse_info)
+        #self._sub_ids['warehouse'] = self.pubpen.subscribe('warehouse.{}.cargo.update',
+        #                                                   self.handle_cargo_update)
 
     def handle_buy_sell_toggle(self, radio_button, old_state):
         """Change interface slightly depending on whether we're buying or selling"""
@@ -100,11 +102,13 @@ class CargoOrderDialog(OrderDialog):
         ### FIXME: Implement warehouse
         if self.buy_button.state:
             self.hold_box.set_label('Hold: {} Free Space'.format(format_number(self.free_space)))
-            #self.warehouse_box.set_label('Warehouse: {}'.format(format_number(self.free_warehouse)))
+            #self.warehouse_box.set_label('Warehouse: {}'.format(
+            #    format_number(self.free_warehouse)))
         else:
-            self.hold_box.set_label('Hold: {} {}'.format(format_number(self.commodity_in_hold),
-                                                         self.order.commodity))
-            #self.warehouse_box.set_label('Warehouse: {}'.format(format_number(self.commodity_in_warehouse)))
+            self.hold_box.set_label('Hold: {} {}'.format(
+                format_number(self.commodity_in_hold), self.order.commodity))
+            #self.warehouse_box.set_label('Warehouse: {}'.format(
+            #    format_number(self.commodity_in_warehouse)))
 
     def validate_storage_toggle(self, checkbox, old_state):
         """Make sure that at least one of the hold/warehouse checkboxes is always checked"""
@@ -185,10 +189,11 @@ class CargoOrderDialog(OrderDialog):
                     self.commodity_in_hold = manifest.quantity
 
             if self.buy_button.state is True:
-                self.hold_box.set_label('Hold: {} Free Space'.format(format_number(self.free_space)))
+                self.hold_box.set_label('Hold: {} Free Space'.format(
+                    format_number(self.free_space)))
             else:
-                self.hold_box.set_label('Hold: {} {}'.format(format_number(self.commodity_in_hold),
-                                                             commodity))
+                self.hold_box.set_label('Hold: {} {}'.format(
+                    format_number(self.commodity_in_hold), commodity))
 
             # Recalculate maximums
             self.validate_quantity()
@@ -204,10 +209,11 @@ class CargoOrderDialog(OrderDialog):
                 commodity = self.order.commodity
 
             if self.buy_button.state is True:
-                self.hold_box.set_label('Hold: {} Free Space'.format(format_number(self.free_space)))
+                self.hold_box.set_label('Hold: {} Free Space'.format(
+                    format_number(self.free_space)))
             else:
-                self.hold_box.set_label('Hold: {} {}'.format(format_number(self.commodity_in_hold),
-                                                             commodity))
+                self.hold_box.set_label('Hold: {} {}'.format(
+                    format_number(self.commodity_in_hold), commodity))
 
             # Recalculate maximums
             self.validate_quantity()
@@ -237,7 +243,8 @@ class EquipOrderDialog(OrderDialog):
         if self.order is None:
             return 0
 
-        if self.order.commodity.lower() in ('cargo module (100 units)', 'warehouse space (1000 units)'):
+        if (self.order.commodity.lower() in ('cargo module (100 units)',
+                                             'warehouse space (1000 units)')):
             return super().max_buy_quantity
 
         if self.order.commodity.lower() == 'laser array':
@@ -245,7 +252,8 @@ class EquipOrderDialog(OrderDialog):
             # Lasers depend on the amount of weapon mounts in the ships
             return 0
 
-        assert False, 'Unknown commodity %s' % self.order.commodity
+        # Unknown commodity
+        return 0
 
     @property
     def max_sell_quantity(self):
@@ -263,6 +271,9 @@ class EquipOrderDialog(OrderDialog):
             ### TODO: Handle lasers
             # lasers is total number of lasers on the ship
             return 0
+
+        # Unknown commodity
+        return 0
 
     #
     # Handlers for backend signals

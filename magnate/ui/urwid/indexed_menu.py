@@ -17,7 +17,7 @@
 Helpful code for creating menus in urwid
 """
 
-from collections import MutableMapping
+from collections.abc import MutableMapping
 import itertools
 from string import punctuation # pylint: disable=deprecated-module
 
@@ -32,7 +32,11 @@ class IndexedMenuEnumerator(MutableMapping):
     A selection is used by calling code to tell which entry was selected via
     a keypress
     """
-    idx_names = [str(c) for c in itertools.chain(range(1, 10), [0], (c for c in punctuation if c not in frozenset('(){}[]<>')))]
+    idx_names = [str(c) for c in itertools.chain(
+        range(1, 10),
+        [0],
+        (c for c in punctuation if c not in frozenset('(){}[]<>'))
+    )]
 
     def __init__(self):
         self.association = {}
@@ -69,7 +73,8 @@ class IndexedMenuEnumerator(MutableMapping):
         :arg name: The key
         :arg selection: The value
 
-        .. warning:: Unlike dict, this cannot be used to set new keys.  Use :meth:`set_next` instead.
+        .. warning:: Unlike dict, this cannot be used to set new keys.  Use
+            :meth:`set_next` instead.
         """
         if name not in self.association:
             raise KeyError('Can only create new keys for an IndexedMenuEnumerator via set_next()')

@@ -98,7 +98,7 @@ def enum_converter(EnumType, value):
     if not isinstance(value, EnumType):
         try:
             return EnumType[value]
-        except:
+        except Exception:
             # Let the validator catch this
             pass
     return value

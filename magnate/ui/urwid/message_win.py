@@ -38,7 +38,7 @@ class MessageWindow(urwid.WidgetWrap):
         self.message_list = urwid.SimpleFocusListWalker([])
         list_box = urwid.ListBox(self.message_list)
         message_win = urwid.LineBox(list_box, tline=None, lline=None, bline=None,
-                              trcorner='│', brcorner='│')
+                                    trcorner='│', brcorner='│')
         super().__init__(message_win)
         self.pubpen.subscribe('user.login_failure', partial(self.add_message, severity=MsgType.error))
         self.pubpen.subscribe('user.order_failure', partial(self.add_message, severity=MsgType.error))

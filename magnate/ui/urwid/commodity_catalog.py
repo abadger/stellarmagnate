@@ -69,7 +69,8 @@ class CommodityCatalog(urwid.WidgetWrap, metaclass=ABCWidget):
     @abstractmethod
     def __init__(self, pubpen, order_info_event, primary_title='Commodity',
                  auxiliary_cols=None, price_col_idx=0,
-                 types_traded=frozenset((CommodityType.cargo, CommodityType.property, CommodityType['ship parts']))):
+                 types_traded=frozenset((CommodityType.cargo, CommodityType.property,
+                                         CommodityType['ship parts']))):
         """
         CommodityCatalogs give the information needed to purchase or sell a commodity
 
@@ -129,22 +130,23 @@ class CommodityCatalog(urwid.WidgetWrap, metaclass=ABCWidget):
             auxiliaries[-1]._selectable = False  #pylint: disable=protected-access
 
         ui_columns = []
-        ui_columns.append(('weight', 2, urwid.LineBox(self.commodity, title_align='left',
-                                                title=self.commodity_col.title,
-                                                lline=None, tlcorner='─', trcorner='─',
-                                                rline=None, blcorner='─', brcorner='─')))
+        ui_columns.append(('weight', 2,
+                           urwid.LineBox(self.commodity, title_align='left',
+                                         title=self.commodity_col.title,
+                                         lline=None, tlcorner='─', trcorner='─',
+                                         rline=None, blcorner='─', brcorner='─')))
         if len(self.auxiliary_cols) > 1:
             for cat_col_idx, cat_col in enumerate(self.auxiliary_cols[:-1]):
                 ui_columns.append((cat_col.space,
                                    urwid.LineBox(auxiliaries[cat_col_idx], title_align='left',
-                                           title=cat_col.title,
-                                           lline=None, tlcorner='\u2500', blcorner='\u2500',
-                                           rline=None, trcorner='\u2500', brcorner='\u2500')))
+                                                 title=cat_col.title,
+                                                 lline=None, tlcorner='\u2500', blcorner='\u2500',
+                                                 rline=None, trcorner='\u2500', brcorner='\u2500')))
         ui_columns.append((self.auxiliary_cols[-1].space,
                            urwid.LineBox(auxiliaries[-1], title_align='left',
-                                   title=self.auxiliary_cols[-1].title,
-                                   lline=None, tlcorner='\u2500', blcorner='\u2500',
-                                   trcorner='\u252c', brcorner='\u2524')))
+                                         title=self.auxiliary_cols[-1].title,
+                                         lline=None, tlcorner='\u2500', blcorner='\u2500',
+                                         trcorner='\u252c', brcorner='\u2524')))
 
         self.market_display = urwid.Columns(ui_columns)
 

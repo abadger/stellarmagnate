@@ -20,7 +20,6 @@ import os
 
 from alembic.config import Config
 from alembic import command
-import sqlalchemy.exc
 from sqlalchemy import create_engine
 from sqlalchemy import Column, Enum, ForeignKey, Integer, String
 from sqlalchemy import UniqueConstraint
@@ -29,7 +28,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy_repr import RepresentableBase
 
-from ..errors import MagnateInvalidSaveGame, MagnateNoSaveGame
+from ..errors import MagnateNoSaveGame
 from ..logging import log
 from . import base_types
 from . import data_def
@@ -72,9 +71,9 @@ SCHEMA_NAMES = ('SystemData', 'CelestialData', 'LocationData', 'Commodity', 'Com
 
 
 # Give the Schemas an initial value of None
-m_globals = globals()
-for name in SCHEMA_NAMES:
-    m_globals[name] = None
+_m_globals = globals()
+for _name in SCHEMA_NAMES:
+    _m_globals[_name] = None
 
 
 def init_schema(datadir):
@@ -327,8 +326,8 @@ def init_schema(datadir):
         :mean_price: Average price of the part
         :standard_deviation: One standard deviation of the price data
         :depreciation_rate: Rate at which the Commodity depreciates in value.
-        :storage: How much space this part adds to the ship.  Negative values subtract storage from the
-            Ship.
+        :storage: How much space this part adds to the ship.  Negative values subtract storage
+            from the Ship.
         :categories: Set of categories that the commodity belongs to
         :ship_parts: List of this ship parts which are installed into ships
         """
@@ -342,8 +341,8 @@ def init_schema(datadir):
 
         :msg: Event description to tell the user what has happened
         :adjustment: The amount a price will rise or fall in response to the Event
-        :affects: The EventConditions that a Commodity must meet for its price to be affected by this
-            Event
+        :affects: The EventConditions that a Commodity must meet for its price to be affected by
+            this Event
         """
         __tablename__ = 'event_data'
         id = Column(Integer, primary_key=True)
@@ -363,7 +362,7 @@ def init_schema(datadir):
         event_id = Column(ForeignKey('event_data.id'))
         event = relationship('EventData', backref='affects')
         _categories = relationship('ConditionCategory', back_populates='condition',
-                                  collection_class=set)
+                                   collection_class=set)
         categories = association_proxy('_categories', 'category')
 
     class ConditionCategory(Base):  # pylint: disable=unused-variable

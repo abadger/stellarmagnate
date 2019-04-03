@@ -29,10 +29,12 @@ class TitleScreen(urwid.LineBox):
         self.pubpen = pubpen
 
         program_name = urwid.Text(release.PROGRAM_NAME, align='center')
-        copyright_name = urwid.Text('© {}, {}'.format(release.COPYRIGHT_YEAR, release.AUTHOR), align='center')
+        copyright_name = urwid.Text('© {}, {}'.format(release.COPYRIGHT_YEAR, release.AUTHOR),
+                                    align='center')
         license_name = urwid.Text(release.LICENSE, align='center')
 
-        screen = urwid.Filler(urwid.Pile([program_name, copyright_name, license_name]), valign='middle')
+        screen = urwid.Filler(urwid.Pile([program_name, copyright_name, license_name]),
+                              valign='middle')
         super().__init__(screen)
 
     def keypress(self, *args):
