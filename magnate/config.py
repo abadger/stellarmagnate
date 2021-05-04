@@ -70,6 +70,15 @@ logging:
       level: WARNING
       output_name: logfile
       filters: []
+
+authentication:
+    # Configuration of authentication.  This is given directly to passlib
+    # See the passlib documentation for details:
+    # https://passlib.readthedocs.io/en/stable/narr/context-tutorial.html#loading-saving-a-cryptcontext
+    passlib:
+        schemes: ["pbkdf2_sha512", "sha512_crypt", "bcrypt", "argon2"]
+        deprecated: []
+
 """.format(data_dir='/usr/share/stellarmagnate', log_file=LOG_FILE, state_dir=STATE_DIR)
 
 TESTING_CONFIG = """
@@ -95,7 +104,9 @@ CONFIG_SCHEMA = Schema({
     'use_uvloop': bool,
     # The logging param is passed directly to twiggy.dict_config() which does its own validation
     'logging': dict,
-    }, required=False)
+    # The authentication param is passed directly to passlib which does its own validation
+    'authentication': dict,
+}, required=False)
 
 
 def _find_config(conf_files=tuple()):
@@ -106,7 +117,8 @@ def _find_config(conf_files=tuple()):
     :returns: a list of config_files.  Configuration in the last files in the
         list should override the first ones.
     """
-    mlog.debug('Entered _find_config()')
+    flog = mlog.fields(func='_find_config')
+    flog.fields(conf_files=conf_files).debug('Entered _find_config()')
 
     paths = itertools.chain((SYSTEM_CONFIG_FILE, USER_CONFIG_FILE),
                             (os.path.expanduser(os.path.expandvars(p)) for
@@ -117,7 +129,7 @@ def _find_config(conf_files=tuple()):
         if os.path.exists(conf_path):
             config_files.append(conf_path)
 
-    mlog.fields(cfg_files=config_files).debug('Leaving _find_config()')
+    flog.fields(cfg_files=config_files).debug('Leaving _find_config()')
     return config_files
 
 
@@ -134,7 +146,9 @@ def _merge_mapping(merge_to, merge_from, inplace=False):
     :returns: the combined dictionary.  If inplace is True, then this is the same as merge_to after
         calling this function
     """
-    mlog.debug('Entered _merge_mapping()')
+    flog = mlog.fields(func='_merge_mapping')
+    flog.fields(merge_to=merge_to, merge_from=merge_from,
+                inplace=inplace).debug('Entered _merge_mapping()')
 
     if inplace:
         dest = merge_to
@@ -149,7 +163,7 @@ def _merge_mapping(merge_to, merge_from, inplace=False):
         else:
             dest[key] = val
 
-    mlog.debug('Leaving _merge_mapping()')
+    flog.fields(dest=dest).debug('Leaving _merge_mapping()')
     return dest
 
 
@@ -164,7 +178,8 @@ def _read_config(paths, testing=False):
     :rtype: ConfigObj, a dict-like object with helper methods for use as a config store
     :returns: Return the configuration dict
     """
-    mlog.debug('Entered _read_config()')
+    flog = mlog.fields(func='_read_config')
+    flog.fields(paths=paths, testing=testing).debug('Entering _read_config()')
 
     cfg = yaml.safe_load(DEFAULT_CONFIG)
     CONFIG_SCHEMA(cfg)
@@ -188,7 +203,7 @@ def _read_config(paths, testing=False):
         _merge_mapping(cfg, testing_cfg, inplace=True)
         CONFIG_SCHEMA(cfg)
 
-    mlog.debug('leaving _read_config()')
+    flog.fields(cfg=cfg).debug('Leaving _read_config()')
     return cfg
 
 
@@ -204,9 +219,14 @@ def read_config(conf_files=tuple(), testing=False):
     :rtype: ConfigObj, a dict-like object with helper methods for use as a config store
     :returns: Return the configuration dict
     """
-    mlog.debug('Entered read_config()')
+    flog = mlog.fields(func='_read_config')
+    flog.fields(conf_file=conf_files, testing=testing).info('Entering read_config()')
+
     cfg_paths = _find_config(conf_files)
-    return _read_config(cfg_paths, testing)
+    cfg = _read_config(cfg_paths, testing)
+
+    flog.fields(cfg=cfg).info('Leaving read_config()')
+    return cfg
 
 
 def write_default_config(filename):
@@ -215,7 +235,10 @@ def write_default_config(filename):
 
     :arg filename: The file path to write the config to.
     """
-    mlog.debug('Entered write_default_config()')
+    flog = mlog.fields(func='write_default_config')
+    flog.fields(filename=filename).info('Entering write_default_config()')
+
     with open(filename, 'w') as f:
         f.write(DEFAULT_CONFIG)
-    mlog.debug('config written')
+
+    flog.debug('Leaving write_default_config()')

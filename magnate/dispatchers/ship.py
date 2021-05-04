@@ -14,18 +14,33 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Dispatchers handle all of the core-side callbacks that respond to events.
+.. py:function:: action.ship.movement(ship_id: int, destination: string)
 
-These are light wrappers that call the objcets which do the real work.  This way all the callbacks
-are here for ease of discovery but the work is performed by objects which also interact with the data.
+    Emitted when the user requests that the ship be moved.  This can trigger
+    a :py:func:`ship.moved` or :py:func:`ship.movement_failure` event.
+
+    :arg string destination: The location to attempt to move the ship to
+
+.. py:function:: query.cargo.info(ship_id: int)
+
+    Emitted to retrieve a complete record of the cargoes that are being
+    carried in a ship.  This triggers a :py:func:`ship.cargo` event.
 """
-import straight.plugin
 
 from __main__ import magnate
 
 
-def register_event_handlers():
+def move_ship(ship_id, destination):
+    # Lookup ship_id in magnate.
+    # Attempt to move it
+    pass
+
+
+def get_cargo_info(ship_id):
+    pass
+
+
+def register_event_handlers(pubpen):
     """Register event handlers"""
-    dispatchers = straight.plugin.load('magnate.dispatchers')
-    for module in dispatchers:
-        module.register_event_handlers(magnate.pubpen)
+    pubpen.subscribe('action.ship.movement', move_ship)
+    pubpen.subscribe('query.cargo.info', get_cargo_info)

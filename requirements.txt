@@ -1,12 +1,15 @@
-PyYaml
+alembic
 attrs
+jsonschema
+kitchen
+passlib
+pubmarine >= 0.3
+# These are extracted from the 1.4.0 version of libpwquality
+# Need the pwquality library and header files installed in order to install
+https://toshio.fedorapeople.org/python/pwquality-1.4.0.tar.gz
+PyYaml
 SQlAlchemy
 sqlalchemy_repr
-alembic
-jsonschema
-voluptuous
-kitchen
-pubmarine >= 0.3
 straight.plugin
 
 # Need a version newer than 0.4.7
@@ -14,3 +17,4 @@ straight.plugin
 -e git+https://github.com/wearpants/twiggy#egg=Twiggy
 
 urwid > 1.3.1
+voluptuous

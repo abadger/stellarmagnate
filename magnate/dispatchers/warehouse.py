@@ -1,5 +1,5 @@
 # Stellar Magnate - A space-themed commodity trading game
-# Copyright (C) 2017 Toshio Kuratomi <toshio@fedoraproject.org>
+# Copyright (C) 2019 Toshio Kuratomi <toshio@fedoraproject.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -14,35 +14,20 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-All exceptions raised by the core engine
+*** Change so that location is a parameter
+.. py:function:: query.warehouse.{location}.info()
+
+    Emitted to retrieve a complete record of the cargoes being held in
+    a location's warehouse.
 """
 
+from __main__ import magnate
 
-class MagnateError(Exception):
-    """Base of the Magnate exception hierarchy"""
+
+def get_warehouse_data(location):
     pass
 
 
-class MagnateAuthError(MagnateError):
-    """Error related to authentication"""
-    pass
-
-
-class MagnateConfigError(MagnateError):
-    """Raised when processing config files"""
-    pass
-
-
-class MagnateSaveError(MagnateError):
-    """Base of all Magnate save game exception hierarchy"""
-    pass
-
-
-class MagnateNoSaveGame(MagnateSaveError):
-    """Raised when a save game file is missing"""
-    pass
-
-
-class MagnateInvalidSaveGame(MagnateSaveError):
-    """Raised when a save game file is invalid"""
-    pass
+def register_event_handlers(pubpen):
+    """Register event handlers"""
+    pubpen.subscribe('query.warehouse.info', get_warehouse_data)

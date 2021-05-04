@@ -113,6 +113,8 @@ def init_schema(datadir):
     global Base
     Base = declarative_base(cls=RepresentableBase)
 
+    flog.debug('Defining dynamic Schema classes')
+
     class SystemData(Base):  # pylint: disable=unused-variable
         """
         Static data about a stellar system
@@ -593,7 +595,7 @@ def load_savegame(savegame, datadir):
     :raises MagnateInvalidSaveGame: If the savegame exists but cannot be processed.
     :returns: The SQLAlchemy engine referencing the file
     """
-    flog = log.fields(func='load_savegame')
+    flog = mlog.fields(func='load_savegame')
     flog.fields(savegame=savegame, datadir=datadir).debug('Entering load_savegame')
 
     if not os.path.exists(savegame):
